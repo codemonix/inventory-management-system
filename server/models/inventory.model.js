@@ -2,15 +2,13 @@ import mongoose from 'mongoose';
 
 const inventorySchema = new mongoose.Schema(
     {
-        name: {type: String, required: true},
-        quantity: {type: Number, required: true},
+        item_id: { type: mongoose.Schema.Types.ObjectId, ref: 'Item', required: true },
         locations: [
             {
-                location: { type: String, required: true},
+                location_id: { type: mongoose.Schema.Types, ref: 'Storage', required: true},
                 quantity: { type: Number, required: true, min: 0 },
             },
         ],
-        description: {type: String },
     },
     { timestamps: true}
 );

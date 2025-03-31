@@ -1,4 +1,4 @@
-import Inventory from "../models/inventoryModel";
+import Inventory from "../models/inventory.model";
 
 export const getInventoryItems = async (req, res) => {
     try {

@@ -1,5 +1,5 @@
 import express from 'express';
-import Inventory from '../models/inventoryModel';
+import Inventory from '../models/inventory.model';
 const router = express.Router();
 
 // Get all inventor items
