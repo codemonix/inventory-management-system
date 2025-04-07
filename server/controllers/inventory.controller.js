@@ -1,4 +1,4 @@
-import Inventory from "../models/inventory.model";
+import Inventory from "../models/inventory.model.js";
 
 
 // fetch all items

@@ -5,7 +5,7 @@ const inventorySchema = new mongoose.Schema(
         item_id: { type: mongoose.Schema.Types.ObjectId, ref: 'Item', required: true },
         locations: [
             {
-                location_id: { type: mongoose.Schema.Types, ref: 'Storage', required: true},
+                location_id: { type: mongoose.Schema.Types.ObjectId, ref: 'Storage', required: true},
                 quantity: { type: Number, required: true, min: 0 },
             },
         ],
