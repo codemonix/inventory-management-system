@@ -1,13 +1,15 @@
-import { timeStamp } from 'console';
+/* the section integrated in inventory model for now */
+
+
 import mongoose from 'mongoose';
 
 const itemSchema = new mongoose.Schema(
     {
-        name: { type: String, required: true },
-        description: { type: String },
-        sku: { type: String, unique: true}, // Could be required as well
+        name: { type: String, required: true, unique: true },
+        code: { type: String, required: true, unique: true },
+        imageUrl: String,
         category: { type: String },
-        price: { type: Number, required: true },
+        price: { type: Number},
     },
     { timeStamp: true },
 );

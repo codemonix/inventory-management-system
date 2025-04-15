@@ -1,5 +1,40 @@
-import Inventory from "../models/inventory.model.js";
 
+import Inventory from "../models/inventory.model.js";
+import { nanoid } from "nanoid";
+import path from 'path';
+import fs from 'fs';
+
+
+export async function createItem(res, res) {
+    try {
+        const { name , description } = req.body;
+
+        if (!req.file) {
+            return res.status(400).json({ error: 'Image file is required' });
+        }
+
+
+        const itemCode = nanoid(10); //unique item code
+        const ext = path.extname(req.file.originalname).toLowerCase();   //get image extension
+        const imageUrl = `/uploads/items/${itemCode}${ext}`;
+        const oldPath = req.file.path;
+        const newPath = path.resolve(`uploads/items/${itemCode}${ext}`);
+        fs.renameSync(oldPath, newPath);
+
+        const newItem = new Inventory({
+            name,
+            description,
+            itemCode,
+            imageUrl,
+            location: []
+        });
+
+        await newItem.save();
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({ error: 'Failed to create inventory item.' });
+    }
+}
 
 // fetch all items
 export const getInventory = async (req, res) => {
@@ -17,18 +52,8 @@ export const getInventory = async (req, res) => {
     };
 };
 
-// Add new item
-export const createInventory = async (req, res) => {
-    try {
-        const newItem = new Inventory(req.body);
-        await newItem.save();
-        res.status(201).json(newItem);
-    } catch (error) {
-        res.status(400).json({ message: error.message });
-    };
-};
 
-// Upfate item
+// Update item
 
 export const updateInventory = async (req, res) => {
     try { 
@@ -36,6 +61,7 @@ export const updateInventory = async (req, res) => {
         if (!updatedItem) return res.status(404).json({ message: "Item not found"});
         res.json(updatedItem);
     } catch (error) {
+        console.error("Update inventory:", error)
         res.status(500).json({ message: error.message });
     };
 };
