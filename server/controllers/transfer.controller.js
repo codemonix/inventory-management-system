@@ -1,21 +1,25 @@
 
-import Transfer from '../models/transfer.model.js';
+import TransferPackage from '../models/transfer.model.js';
 import Inventory from '../models/inventory.model.js';
-import e from 'express';
 
 export const createTransfer = async ( req, res ) => {
     try {
+        console.log('Incomming transfer payload:', req.body);
         const { fromLocation, toLocation, items } = req.body;
-
         if ( fromLocation === toLocation ) {
             return res.status(400).json({ message: 'Source and destination must be different.' });
+        }
+
+        if (items.length === 0 ) {
+            return res.status(400).json({ error: "transfer package is empty."})
         }
 
         const updates = [];
 
         for ( const { item, quantity } of items ) {
-            const sourceStock = await Inventory.findOne({ item, loaction: fromLocation});
-
+            console.log('item, quantity transfer controller:', item, quantity);
+            const sourceStock = await Inventory.findOne({ itemId: item, locationId: fromLocation});
+            console.log('sourceStock:', sourceStock);
             if (!sourceStock || sourceStock.quantity < quantity) {
                 return res.status(400).json({ message: `Insufficient stock for item ${item}`});
             }
@@ -28,17 +32,18 @@ export const createTransfer = async ( req, res ) => {
         await Promise.all(updates);
 
         // Create transfer with pending status
-        const transfer = await Transfer.create({
+        const transfer = await TransferPackage.create({
             fromLocation,
             toLocation,
             items,
             createdBy: req.user.id,
-            status: 'pending',
+            status: 'in_transit',
         });
 
         res.status(201).json({ message: 'Transfer initiated successfully.', transfer });
     } catch (error) {
-        console.error(error);
+        console.error(error.message);
+        console.error(error.stack);
         res.status(500).json({ message: 'Internal Server Error' });
     }
 };
@@ -47,13 +52,13 @@ export const createTransfer = async ( req, res ) => {
 export const confirmTransfer = async (req, res) => {
     try {
         const { transferId } = req.params;
-        const transfer = Transfer.findById(transferId);
+        const transfer = TransferPackage.findById(transferId);
 
         if (!transfer) {
             res.status(400).json({ message: 'Transfer not found' });
         }
 
-        if (transfer.status !== 'pending') {
+        if (transfer.status !== 'in_transit') {
             return res.status(400).json({ message: 'Transfer already completed or canceled'});
         }
 
@@ -82,7 +87,7 @@ export const confirmTransfer = async (req, res) => {
 
         res.status(200).json({ message: 'Transfer received and stock updated', transfer });
     } catch (error) {
-        console.error(error);
+        console.error(error.message);
         res.status(500).json({ message: 'Failed to confirm transfer' });
     }
 };
@@ -91,14 +96,14 @@ export const confirmTransfer = async (req, res) => {
 
 export const getAllTransfers = async (req, res) => {
     try {
-        const transfers = await Transfer.find()
+        const transfers = await TransferPackage.find()
             .populate('fromLocation')
             .populate('toLocation')
             .populate('items.item')
             .populate('createdBy', 'email role');
         res.json(transfers);
     } catch (error) {
-        console.error(error);
+        console.error(error.message);
         res.status(500).json({ message: 'Failed to fetch transfers'});
     }
 };

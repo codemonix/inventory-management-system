@@ -26,8 +26,27 @@ const transferSchema = new mongoose.Schema({
         required: true,
     },
     items: {
-        items: [transferItemSchema],
-        required: true
+        type: [transferItemSchema],
+        required: true,
+        validate: [
+            {
+                validator: function (val) {
+                return Array.isArray(val) && val.length > 0;
+                },
+                message: 'Transfer package must include at least one item.'
+            },
+            {
+                validator: function (val) {
+                    const itemIds = val.map( entry => {
+                        console.log('val:', val)
+                        entry.item.toString();   
+                    });
+                    return new Set(itemIds).size === itemIds.length;
+                },
+                message: 'Duplicated items are npt allowed in a transfer package'
+            }
+
+        ]
     },
     createdBy: {
         type: mongoose.Schema.Types.ObjectId,
@@ -36,8 +55,8 @@ const transferSchema = new mongoose.Schema({
     },
     status: {
         type: String,
-        enum: [ 'pending', 'received', 'comleted'],
-        default: 'pending'
+        enum: [ 'in_transit', 'comleted'],
+        default: 'in_transit'
     }
 }, { timestamps: true });
 

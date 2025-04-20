@@ -2,7 +2,7 @@ import bcrypt from 'bcryptjs';
 import User from '../models/users.model.js';
 import generateToken from '../utils/generateToken.js';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'dev_secret';
+// const JWT_SECRET = process.env.JWT_SECRET || 'dev_secret';
 
 
 export async function  registerUser(req, res) {
@@ -32,8 +32,8 @@ export async function  registerUser(req, res) {
             token,
         });
 
-    } catch (err) {
-        console.log('Register user:', err);
+    } catch (error) {
+        console.log('Register user:', error);
         res.status(500).json({ error: 'Server error, please try again later.'});
     }
 }
@@ -50,7 +50,6 @@ export async function loginUser(req, res) {
         // check password
         const isMatched = await bcrypt.compare(password, user.password);
         if (!isMatched) return res.status(400).json({ error: 'Invalid credentials' });
-        
         
         const token = generateToken(user._id, user.role);
 
@@ -88,8 +87,8 @@ export async function getCurrentUser(req, res) {
                 role: user.role,
             },
         });
-    } catch (err) {
-        console.log('Get user error:', err);
+    } catch (error) {
+        console.log('Get user error:', error);
         res.status(500).json({ error: 'Server error, Please try again later.'})
     }
 }
