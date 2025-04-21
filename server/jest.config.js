@@ -5,5 +5,5 @@ export default {
         '^(\\.{1,2}/.*)\\.js$': '$1',
     },
     setupFilesAfterEnv: ['<rootDir>/tests/setup.js'],
-    testTimeout: 30000,
+    testTimeout: 10000,
 };

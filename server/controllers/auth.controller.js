@@ -47,6 +47,10 @@ export async function loginUser(req, res) {
             return res.status(401).json({ message: 'Invalid credentials or inactive account' });
         }
 
+        if (!user.isApproved) {
+            return res.status(403).json({ message: 'Account not approved yet' });
+        }
+
         // check password
         const isMatched = await bcrypt.compare(password, user.password);
         if (!isMatched) return res.status(400).json({ error: 'Invalid credentials' });

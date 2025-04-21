@@ -1,7 +1,7 @@
 
 import request from 'supertest';
 import mongoose from 'mongoose';
-import app from '../server.js';
+import app from '../app.js';
 import Location from '../models/location.model.js';
 import User from '../models/users.model.js';
 import Transfer from '../models/transfer.model.js';
@@ -24,6 +24,7 @@ beforeAll(async () => {
             name: 'Test User',
             email: `test-${nanoid(4)}@email.com`,
             password: 'testpass123',
+            isApproved: true,
             role: 'admin'
         });
 
@@ -67,7 +68,11 @@ afterAll(async () => {
     await Location.deleteMany({});
     await Item.deleteMany({});
     await Transfer.deleteMany({});
-    await mongoose.connection.close();
+    await mongoose.disconnect();
+    console.log('Disconnected from MongoDB and closed the app.');
+    // await setTimeout(1000);
+    const handles = process._getActiveRequests();
+    console.log('Active handles:', handles);
 });
 
 describe('Transfer API', () => {
