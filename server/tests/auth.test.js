@@ -1,7 +1,7 @@
 import request from 'supertest';
 import app from '../app.js';
-import generateToken from '../utils/generateToken.js';
-import User from '../models/user.model.js';
+// import generateToken from '../utils/generateToken.js';
+// import User from '../models/user.model.js';
 
 describe('Auth Endpoints', () => {
     it('should register a new User', async () => {

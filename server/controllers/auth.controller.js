@@ -41,6 +41,8 @@ export async function  registerUser(req, res) {
 export async function loginUser(req, res) {
     
     try {
+        console.log('Login request:', req.body);
+        // check if user exists
         const { email, password } = req.body;
         const user = await User.findOne({ email });
         if (!user || !user.isActive) {
@@ -68,7 +70,7 @@ export async function loginUser(req, res) {
             token,
         });
     } catch (error) {
-        console.log('Login error:', error);
+        console.log('Login error:', error.message);
         res.status(500).json({ error: 'Something went wrong during login'});
     }
 
