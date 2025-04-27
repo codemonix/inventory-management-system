@@ -1,11 +1,15 @@
-import { Navigate } from "react-router-dom";
+import { Navigate, Outlet } from "react-router-dom";
 import { useAuth } from "../context/AuthContext.jsx";
 
 
-const PrivateRoutes = ({ children }) => {
+const PrivateRoutes = () => {
     const { isLoggedIn } = useAuth();
-
-    return isLoggedIn ? children : <Navigate to="/login" />;
+    if (!isLoggedIn) {
+        // If not authenticated, redirect to the login page
+        return <Navigate to="/login" />;
+    };
+    console.log("PrivateRoutes -> isLoggedIn", isLoggedIn);
+    return <Outlet />; // Render the child routes if authenticated
 };
 
 export default PrivateRoutes;

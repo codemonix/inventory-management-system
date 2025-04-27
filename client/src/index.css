@@ -1,6 +1,14 @@
 
 @import "tailwindcss";
 
+body {
+  @apply bg-gray-400 
+}
+
+main {
+  @apply bg-gray-400
+}
+
 /* :root {
   font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;

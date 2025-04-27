@@ -1,11 +1,13 @@
 
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { AuthProvider, useAuth } from './context/AuthContext.jsx';
+import { AuthProvider } from './context/AuthProvider.jsx';
+import { useAuth } from './context/AuthContext.jsx';
 import LoginPage from './pages/LoginPage.jsx';
 import LogoutPage from './pages/LogoutPage.jsx';
 import DashboardPage from './pages/DashboardPage';
 import PrivateRoutes from './routes/PrivateRoutes.jsx';
+import Layout from './components/Layout.jsx';
 
 function App() {
 
@@ -13,21 +15,15 @@ function App() {
     <AuthProvider>
       <Router>
         <Routes>
+          {/* Public routes */}
           <Route path="/" element={<RedirectToCorrectPage />} />
           <Route path="/login" element={<LoginPage />} />
-          <Route path="/logout" element={
-            <PrivateRoutes>
-              <LogoutPage />
-            </PrivateRoutes>
-          } />
-          <Route
-            path="/dashboard"
-            element={
-              <PrivateRoutes>
-                <DashboardPage />
-              </PrivateRoutes>
-            }
-          />
+          <Route element={<PrivateRoutes />}>
+            <Route path="/logout" element={<LogoutPage />} />
+            <Route path='/dashboard' element={<Layout />}>
+              <Route index element={<DashboardPage />} />
+            </Route>
+          </Route>
         </Routes>
       </Router>
     </AuthProvider>
@@ -36,7 +32,7 @@ function App() {
 
 function RedirectToCorrectPage() {
   const { isLoggedIn } = useAuth();
-
+  console.log("RedirectToCorrectPage -> isLoggedIn", isLoggedIn);
   return isLoggedIn ? <Navigate to="/dashboard" /> : <Navigate to="/login" />;
 }
 
