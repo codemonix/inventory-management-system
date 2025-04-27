@@ -1,39 +1,44 @@
 import { useEffect, useState } from "react";
-import { fetchItems } from "../api/api.js";
+import { fetchInventory } from "../api/api.js";
 import ItemCard from "../components/ItemCard.jsx";
+import { useAuth } from "../context/AuthContext.jsx";
 
 
 const locationColors = {
-    "Istanbul": "red-400",
-    "Mashhad": "green-400",
-    "Kargo": "blue-400",
+    "Istanbul": "red",
+    "Mashhad": "green",
+    "Kargo": "blue"
 }
 
 
 const DashboardPage = () => {
+    const { isLoggedIn, user, logout } = useAuth();
     const [ items, setItems ] = useState([]);
     const [ error, setError ] = useState("");
 
     useEffect(() => {
-        const loadItems = async () => {
-            try {
-                const data = await fetchItems();
-                setItems(data);
-            } catch (error) {
-                console.error("Error fetching items:", error);
-                setError("Failed to load items. Please try again later.");
-            }
-        };
-        loadItems();
-    }, []);
+        if (isLoggedIn) {
+            fetchInventory().then(setItems).catch((err) => {
+                console.error("Error fetching items:", err.message);
+                setError(err.message || "Failed to fetch items. Please try again later.");
+            });
+        }
+    }, [isLoggedIn]);
+    
+    if (!isLoggedIn) {
+        return <p className="text-red-500">Please log in to view the dashboard.</p>;
+    }
+
+
 
     return (
         <div className="p-6">
-            <h1 className="text-2xl font-bold mb-4">Dashboard</h1>
+            <h2>Welcome {user?.name}</h2>
             {error && <p className="text-red-500">{error}</p>}
+            <button onClick={logout} className="bg-red-500 text-white p-2 rounded-md">Logout</button>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {items.map((item) => (
-                    <ItemCard key={item._id} item={item} locationColors={locationColors} />
+                    <ItemCard key={item.itemId} item={item} locationColors={locationColors} />
                 ))}
             </div>
         </div>

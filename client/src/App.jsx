@@ -1,51 +1,45 @@
 
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import LoginPage from './pages/LoginPage';
-import DashboardPage from './pages/DashboardPage';
-// import ItemsPage from './pages/ItemsPage.jsx';
-// import TransfersPage from './pages/TransfersPage.jsx';
+import { AuthProvider, useAuth } from './context/AuthContext.jsx';
+import LoginPage from './pages/LoginPage.jsx';
 import LogoutPage from './pages/LogoutPage.jsx';
-import Layout from './components/Layout.jsx';
-import { getToken } from './utils/auth.js';
-// import { useState } from 'react'
-// import reactLogo from './assets/react.svg'
-// import viteLogo from '/vite.svg'
-// import './App.css'
+import DashboardPage from './pages/DashboardPage';
+import PrivateRoutes from './routes/PrivateRoutes.jsx';
 
-export default function App() {
-  const [isLoggedIn, setIsLoggedIn] = React.useState(!!getToken());
+function App() {
 
   return (
-    <Router>
-      <Routes>
-        <Route path='/login'
-          element={isLoggedIn ? <Navigate to="/dashboard"/> : <LoginPage />}
-        />
-        {/* potected routes */}
-        <Route element={<Layout />}>
-          <Route path='/dashboard' 
-            element={isLoggedIn ? <DashboardPage /> : <Navigate to="/login" />}
-          />
-{/*           
-          <Route path='/items'
-            element={isLoggedIn ? <ItemsPage /> : <Navigate to="/login" />}
-          />
-          <Route path='/transfers'
-            element={isLoggedIn ? <TransfersPage /> : <Navigate to="/login" />}
-          /> */}
-          <Route path='/logout'
-            element={isLoggedIn ? <LogoutPage /> : <Navigate to="/login" />}
-          />
-          {/* Fallback */}
+    <AuthProvider>
+      <Router>
+        <Routes>
+          <Route path="/" element={<RedirectToCorrectPage />} />
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/logout" element={
+            <PrivateRoutes>
+              <LogoutPage />
+            </PrivateRoutes>
+          } />
           <Route
-            path="*"
-            element={<Navigate to={isLoggedIn ? "/dashboard" : "/login"} replace />}
+            path="/dashboard"
+            element={
+              <PrivateRoutes>
+                <DashboardPage />
+              </PrivateRoutes>
+            }
           />
-        </Route>
-      </Routes>
-    </Router>
+        </Routes>
+      </Router>
+    </AuthProvider>
   );
 }
+
+function RedirectToCorrectPage() {
+  const { isLoggedIn } = useAuth();
+
+  return isLoggedIn ? <Navigate to="/dashboard" /> : <Navigate to="/login" />;
+}
+
+export default App;
 
 

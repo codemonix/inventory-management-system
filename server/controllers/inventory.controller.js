@@ -64,17 +64,38 @@ export async function createInventory(req, res) {
 // fetch all items
 export const getInventory = async (req, res) => {
     try {
-        const items = await Inventory.find();
+        const allItems = await Inventory.find()
+            .populate("itemId", "name imageUrl")
+            .populate("locationId", "name")
+            .lean()
+        console.log('allItems', allItems);
+        const itemsMap = {};
 
-        // total quntity for each item
-        const updatedItems = items.map( item => ({
-            ...item.toObject(), 
-            totalQuantity: item.locations.reduce((sum, loc) => sum + loc.quantity, 0)
-        }));
-        res.json(updatedItems);
+        allItems.forEach(item => {
+            const itemkey = item.itemId._id.toString();
+            if (!itemsMap[itemkey]) {
+                itemsMap[itemkey] = {
+                    itemId: itemkey,
+                    name: item.itemId.name,
+                    image: item.itemId.imageUrl,
+                    stock: []
+                };
+            }
+            itemsMap[itemkey].stock.push({
+                locationId: item.locationId._id.toString(),
+                locationName: item.locationId.name,
+                quantity: item.quantity,
+            });
+        });
+
+        const itemsWithStock = Object.values(itemsMap)
+        console.log('itemsWithStock', itemsWithStock);
+        console.log('itemsMap', itemsMap);
+
+        return res.json(itemsWithStock);
     } catch (error) {
         console.log(error.message)
-        res.status(500).json({message: "Error getting inventory"});
+        return res.status(500).json({message: "Error getting inventory"});
     };
 };
 
