@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { fetchInventory } from "../api/api.js";
+import { fetchInventory } from "../services/inventoryServices.js";
 import ItemCard from "../components/ItemCard.jsx";
 import { useAuth } from "../context/AuthContext.jsx";
 

@@ -1,36 +1,64 @@
-import React from "react";
-import { NavLink } from "react-router-dom";
+import { useState} from "react";
+import { NavLink, Outlet } from "react-router-dom";
 import { getToken } from "../utils/auth.js";
 
 const Sidebar = () => {
     const linkClass = ({ isActive }) => {
-        isActive ? "text-blue-500 font-bold" : "text-white hover:text-blue-300"
-    }
+        return isActive ? "text-blue-500 font-bold" : "text-white hover:text-blue-500";
+    };
+    
     const isAuth = !!getToken();
+    const [isOpen, setIsOpen] = useState(false);
+
+    const toggleSidebar = () => {
+        setIsOpen(!isOpen);
+    }
 
     return (
-        <aside className="w-64 bg-gray-800 text-white h-screen p-4">
-            {/* Logo or Title */}
-            <div className="p-4 test-2xl font-bold">inventory</div>
-            <nav className="flex flex-col p-4 space-y-2">
-                <NavLink to="/" className={linkClass}>
-                    Home
-                </NavLink>
-                <NavLink to="/dashboard" className={ linkClass } >
-                    Dashboard
-                </NavLink>
-                <NavLink to="/items" className={ linkClass }>
-                    Items
-                </NavLink>
-                <NavLink to="/transfers" className={ linkClass }>
-                    Transfers
-                </NavLink>
-                { isAuth && (<NavLink to="/logout "
-                className="mt-auto block px-3 py-2 m-4 rounded bg-red-600 hover:bg-red-500 text-center">
-                    Logout
-                </NavLink>)}
-            </nav>
-        </aside>
+        <div>
+            <div className="lg:hidden p-4">
+                <button onClick={toggleSidebar} className="text-gray-500 cursor-pointer">
+                    <svg xmlns="http://www.w3.org/2000/svg" 
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                        className="w-6 h-6"
+                        >
+                            <path 
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M4 6h16M4 12h16M4 18h16"
+                                />
+                        </svg>
+                </button>
+            </div>
+            <aside className={`flex flex-col bg-gray-800 text-white w-64 p-4 space-y-4 absolute lg:relative transition-transform transform h-screen ${isOpen ? "translate-x-0" : "-translate-x-full"} lg:translate-x-0 lg:static`}>
+                {/* Logo or Title */}
+                <h1 className="p-4 text-2xl font-bold">inventory</h1>
+                <nav className="flex flex-col p-4 space-y-2">
+                    <NavLink to="/" className={linkClass}>
+                        Home
+                    </NavLink>
+                    <NavLink to="/dashboard" className={ linkClass } >
+                        Dashboard
+                    </NavLink>
+                    <NavLink to="/items" className={ linkClass }>
+                        Items
+                    </NavLink>
+                    <NavLink to="/transfers" className={ linkClass }>
+                        Transfers
+                    </NavLink>
+                    { isAuth && (<NavLink to="/logout "
+                    className="mt-auto block px-3 py-2 m-4 rounded bg-red-400 hover:bg-red-500 text-center">
+                        Logout
+                    </NavLink>)}
+                </nav>
+            </aside>
+            <div className={`lg:ml-64 p-4`}>
+                {/* <h1>This is h1</h1> */}
+            </div>
+        </div>
     );
 };
 
