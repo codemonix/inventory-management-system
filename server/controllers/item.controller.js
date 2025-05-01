@@ -38,3 +38,17 @@ export async function getItems(req, res) {
         res.status(500).json({ error: 'Fail to fetch items.'});
     }
 }
+
+export async function deleteItem(req, res) {
+    try {
+        const { id } = req.params;
+        const item = await Item.findByIdAndDelete(id);
+        if (!item) {
+            return res.status(404).json({ error: 'Item not found' });
+        }
+        res.status(200).json({ message: 'Item deleted successfully' });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Failed to delete item' });
+    }
+}

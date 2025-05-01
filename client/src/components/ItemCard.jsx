@@ -5,7 +5,7 @@
 const ItemCard = ({ item, locationColors }) => {
     // console.log("ItemCard Props:", item, locationColors); // Log the props to check if they are being passed correctly
     return (
-        <div div className="flex bg-gray-300 p-4 rounded-lg shadow-lg hover:shadow-xl transition-shadow duration-300" >
+        <div className="flex bg-gray-300 p-4 rounded-lg shadow-lg hover:shadow-xl transition-shadow duration-300">
             <img src={item.image} alt={item.name} className="w-25 h-25 object-cover rounded mr-4" />
             <div className="flex flex-col flex-grow">
                 <span className="font-bold">{item.name}</span>

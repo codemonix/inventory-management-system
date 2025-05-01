@@ -15,7 +15,7 @@ const Sidebar = () => {
     }
 
     return (
-        <div>
+        <div className="relative lg:flex">
             <div className="lg:hidden p-4">
                 <button onClick={toggleSidebar} className="text-gray-500 cursor-pointer">
                     <svg xmlns="http://www.w3.org/2000/svg" 
@@ -46,6 +46,9 @@ const Sidebar = () => {
                     <NavLink to="/items" className={ linkClass }>
                         Items
                     </NavLink>
+                    <NavLink to="/locations" className={ linkClass }>
+                        Locations
+                    </NavLink>
                     <NavLink to="/transfers" className={ linkClass }>
                         Transfers
                     </NavLink>
@@ -55,8 +58,8 @@ const Sidebar = () => {
                     </NavLink>)}
                 </nav>
             </aside>
-            <div className={`lg:ml-64 p-4`}>
-                {/* <h1>This is h1</h1> */}
+            <div className={`lg:ml-56 p-4`}>
+
             </div>
         </div>
     );

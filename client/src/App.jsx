@@ -8,6 +8,8 @@ import LogoutPage from './pages/LogoutPage.jsx';
 import DashboardPage from './pages/DashboardPage';
 import PrivateRoutes from './routes/PrivateRoutes.jsx';
 import Layout from './components/Layout.jsx';
+import ItemsPage from './pages/ItemsPage.jsx';
+import LocationsPage from './pages/LocationsPage.jsx';
 
 function App() {
 
@@ -22,6 +24,12 @@ function App() {
             <Route path="/logout" element={<LogoutPage />} />
             <Route path='/dashboard' element={<Layout />}>
               <Route index element={<DashboardPage />} />
+            </Route>
+            <Route path='/items' element={<Layout />}>
+              <Route index element={<ItemsPage />} />
+            </Route>
+            <Route path='/locations' element={<Layout />}>
+              <Route index element={<LocationsPage />} />
             </Route>
           </Route>
         </Routes>
