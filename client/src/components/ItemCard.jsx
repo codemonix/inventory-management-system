@@ -1,27 +1,53 @@
+import {
+    Card,
+    CardContent,
+    Typography,
+    IconButton,
+    Box,
+} from "@mui/material";
+import DeleteIcon from "@mui/icons-material/Delete";
+import EditIcon from "@mui/icons-material/Edit";
 
-
-
-
-const ItemCard = ({ item, locationColors }) => {
-    // console.log("ItemCard Props:", item, locationColors); // Log the props to check if they are being passed correctly
+const ItemCard = ({ item, onDelete, onEdit }) => {
+    // console.log("ItemCard -> item", item);
+    
     return (
-        <div className="flex bg-gray-300 p-4 rounded-lg shadow-lg hover:shadow-xl transition-shadow duration-300">
-            <img src={item.image} alt={item.name} className="w-25 h-25 object-cover rounded mr-4" />
-            <div className="flex flex-col flex-grow">
-                <span className="font-bold">{item.name}</span>
-                {item.stock.map((stock) => (
-                    <div key={stock.locationId} className="flex items-center space-x-1">
-                        <div className="w-4 h-4 rounded-full" 
-                            style={{ backgroundColor: locationColors[stock.locationName] || "gray" }}></div>
-                        <span className="text-sm">{stock.locationName}: {stock.quantity}</span>
-                    </div>
-                ))}
-            </div>
-            <div className="flex flex-col items-center gap-2 mt-2 ml-auto">
-                <button className="px-3 py-1 text-sm bg-green-500 text-white rounded flex-1 w-full">In</button>
-                <button className="px-3 py-1 text-sm bg-red-500 text-white rounded flex-1 w-full">Out</button>
-            </div>
-        </div>
+        <Card sx={{ display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "stretch",
+                    height: 100,
+                    m: 1,
+                     }} >
+            <Box sx={{ display: "flex", flexDirection: "column", flexGrow: 1 }}>
+                <CardContent sx={{ flex: "1 0 auto", p: 1 }}>
+                    <Typography variant="h7" >{ item.name }</Typography>
+                    <Typography variant="body2" color="text.secondary" >
+                        { item.code? `Code: ${item.code}` : "" }
+                    </Typography>   
+                    <Typography variant="body2" color="text.secondary" >
+                        { item.description }
+                    </Typography>
+                </CardContent>
+
+                <Box sx={{ display: "flex", gap: 1, px: 2, pb: 1 }}>
+                    <IconButton onClick={onEdit} color="Primary" >
+                        <EditIcon />
+                    </IconButton>
+                    <IconButton onClick={() => onDelete(item)} color="error" >
+                        <DeleteIcon />
+                    </IconButton>
+                </Box>
+            </Box>
+            
+            { item.imageUrl && (
+                <Box 
+                component="img"
+                src={item.imageUrl}
+                alt={item.name}
+                sx={{ width: 100, height: "100%", objectFit: "cover", borderRadius: 1, ml: 1 }}/>
+            )}
+            
+        </Card>
     );
 };
 

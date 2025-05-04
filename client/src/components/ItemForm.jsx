@@ -3,12 +3,15 @@ import { createItem } from "../services/itemsService.js";
 
 export default function ItemForm({ onItemCreated }) {
     const [name , setName] = useState("");
+    console.log("ItemForm -> name", name);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         const newItem = { name };
+        console.log("ItemForm -> newItem", newItem);
         try {
             const createdItem = await createItem(newItem);
+            console.log("ItemForm -> createdItem", createdItem);
             onItemCreated(createdItem); // Call the callback function with the created item
             setName(""); // Clear the input field after submission
         } catch (error) {

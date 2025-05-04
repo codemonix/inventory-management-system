@@ -62,7 +62,7 @@ function SidebarDrawer() {
 
     return (
         <div>
-            <IconButton onClick={toggleSidebar} sx={{ position: 'fixed', top: 0, left: 10, zIndex: 1000 }}>
+            <IconButton onClick={toggleSidebar} sx={{ position: 'fixed', top: 0, left: 10, zIndex: 1000, backgroundColor: 'rgba(206, 206, 206, 1)' }}>
                 <MenuIcon fontSize="large" />
             </IconButton>
             <Drawer open={isOpen} onClose={toggleSidebar} >

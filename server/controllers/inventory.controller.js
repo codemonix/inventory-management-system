@@ -72,6 +72,11 @@ export const getInventory = async (req, res) => {
         const itemsMap = {};
 
         allItems.forEach(item => {
+            // console.log('inventoryCont -> item', item.itemId);
+            // if (!item.itemId) {
+            //     console.log('ItemiD not found', item);
+            //     return;
+            // }
             const itemkey = item.itemId._id.toString();
             if (!itemsMap[itemkey]) {
                 itemsMap[itemkey] = {

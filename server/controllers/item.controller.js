@@ -1,8 +1,10 @@
 
 import Item from "../models/item.model.js";
+import Inventory from "../models/inventory.model.js";
 import { nanoid } from "nanoid";
 
 export async function createItem(req, res) {
+    console.log('item controller -> createItem:', req.body);
     try {
         const { name, category, price } = req.body;
 
@@ -21,7 +23,7 @@ export async function createItem(req, res) {
             imageUrl
         });
         const savedItem = await newItem.save();
-        console.log('newItem:', newItem);
+        console.log('newItem:', savedItem);
         res.status(201).json({ message: 'Item created successfully', item: savedItem});
     } catch (error) {
         console.error(error);
@@ -42,7 +44,12 @@ export async function getItems(req, res) {
 export async function deleteItem(req, res) {
     try {
         const { id } = req.params;
+        const isReferenced = await Inventory.exists({ itemId: id });
+        if (isReferenced) {
+            return res.status(400).json({ error: 'Item is used in Inventory, cannot be deleted' });
+        }
         const item = await Item.findByIdAndDelete(id);
+    
         if (!item) {
             return res.status(404).json({ error: 'Item not found' });
         }

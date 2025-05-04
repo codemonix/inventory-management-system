@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { fetchInventory } from "../services/inventoryServices.js";
-import ItemCardDashboard from "../components/ItemCardDashboard.jsx";
+import ItemCard from "../components/ItemCard.jsx";
 import ItemList from "../components/ItemList.jsx";
 import { useAuth } from "../context/AuthContext.jsx";
 
@@ -39,13 +39,13 @@ const DashboardPage = () => {
 
 
     return (
-        <div className="bg-gray-400 p-2">
+        <div className="bg-gray-400 p-6">
             {/* <h2 className="text-center p-2">Welcome {user?.user.name}</h2> */}
             {error && <p className="text-red-500">{error}</p>}
             
-            <div className="p-2">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {items.map((item) => (
-                    <ItemCardDashboard key={item.itemId} item={item} locationColors={locationColors} />
+                    <ItemCard key={item.itemId} item={item} locationColors={locationColors} />
                 ))}
             </div>
             {/* <div className="flex justify-center mt-4">
