@@ -59,3 +59,29 @@ export async function deleteItem(req, res) {
         res.status(500).json({ error: 'Failed to delete item' });
     }
 }
+
+export async function updateItemImage(req, res) {
+    try {
+        const { itemId } = req.params;
+        const filename = req.file.filename;
+        console.log("item.controller -> updateItemImage -> req.file.filename:", req.file.filename);
+
+        // Later delete old image if it is not default.jpg
+
+        const updateItem = await Item.findByIdAndUpdate(
+            itemId,
+            { imageUrl: `/uploads/items/${filename}` },
+            { new: true }
+        );
+        console.log("item.controller -> updateItemImage -> updateItem:", updateItem);
+        if (!updateItem) {
+            return res.status(404).json({success: false, error: 'Item not found' });
+        }
+
+        res.status(200).json({ success: true, message: 'Item image updated successfully', item: updateItem });
+    } catch (error) {
+        console.error("Error item.controller", error.message);
+        res.status(500).json({ success: false, error: 'Failed to update item image' });
+    }
+}
+    

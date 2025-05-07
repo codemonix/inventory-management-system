@@ -2,7 +2,8 @@
 import express from 'express';
 import { upload } from '../utils/upload.js';
 import auth, { isAdmin }  from '../middleware/auth.middleware.js';
-import { createItem, getItems, deleteItem } from '../controllers/item.controller.js';
+import { createItem, getItems, deleteItem, updateItemImage } from '../controllers/item.controller.js';
+import { fetchItemCode } from '../middleware/fetchItemCode.middleware.js';
 
 const router = express.Router();
 
@@ -20,5 +21,7 @@ router.post('/upload', auth,  upload.single('image'), (req, res) => {
         res.status(400).json({ success: false, message: error.message });
     }
 });
+
+router.post('/:itemId/update-image', auth, fetchItemCode, upload.single('image'), updateItemImage);
 
 export default router;

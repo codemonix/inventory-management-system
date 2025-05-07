@@ -10,11 +10,17 @@ const ItemsPage = () => {
     const [itemToDelete, setItemToDelete] = useState(null);
     const [editingItem, setEditingItem] = useState(null);
     const [deleteError, setDeleteError] = useState("");
+    const [triggerUpdate, setTriggerUpdate] = useState(0);
     
     useEffect(() => {
         getItems().then(setItems).catch((error) => console.error("Error fetching items:", error.message));
-    }, []);
+    }, [triggerUpdate]);
 
+    const handleImageUpload = (itemId, newImageUrl) => {
+        console.log("ItemsPage -> handleImageUpload -> triggerUpdate", triggerUpdate);
+        setItems((prevItems) => prevItems.map(item => item._id === itemId ? { ...item, imageUrl: newImageUrl } : item));
+        setTriggerUpdate(prev => prev + 1); // Trigger re-render to show updated image
+    };
    
 
     const handleDelete = (item) => {
@@ -69,6 +75,7 @@ const ItemsPage = () => {
             <ItemForm onItemCreated={(item) => setItems((prevItems) => [...prevItems, item.item]) } item={editingItem} />
             <ItemList items={items} onDelete={handleDelete} 
                 onEdit={handleEdit} 
+                onImageUpload={handleImageUpload}
             />
             {showConfirm && (
                 <ConfirmModal
