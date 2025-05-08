@@ -33,7 +33,7 @@ export async function  registerUser(req, res) {
         });
 
     } catch (error) {
-        console.log('Register user:', error);
+        log('Register user:', error);
         res.status(500).json({ error: 'Server error, please try again later.'});
     }
 }
@@ -41,7 +41,7 @@ export async function  registerUser(req, res) {
 export async function loginUser(req, res) {
     
     try {
-        console.log('Login request:', req.body);
+        log(req.body);
         // check if user exists
         const { email, password } = req.body;
         const user = await User.findOne({ email });
@@ -70,7 +70,7 @@ export async function loginUser(req, res) {
             token,
         });
     } catch (error) {
-        console.log('Login error:', error.message);
+        log('Login error:', error.message);
         res.status(500).json({ error: 'Something went wrong during login'});
     }
 

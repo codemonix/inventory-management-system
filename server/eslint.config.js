@@ -9,6 +9,7 @@ export default defineConfig([
   { files: ["**/*.{js,mjs,cjs,jsx}"], languageOptions: { globals: {
     ...globals.node,
     ...globals.jest,
+    log: "readonly",
   } } },
   pluginReact.configs.flat.recommended,
 ]);

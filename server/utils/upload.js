@@ -24,9 +24,9 @@ export const upload = multer({
     limits: { fileSize: 2 * 1024 * 1024 },
     fileFilter: (req, file, cb ) => {
         const allowedExt = ['.png', '.jpg', '.jpeg', '.webp'];
-        console.log('upload.js -> file, req.body:', file, req.body);
+        log( file, req.body );
         const ext = path.extname(file.originalname).toLowerCase();
-        console.log('upload.js -> ext:', ext);
+        log( ext );
         if (!allowedExt.includes(ext)) {
             return cb(new Error('Only image files are allowed'));
         }

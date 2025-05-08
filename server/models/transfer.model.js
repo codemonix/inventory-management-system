@@ -38,7 +38,7 @@ const transferSchema = new mongoose.Schema({
             {
                 validator: function (val) {
                     const itemIds = val.map( entry => {
-                        console.log('val:', val)
+                        // log(val);
                         entry.item.toString();   
                     });
                     return new Set(itemIds).size === itemIds.length;

@@ -14,8 +14,8 @@ export default async function auth(req, res, next) {
         req.user = await User.findById(decoded.id).select('-password');
         if (!req.user) return res.status(401).json({ error: 'User not found!'})
         next();
-    } catch (err) {
-        console.error(err);
+    } catch (error) {
+        log(error.message);
         res.status(403).json({ error: 'Invalid or expired token' });
     };
 };

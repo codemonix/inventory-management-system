@@ -6,7 +6,7 @@ export async function createLocation(req, res) {
         await location.save();
         res.status(201).json({mesage: "Location created successfully", location: location});
     } catch (error) {
-        console.error(error);
+        log(error.message);
         res.status(500).json({ error: 'Failed to create location' });
     }
 }
@@ -16,7 +16,7 @@ export async function getLocations(req, res) {
         const locations = await Location.find();
         res.status(200).json(locations);
     } catch (error) {
-        console.error(error);
+        log(error.message);
         res.status(500).json({ error: 'Failed to get locations' });
     }
 }
@@ -30,7 +30,7 @@ export async function deleteLocation(req, res) {
         }
         res.status(200).json({ message: 'Location deleted successfully' });
     } catch (error) {
-        console.error(error);
+        log(error.message);
         res.status(500).json({ error: 'Failed to delete location' });
     }
 }

@@ -23,10 +23,10 @@ export async function createItem(req, res) {
             imageUrl
         });
         const savedItem = await newItem.save();
-        console.log('newItem:', savedItem);
+        log({ savedItem });
         res.status(201).json({ message: 'Item created successfully', item: savedItem});
     } catch (error) {
-        console.error(error);
+        log(error.message);
         res.status(500).json({ error: 'Failed to create item.' });
     }
 }
@@ -36,7 +36,7 @@ export async function getItems(req, res) {
         const items = await Item.find();
         res.status(200).json(items)
     } catch (error) {
-        console.error(error);
+        log(error.message);
         res.status(500).json({ error: 'Fail to fetch items.'});
     }
 }
@@ -55,7 +55,7 @@ export async function deleteItem(req, res) {
         }
         res.status(200).json({ message: 'Item deleted successfully' });
     } catch (error) {
-        console.error(error);
+        log(error.message);
         res.status(500).json({ error: 'Failed to delete item' });
     }
 }
@@ -64,7 +64,7 @@ export async function updateItemImage(req, res) {
     try {
         const { itemId } = req.params;
         const filename = req.file.filename;
-        console.log("item.controller -> updateItemImage -> req.file.filename:", req.file.filename);
+        log(req.file.filename);
 
         // Later delete old image if it is not default.jpg
 
@@ -73,14 +73,14 @@ export async function updateItemImage(req, res) {
             { imageUrl: `/uploads/items/${filename}` },
             { new: true }
         );
-        console.log("item.controller -> updateItemImage -> updateItem:", updateItem);
+        log(updateItem);
         if (!updateItem) {
             return res.status(404).json({success: false, error: 'Item not found' });
         }
 
         res.status(200).json({ success: true, message: 'Item image updated successfully', item: updateItem });
     } catch (error) {
-        console.error("Error item.controller", error.message);
+        log(error.message);
         res.status(500).json({ success: false, error: 'Failed to update item image' });
     }
 }

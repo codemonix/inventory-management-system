@@ -4,7 +4,7 @@ import Inventory from '../models/inventory.model.js';
 
 export const createTransfer = async ( req, res ) => {
     try {
-        console.log('Incomming transfer payload:', req.body);
+        log(req.body);
         const { fromLocation, toLocation, items } = req.body;
         if ( fromLocation === toLocation ) {
             return res.status(400).json({ message: 'Source and destination must be different.' });
@@ -17,9 +17,9 @@ export const createTransfer = async ( req, res ) => {
         const updates = [];
 
         for ( const { item, quantity } of items ) {
-            console.log('item, quantity transfer controller:', item, quantity);
+            log( item, quantity );
             const sourceStock = await Inventory.findOne({ itemId: item, locationId: fromLocation});
-            console.log('sourceStock:', sourceStock);
+            log('sourceStock:', sourceStock);
             if (!sourceStock || sourceStock.quantity < quantity) {
                 return res.status(400).json({ message: `Insufficient stock for item ${item}`});
             }
@@ -42,8 +42,7 @@ export const createTransfer = async ( req, res ) => {
 
         res.status(201).json({ message: 'Transfer initiated successfully.', transfer });
     } catch (error) {
-        console.error(error.message);
-        console.error(error.stack);
+        log(error.message);
         res.status(500).json({ message: 'Internal Server Error' });
     }
 };
@@ -87,7 +86,7 @@ export const confirmTransfer = async (req, res) => {
 
         res.status(200).json({ message: 'Transfer received and stock updated', transfer });
     } catch (error) {
-        console.error(error.message);
+        log(error.message);
         res.status(500).json({ message: 'Failed to confirm transfer' });
     }
 };
@@ -103,7 +102,7 @@ export const getAllTransfers = async (req, res) => {
             .populate('createdBy', 'email role');
         res.json(transfers);
     } catch (error) {
-        console.error(error.message);
+        log(error.message);
         res.status(500).json({ message: 'Failed to fetch transfers'});
     }
 };

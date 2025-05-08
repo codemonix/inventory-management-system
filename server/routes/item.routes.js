@@ -17,7 +17,7 @@ router.post('/upload', auth,  upload.single('image'), (req, res) => {
         const filename = req.file.filename;
         res.status(200).json({ success: true, filename });
     } catch (error) {
-        console.error('item route:', error.message);
+        log(error.message);
         res.status(400).json({ success: false, message: error.message });
     }
 });

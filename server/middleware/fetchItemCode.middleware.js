@@ -12,7 +12,7 @@ export async function fetchItemCode(req, res, next) {
         req.itemCode = item.code;
         next();
     } catch (error) {
-        console.error("Error fetching item code:", error.message);
+        log("Error fetching item code:", error.message);
         res.status(500).json({ error: "Failed to fetch item code" });
     }
 }

@@ -77,7 +77,7 @@ afterAll(async () => {
 
 describe('Transfer API', () => {
     it('should create a valid transfer', async () => {
-        console.log('create a valid transfer test: from, to, item', fromLocation, toLocation, itemId)
+        log({ fromLocation, toLocation, itemId });
         const res = await request(app)
             .post('/api/transfers')
             .set('Authorization', `Bearer ${token}`)

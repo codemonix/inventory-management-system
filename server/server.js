@@ -1,4 +1,7 @@
 import app from './app.js';
+import { debugLog } from './utils/logger.js';
+
+globalThis.log = debugLog; // Make log function globally available
 
 const PORT = process.env.PORT || 5000;
 

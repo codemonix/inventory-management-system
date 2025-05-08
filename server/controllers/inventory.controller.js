@@ -57,7 +57,7 @@ export async function createInventory(req, res) {
 
         // await newItem.save();
     } catch (error) {
-        console.log(error.message);
+        log(error.message);
         res.status(500).json({ error: 'Failed to create inventory item.' });
     }
 }
@@ -95,12 +95,13 @@ export const getInventory = async (req, res) => {
         });
 
         const itemsWithStock = Object.values(itemsMap)
-        console.log('itemsWithStock', itemsWithStock);
-        console.log('itemsMap', itemsMap);
+        // log('itemsWithStock', itemsWithStock);
+        // log('itemsMap', itemsMap);
+        log('allItems length', allItems.length);
 
         return res.json(itemsWithStock);
     } catch (error) {
-        console.log(error.message)
+        log(error.message)
         return res.status(500).json({message: "Error getting inventory"});
     };
 };
@@ -113,9 +114,9 @@ export const updateInventory = async (type, req, res) => {
     try {
         const { itemId } = req.params;
         const { locationId, quantity, note } = req.body;
-        console.log("inv.cont -> 116: itemId, locationId", itemId, locationId)
+        log(itemId, locationId);
         const userId = req.user._id;
-        console.log("inventory.controller -> updateInventory:", req.body)
+        // log(req.body);
 
         if (!['IN', 'OUT', 'TRANSFER'].includes(type)) return res.status(400).json({ error: 'Invalid type!'});
         if (!itemId, !locationId, !quantity) return res.status(400).json({ error: 'Missin required files.'});
@@ -124,13 +125,13 @@ export const updateInventory = async (type, req, res) => {
         
         
 
-        console.log('updateInventory -> 127', itemId, locationId, quantity)
+        log({ itemId, locationId, quantity})
         const updatedItem = await Inventory.findOneAndUpdate(
             { itemId, locationId },
             { $inc: { quantity: adjustment } },
             { upsert: true, new: true }
         );
-        console.log('updateInventory', updatedItem)
+        log(updatedItem)
         if (!updatedItem) return res.status(404).json({ message: "Inventory record not found for this item and location."});
         await logTransaction({
             itemId,
@@ -150,7 +151,7 @@ export const updateInventory = async (type, req, res) => {
 };
 
 export async function addStock(req, res) {
-    console.log("inventory.cont -> addStock:", req.body)
+    log("req.body", req.body)
     return updateInventory('IN', req, res);
 }
 
