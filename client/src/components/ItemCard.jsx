@@ -11,14 +11,20 @@ import imageCompressor from "browser-image-compression";
 // import axios from "axios";
 import { useState } from "react";
 import api from "../api/api";
+import { logInfo } from "../utils/logger";
+// import { useRef } from "react";
 
 const defaultImage = "/uploads/items/default.jpg"; // Placeholder image URL
 
 const ItemCard = ({ item, onDelete, onEdit, onImageUpload }) => {
+    // eslint-disable-next-line no-unused-vars
     const [image, setImage] = useState(item.imageUrl || defaultImage);
     const [loading, setLoading] = useState(false);
-    console.log("ItemCard -> item", item);
-    console.log("ItemCard -> item.imageUrl, image", item.imageUrl, image);
+
+    // const editButtonRef = useRef(null);
+    logInfo("item name:", item.name);
+
+    logInfo("imageUrl:", item.imageUrl);
 
     const handleImageChange = () => {
         console.log("ItemCard -> handleImageChange -> item", item.code);
@@ -73,7 +79,7 @@ const ItemCard = ({ item, onDelete, onEdit, onImageUpload }) => {
                 console.error("Error compressing image:", error.message);
                 return file; // Return the original file if compression fails
             }
-        };  
+        };
     
     return (
         <Card sx={{ display: "flex",
@@ -83,18 +89,25 @@ const ItemCard = ({ item, onDelete, onEdit, onImageUpload }) => {
                     m: 1,
                      }} >
             <Box sx={{ display: "flex", flexDirection: "column", flexGrow: 1 }}>
-                <CardContent sx={{ flex: "1 0 auto", p: 1 }}>
+                <CardContent sx={{ flex: "1 0 auto", p: 1 , pb: 0}}>
                     <Typography variant="h7" >{ item.name }</Typography>
-                    <Typography variant="body2" color="text.secondary" >
-                        { item.code? `Code: ${item.code}` : "" }
-                    </Typography>   
-                    <Typography variant="body2" color="text.secondary" >
-                        { item.description }
-                    </Typography>
+                    <Box sx={{ display: "flex", gap: 1 }}>
+                        <Typography variant="body2" color="text.secondary" >
+                            { item.code? `Code: ${item.code}` : "" }
+                        </Typography>
+                        {item.price && (
+                            <Typography variant="body2" color="text.secondary" >
+                                <strong>Price:</strong> {item.price} €
+                            </Typography>
+                        )}
+                        <Typography variant="body2" color="text.secondary" >
+                            { item.description?  `Descriptioln:${item.description}` : "" }
+                        </Typography>
+                    </Box>
                 </CardContent>
 
-                <Box sx={{ display: "flex", gap: 1, px: 2, pb: 1 }}>
-                    <IconButton onClick={onEdit} color="Primary" >
+                <Box sx={{ display: "flex", gap: 1, px: 1, pb: 1 }}>
+                    <IconButton onClick={(e) => onEdit(item, e.currentTarget)} color="Primary" >
                         <EditIcon />
                     </IconButton>
                     <IconButton onClick={() => onDelete(item)} color="error" >

@@ -2,7 +2,7 @@
 import express from 'express';
 import { upload } from '../utils/upload.js';
 import auth, { isAdmin }  from '../middleware/auth.middleware.js';
-import { createItem, getItems, deleteItem, updateItemImage } from '../controllers/item.controller.js';
+import { createItem, getItems, deleteItem, updateItemImage, updateItem } from '../controllers/item.controller.js';
 import { fetchItemCode } from '../middleware/fetchItemCode.middleware.js';
 
 const router = express.Router();
@@ -10,6 +10,7 @@ const router = express.Router();
 router.post('/', auth, createItem);
 router.get('/', auth, getItems);
 router.delete('/:id', auth, isAdmin, deleteItem);
+router.put('/:itemId', auth, isAdmin, updateItem);
 
 
 router.post('/upload', auth,  upload.single('image'), (req, res) => {

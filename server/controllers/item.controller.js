@@ -84,4 +84,31 @@ export async function updateItemImage(req, res) {
         res.status(500).json({ success: false, error: 'Failed to update item image' });
     }
 }
+
+export async function updateItem(req, res) {
+
+    try {
+        const { itemId } = req.params;
+        const { name, category, price } = req.body;
+
+        if (!name) {
+            return res.status(400).json({ error: 'Name is required!' });
+        }
+
+        const updateItem = await Item.findByIdAndUpdate(
+            itemId,
+            { name, category, price },
+            { new: true }
+        );
+
+        if (!updateItem) {
+            return res.status(404).json({ error: 'Item not found' });
+        }
+
+        res.status(200).json({ message: 'Item updated successfully', item: updateItem });
+    } catch (error) {
+        log(error.message);
+        res.status(500).json({ error: 'Failed to update item' });
+    }
+}
     

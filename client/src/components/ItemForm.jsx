@@ -5,8 +5,8 @@ export default function ItemForm({ onItemCreated }) {
     const [name , setName] = useState("");
     console.log("ItemForm -> name", name);
 
-    const handleSubmit = async (e) => {
-        e.preventDefault();
+    const handleSubmit = async () => {
+        // e.preventDefault();
         const newItem = { name };
         console.log("ItemForm -> newItem", newItem);
         try {
@@ -20,7 +20,10 @@ export default function ItemForm({ onItemCreated }) {
     };
 
     return (
-        <form onSubmit={handleSubmit} className="flex flex-col items-center bg-gray-300 p-4 rounded-md shadow-md mb-4">
+        <form onSubmit={(e) => {
+            e.preventDefault();
+            handleSubmit();
+        }} className="flex flex-col items-center bg-gray-300 p-4 rounded-md shadow-md mb-4">
             <h2 className="text-lg font-semibold mb-4">Add New Item</h2>
             <input
                 type="text"

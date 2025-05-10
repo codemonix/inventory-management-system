@@ -2,19 +2,33 @@ import { useState, useEffect } from 'react';
 import ItemList from '../components/ItemList.jsx';
 import ItemForm from '../components/ItemForm';
 import ConfirmModal from '../components/ConfirmModal.jsx';
-import { getItems, deleteItem } from '../services/itemsService.js';
+import { getItems, deleteItem, updateItem } from '../services/itemsService.js';
+import EditItemDialog from '../components/ItemEditDialog.jsx';
+// import Item from '../../../server/models/item.model.js';
+import { logDebug, logInfo } from '../utils/logger.js';
 
 const ItemsPage = () => {
     const [items, setItems] = useState([]);
     const [showConfirm, setShowConfirm] = useState(false);
     const [itemToDelete, setItemToDelete] = useState(null);
-    const [editingItem, setEditingItem] = useState(null);
+    const [itemToEdit, setItemToEdit] = useState(null);
     const [deleteError, setDeleteError] = useState("");
     const [triggerUpdate, setTriggerUpdate] = useState(0);
+    const [showEditForm, setShowEditForm] = useState(false);
+    const [showItemForm, setShowItemForm] = useState(false);
+    
+    const [editButtonRef, setEditButtonRef] = useState(null);
     
     useEffect(() => {
         getItems().then(setItems).catch((error) => console.error("Error fetching items:", error.message));
     }, [triggerUpdate]);
+
+    const toggleItemForm = () => {
+        setShowItemForm((prev) => !prev);
+        if (showItemForm) {
+            setItemToEdit(null); // Clear the editing item
+        }
+    }
 
     const handleImageUpload = (itemId, newImageUrl) => {
         console.log("ItemsPage -> handleImageUpload -> triggerUpdate", triggerUpdate);
@@ -24,7 +38,7 @@ const ItemsPage = () => {
    
 
     const handleDelete = (item) => {
-        console.log("Item to delete:", item);
+        logInfo("Item to delete:", item);
         setItemToDelete(item);
         setShowConfirm(true);
     };
@@ -57,8 +71,39 @@ const ItemsPage = () => {
         setDeleteError("");
     };
 
-    const handleEdit = (item) => {
-        setEditingItem(item); // Set the item to be edited
+    const handleEdit = (item, buttonElement) => {
+        logInfo("Item to edit:", item);
+        setItemToEdit(item) ; // Set the item to be edited
+        setShowEditForm(true); // Show the edit form
+        setEditButtonRef(buttonElement); // Set the button reference
+        
+        logDebug("setItemToEdit:", itemToEdit);
+    }
+
+    const handleEditFormClose = () => {
+        setItemToEdit(null); // Clear the editing item
+        setShowEditForm(false); // Close the edit form
+        if (editButtonRef.current) {
+            logDebug("editButtonRef.current:", editButtonRef);
+            editButtonRef.blur();
+        }
+    }
+
+    const handleEditFormSave = async (savedItem) => {
+        logInfo("Saved item:", savedItem);
+        setItems((prevItems) => prevItems.map(item => item._id === savedItem._id ? savedItem : item));
+        // const updatedEditItem = 
+        updateItem(itemToEdit._id, savedItem)
+        setShowEditForm(false); // Close the edit form
+        setItemToEdit(null); // Clear the editing item
+        logInfo("editButtonRef:", editButtonRef);
+        if (editButtonRef.current) {
+                logDebug("editButtonRef.current:", editButtonRef.current);
+                editButtonRef.current.blur();
+            }
+        setTriggerUpdate(prev => prev + 1); // Trigger re-render to show updated item
+
+
     }
 
     // const handleFormSubmit = (savedItem) => {
@@ -69,15 +114,28 @@ const ItemsPage = () => {
     //     }
 
     // }
-    console.log("ItemsPage -> items", items);
+    logInfo("items length", items.length);
     return (
         <div>
-            <ItemForm onItemCreated={(item) => setItems((prevItems) => [...prevItems, item.item]) } item={editingItem} />
+            {showItemForm && (
+                <ItemForm onItemCreated={(item) => setItems((prevItems) => [...prevItems, item.item]) } item={itemToEdit} />
+            )}
+            <div className="flex justify-between items-center mb-4">
+                <h1 className="text-2xl font-bold">Items</h1>
+                <button
+                    className="bg-blue-500 text-white px-4 py-2 rounded"
+                    onClick={toggleItemForm}
+                >
+                    {showItemForm ? "Close Form" : "Add Item"}
+                </button>
+            </div>
             <ItemList items={items} onDelete={handleDelete} 
                 onEdit={handleEdit} 
                 onImageUpload={handleImageUpload}
+                editButtonRef={editButtonRef}
             />
             {showConfirm && (
+
                 <ConfirmModal
                     open={showConfirm}
                     title="Delete Item"
@@ -87,6 +145,15 @@ const ItemsPage = () => {
                     error={deleteError}
                 />
             )}
+            {showEditForm &&
+                (<EditItemDialog
+                    open={showEditForm}
+                    onClose={handleEditFormClose}
+                    item={itemToEdit}
+                    onSave={handleEditFormSave}
+                />)
+            }
+            
             
         </div>
     );

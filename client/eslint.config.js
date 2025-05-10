@@ -11,7 +11,9 @@ export default [
       ecmaVersion: 2020,
       globals: {
         ...globals.browser,
-        log: 'readonly',
+        logInfo: 'readonly',
+        logError: 'readonly',
+        logWarning: 'readonly',
       },
       parserOptions: {
         ecmaVersion: 'latest',
