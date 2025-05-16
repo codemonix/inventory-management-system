@@ -8,9 +8,12 @@ import {
 import StockDetails from "./StockDetail";
 import InputTwoToneIcon from '@mui/icons-material/InputTwoTone';
 import OutputTwoToneIcon from '@mui/icons-material/OutputTwoTone';
+import SwapHorizonIcon from '@mui/icons-material/SwapHoriz';
+import { logDebug } from "../utils/logger";
 
-const ItemCardDashboard = ({ item, onIn, onOut, locationColors }) => {
+const ItemCardDashboard = ({ item, onIn, onOut, locationColors, onAddToTransfer }) => {
     console.log("ItemCardDashboard -> item", item.image);
+    logDebug("ItemCardDashboard -> item", item);
     
     return (
         <Card sx={{ display: "flex",
@@ -30,6 +33,9 @@ const ItemCardDashboard = ({ item, onIn, onOut, locationColors }) => {
                         </IconButton>
                         <IconButton onClick={onOut} color="error" >
                             <OutputTwoToneIcon />
+                        </IconButton>
+                        <IconButton onClick={onAddToTransfer} color="secondary" >
+                            <SwapHorizonIcon />
                         </IconButton>
                     </Box> 
                      </Box>

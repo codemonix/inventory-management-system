@@ -1,6 +1,77 @@
 
 import TransferPackage from '../models/transfer.model.js';
 import Inventory from '../models/inventory.model.js';
+import tempTransferModel from '../models/tempTransfer.model.js';
+import { debugLog } from '../utils/logger.js';
+
+
+export const getTempTransfer = async (req, res) => {
+    const temp = await tempTransferModel.findOne();
+    res.json(temp);
+};
+
+export const createTempTransfer = async (req, res) => {
+    const { fromLocation, toLocation } = req.body;
+    const existing = await tempTransferModel.findOne();
+    if (existing) await existing.deleteOne();
+    const temp = new tempTransferModel({ fromLocation, toLocation, items: [] });
+    await temp.save();
+    res.status(201).json(temp);
+};
+
+// Add item to temp transfer
+export const addItemToTempTransfer = async (req, res) => {
+    const { itemId, quantity } = req.body;
+    const temp = await tempTransferModel.findOne();
+    if (!temp) {
+        return res.status(404).json({ message: 'Temp transfer not found' });
+    }
+    temp.items.push({ itemId, quantity });
+    await temp.save();
+    res.status(201).json(temp);
+};
+
+// Remove item from temp transfer
+export const removeItemFromTempTransfer = async (req, res) => {
+    const { itemId } = req.params;
+    const temp = await tempTransferModel.findOne();
+    if (!temp) {
+        return res.status(404).json({ message: 'Temp transfer not found' });
+    }
+    temp.items = temp.items.filter(item => item.itemId.toString() !== itemId);
+    await temp.save();
+    res.status(200).json(temp);
+};
+
+// Finalize temp transfer
+export const finalizeTempTransfer = async (req, res) => {
+    const temp = await tempTransferModel.findOne();
+    if (!temp) {
+        return res.status(400).json({ message: 'Noting to finalize' });
+    }
+
+    const cleanedItems = temp.items.map( i => ({
+        item: i.itemId,
+        quantity: i.quantity
+    }));
+
+    const newTransfer = new TransferPackage({
+        fromLocation: temp.fromLocation,
+        toLocation: temp.toLocation,
+        items: cleanedItems,
+        createdBy: req.user.id,
+    });
+    try {
+        await newTransfer.save();
+        await temp.deleteOne();
+        res.status(201).json(newTransfer);
+    } catch (error) {
+        debugLog('temp transfer:', temp);
+        debugLog(newTransfer)
+        debugLog(error.message);
+        return res.status(500).json({ message: 'Failed to save transfer' });
+    }
+}
 
 export const createTransfer = async ( req, res ) => {
     try {

@@ -10,6 +10,7 @@ import PrivateRoutes from './routes/PrivateRoutes.jsx';
 import Layout from './components/Layout.jsx';
 import ItemsPage from './pages/ItemsPage.jsx';
 import LocationsPage from './pages/LocationsPage.jsx';
+import TransfersPage from './pages/TranfersPage.jsx';
 
 function App() {
 
@@ -30,6 +31,9 @@ function App() {
             </Route>
             <Route path='/locations' element={<Layout />}>
               <Route index element={<LocationsPage />} />
+            </Route>
+            <Route path='/transfers' element={<Layout />}>
+              <Route index element={<TransfersPage />} />
             </Route>
           </Route>
         </Routes>

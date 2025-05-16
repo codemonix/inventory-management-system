@@ -25,7 +25,7 @@ const StockActionDialog = ({ open, onClose, onSubmit, itemId, locations, type })
 
     return (
         <Dialog open={open} onClose={onClose}>
-            <DialogTitle >{type === 'IN' ? 'Add stock' : 'Ramove stock'} </DialogTitle>
+            <DialogTitle >{type === 'IN' ? 'Add' : 'Ramove'} </DialogTitle>
             <DialogContent sx={{ display: 'flex', flexDirection: "column", gap: 2 , minWidth: 300 }}  >
                 <TextField 
                 select

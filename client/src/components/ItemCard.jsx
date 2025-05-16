@@ -21,10 +21,7 @@ const ItemCard = ({ item, onDelete, onEdit, onImageUpload }) => {
     const [image, setImage] = useState(item.imageUrl || defaultImage);
     const [loading, setLoading] = useState(false);
 
-    // const editButtonRef = useRef(null);
-    logInfo("item name:", item.name);
-
-    logInfo("imageUrl:", item.imageUrl);
+    logInfo("item", item)
 
     const handleImageChange = () => {
         console.log("ItemCard -> handleImageChange -> item", item.code);

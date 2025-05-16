@@ -38,12 +38,11 @@ const transferSchema = new mongoose.Schema({
             {
                 validator: function (val) {
                     const itemIds = val.map( entry => {
-                        // log(val);
-                        entry.item.toString();   
+                        return entry.item.toString();   
                     });
                     return new Set(itemIds).size === itemIds.length;
                 },
-                message: 'Duplicated items are npt allowed in a transfer package'
+                message: 'Duplicated items are not allowed in a transfer package'
             }
 
         ]
@@ -55,8 +54,8 @@ const transferSchema = new mongoose.Schema({
     },
     status: {
         type: String,
-        enum: [ 'in_transit', 'comleted'],
-        default: 'in_transit'
+        enum: [ 'assembling','in_transit', 'comleted'],
+        default: 'assembling'
     }
 }, { timestamps: true });
 

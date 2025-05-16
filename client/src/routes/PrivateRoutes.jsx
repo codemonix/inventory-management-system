@@ -8,7 +8,7 @@ const PrivateRoutes = () => {
         // If not authenticated, redirect to the login page
         return <Navigate to="/login" />;
     };
-    console.log("PrivateRoutes -> isLoggedIn", isLoggedIn);
+    logInfo("isLoggedin:",isLoggedIn);
     return <Outlet />; // Render the child routes if authenticated
 };
 

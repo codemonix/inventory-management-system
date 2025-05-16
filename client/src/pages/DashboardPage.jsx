@@ -1,10 +1,12 @@
 import { useEffect, useState } from "react";
 import { fetchInventory, stockIn, stockOut } from "../services/inventoryServices.js";
 import ItemCardDashboard from "../components/ItemCardDashboard.jsx";
-import ItemList from "../components/ItemList.jsx";
+// import ItemList from "../components/ItemList.jsx";
 import { useAuth } from "../context/AuthContext.jsx";
 import { getLocations } from "../services/locationsService.js"
 import StockActionDialog from "../components/stockActionDialog.jsx";
+import  { useDispatch }  from "react-redux";
+import { addItem } from "../redux/slices/transferSlice.js";
 
 
 const locationColors = {
@@ -25,6 +27,8 @@ const DashboardPage = () => {
     const [ triggerUpdate, setTriggerUpdate ] = useState(0);
     
     console.log("DashboardPage -> user", user);
+
+    const dispatch = useDispatch();
 
     useEffect(() => {
         if (isLoggedIn) {
@@ -59,11 +63,21 @@ const DashboardPage = () => {
         if (actionType === 'IN') {
             await stockIn (itemId, locationId, quantity );
             setTriggerUpdate((prev) => prev + 1 );
-        } else {
+        } else if (actionType === 'OUT') {
+            await stockOut (itemId, locationId, quantity );
+            setTriggerUpdate((prev) => prev + 1 );
+        } else if (actionType === 'TRANSFER') {
+            console.log("handleAddToTransferClick: ", itemId);
+            handleAddItemToTempTransfer(itemId, quantity);
             await stockOut (itemId, locationId, quantity );
             setTriggerUpdate((prev) => prev + 1 );
         }
-    }
+    };
+
+    // const handleAddToTransfer = (itemId, quantity) => {
+    //     console.log("handleAddToTransfer: ", itemId, quantity);
+    //     dispatch(addItem({ itemId, quantity }));
+    // }
 
     const handleClose = () => {
         console.log("handle onClose")
@@ -73,6 +87,11 @@ const DashboardPage = () => {
         }
         setDialogOpen(false);
 
+    };
+
+    const handleAddItemToTempTransfer = (itemId, quantity) => {
+        console.log("DashboardPage -> handleAddItemToTempTransfer:", itemId, quantity);
+        dispatch(addItem({ itemId, quantity }));
     }
 
 
@@ -91,6 +110,7 @@ const DashboardPage = () => {
                         locations={locations}
                         onIn={() => handleClick(item.itemId, 'IN')}
                         onOut={() => handleClick(item.itemId, 'OUT')}
+                        onAddToTransfer={() => handleClick(item.itemId, 'TRANSFER')}
                          />
                 ))}
                 <StockActionDialog

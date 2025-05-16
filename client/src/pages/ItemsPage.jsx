@@ -120,8 +120,8 @@ const ItemsPage = () => {
             {showItemForm && (
                 <ItemForm onItemCreated={(item) => setItems((prevItems) => [...prevItems, item.item]) } item={itemToEdit} />
             )}
-            <div className="flex justify-between items-center mb-4">
-                <h1 className="text-2xl font-bold">Items</h1>
+            <div className="flex justify-center items-center pt-2">
+                {/* <h3 className="text-2xl font-bold">Items</h3> */}
                 <button
                     className="bg-blue-500 text-white px-4 py-2 rounded"
                     onClick={toggleItemForm}
