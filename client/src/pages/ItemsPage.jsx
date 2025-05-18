@@ -5,7 +5,7 @@ import ConfirmModal from '../components/ConfirmModal.jsx';
 import { getItems, deleteItem, updateItem } from '../services/itemsService.js';
 import EditItemDialog from '../components/ItemEditDialog.jsx';
 // import Item from '../../../server/models/item.model.js';
-import { logDebug, logInfo } from '../utils/logger.js';
+import { logDebug, logError, logInfo } from '../utils/logger.js';
 
 const ItemsPage = () => {
     const [items, setItems] = useState([]);
@@ -16,8 +16,9 @@ const ItemsPage = () => {
     const [triggerUpdate, setTriggerUpdate] = useState(0);
     const [showEditForm, setShowEditForm] = useState(false);
     const [showItemForm, setShowItemForm] = useState(false);
-    
-    const [editButtonRef, setEditButtonRef] = useState(null);
+    // const [openInOutDialog, setOpenInOutDialog ] = useState(false)
+    // const [itemInOut, setItemInOut] = useState(null);
+    // const [actionType, setActionType] = useState('IN');
     
     useEffect(() => {
         getItems().then(setItems).catch((error) => console.error("Error fetching items:", error.message));
@@ -31,7 +32,6 @@ const ItemsPage = () => {
     }
 
     const handleImageUpload = (itemId, newImageUrl) => {
-        console.log("ItemsPage -> handleImageUpload -> triggerUpdate", triggerUpdate);
         setItems((prevItems) => prevItems.map(item => item._id === itemId ? { ...item, imageUrl: newImageUrl } : item));
         setTriggerUpdate(prev => prev + 1); // Trigger re-render to show updated image
     };
@@ -53,15 +53,15 @@ const ItemsPage = () => {
                 setDeleteError("");
             } catch (error) {
                 if (error.response && error.response.status === 400) {
-                    console.error("Error deleting item:", error.response.data.error);
+                    logError("Error deleting item:", error.response.data.error);
                     setDeleteError(error.response.data.error || "Item is still in use");
                 } else {
-                    console.error("Error deleting item:", error.message);
+                    logError("Error deleting item:", error.message);
                     alert("An error occurred while deleting the item. Please try again.");
                 }
             }
         } else {
-            console.error("No item to delete.");
+            logInfo("No item to delete.");
         }
     };
 
@@ -71,11 +71,10 @@ const ItemsPage = () => {
         setDeleteError("");
     };
 
-    const handleEdit = (item, buttonElement) => {
+    const handleEdit = (item) => {
         logInfo("Item to edit:", item);
         setItemToEdit(item) ; // Set the item to be edited
         setShowEditForm(true); // Show the edit form
-        setEditButtonRef(buttonElement); // Set the button reference
         
         logDebug("setItemToEdit:", itemToEdit);
     }
@@ -83,10 +82,7 @@ const ItemsPage = () => {
     const handleEditFormClose = () => {
         setItemToEdit(null); // Clear the editing item
         setShowEditForm(false); // Close the edit form
-        if (editButtonRef.current) {
-            logDebug("editButtonRef.current:", editButtonRef);
-            editButtonRef.blur();
-        }
+        
     }
 
     const handleEditFormSave = async (savedItem) => {
@@ -96,24 +92,18 @@ const ItemsPage = () => {
         updateItem(itemToEdit._id, savedItem)
         setShowEditForm(false); // Close the edit form
         setItemToEdit(null); // Clear the editing item
-        logInfo("editButtonRef:", editButtonRef);
-        if (editButtonRef.current) {
-                logDebug("editButtonRef.current:", editButtonRef.current);
-                editButtonRef.current.blur();
-            }
         setTriggerUpdate(prev => prev + 1); // Trigger re-render to show updated item
 
 
     }
 
-    // const handleFormSubmit = (savedItem) => {
-    //     if (editingItem) {
-    //         setItems((prevItems) => prevItems.map(item => item._id === savedItem._id ? savedItem : item));
-    //     } else {
-    //         setItems((prevItems) => [...prevItems, savedItem]);
-    //     }
-
+    // const handleInOutClick = (itemId, type ) => {
+    //     setItemInOut(itemId)
+    //     setActionType(type)
+    //     setOpenInOutDialog(true)
     // }
+
+
     logInfo("items length", items.length);
     return (
         <div>
@@ -132,7 +122,6 @@ const ItemsPage = () => {
             <ItemList items={items} onDelete={handleDelete} 
                 onEdit={handleEdit} 
                 onImageUpload={handleImageUpload}
-                editButtonRef={editButtonRef}
             />
             {showConfirm && (
 

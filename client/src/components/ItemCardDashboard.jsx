@@ -12,7 +12,6 @@ import SwapHorizonIcon from '@mui/icons-material/SwapHoriz';
 import { logDebug } from "../utils/logger";
 
 const ItemCardDashboard = ({ item, onIn, onOut, locationColors, onAddToTransfer }) => {
-    console.log("ItemCardDashboard -> item", item.image);
     logDebug("ItemCardDashboard -> item", item);
     
     return (

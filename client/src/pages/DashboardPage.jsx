@@ -7,6 +7,7 @@ import { getLocations } from "../services/locationsService.js"
 import StockActionDialog from "../components/stockActionDialog.jsx";
 import  { useDispatch }  from "react-redux";
 import { addItem } from "../redux/slices/transferSlice.js";
+import { logError } from "../utils/logger.js";
 
 
 const locationColors = {
@@ -33,7 +34,7 @@ const DashboardPage = () => {
     useEffect(() => {
         if (isLoggedIn) {
             fetchInventory().then(setItems).catch((error) => {
-                console.error("Error fetching items:", error.message);
+                logError("Error fetching items:", error.message);
                 setError(error.message || "Failed to fetch items. Please try again later.");
             });
 
@@ -80,11 +81,6 @@ const DashboardPage = () => {
     // }
 
     const handleClose = () => {
-        console.log("handle onClose")
-        const active = document.activeElement;
-        if (active instanceof HTMLElement) {
-            active.blur()
-        }
         setDialogOpen(false);
 
     };

@@ -18,14 +18,13 @@ const StockActionDialog = ({ open, onClose, onSubmit, itemId, locations, type })
     const [ quantity, setQuantity ] = useState('');
 
     const handleSubmit = () => {
-        console.log(locationId)
         onSubmit({ itemId, locationId, quantity: Number(quantity) });
         onClose();
     };
 
     return (
         <Dialog open={open} onClose={onClose}>
-            <DialogTitle >{type === 'IN' ? 'Add' : 'Ramove'} </DialogTitle>
+            <DialogTitle >{type === 'IN' ? 'Add' : type === 'OUT' ? 'Remove' : 'Transfer'} </DialogTitle>
             <DialogContent sx={{ display: 'flex', flexDirection: "column", gap: 2 , minWidth: 300 }}  >
                 <TextField 
                 select

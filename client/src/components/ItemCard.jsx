@@ -7,6 +7,8 @@ import {
 } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
 import EditIcon from "@mui/icons-material/Edit";
+import InputTwoToneIcon from '@mui/icons-material/InputTwoTone'
+import OutputTwoTone from '@mui/icons-material/OutputTwoTone'
 import imageCompressor from "browser-image-compression";
 // import axios from "axios";
 import { useState } from "react";
@@ -16,12 +18,13 @@ import { logInfo } from "../utils/logger";
 
 const defaultImage = "/uploads/items/default.jpg"; // Placeholder image URL
 
-const ItemCard = ({ item, onDelete, onEdit, onImageUpload }) => {
+const ItemCard = ({ item, onIn, onOut, onDelete, onEdit, onImageUpload, totalStock }) => {
     // eslint-disable-next-line no-unused-vars
     const [image, setImage] = useState(item.imageUrl || defaultImage);
     const [loading, setLoading] = useState(false);
 
-    logInfo("item", item)
+    logInfo("item", item);
+    logInfo("totalStock", totalStock( item._id))
 
     const handleImageChange = () => {
         console.log("ItemCard -> handleImageChange -> item", item.code);
@@ -77,6 +80,7 @@ const ItemCard = ({ item, onDelete, onEdit, onImageUpload }) => {
                 return file; // Return the original file if compression fails
             }
         };
+
     
     return (
         <Card sx={{ display: "flex",
@@ -88,18 +92,24 @@ const ItemCard = ({ item, onDelete, onEdit, onImageUpload }) => {
             <Box sx={{ display: "flex", flexDirection: "column", flexGrow: 1 }}>
                 <CardContent sx={{ flex: "1 0 auto", p: 1 , pb: 0}}>
                     <Typography variant="h7" >{ item.name }</Typography>
-                    <Box sx={{ display: "flex", gap: 1 }}>
-                        <Typography variant="body2" color="text.secondary" >
-                            { item.code? `Code: ${item.code}` : "" }
-                        </Typography>
-                        {item.price && (
+                    <Box sx={{ display: "flex", flexDirection: "row", gap: 1 }}>
+                        <Box sx={{ minWidth: "125px" }}>
                             <Typography variant="body2" color="text.secondary" >
-                                <strong>Price:</strong> {item.price} €
+                                { item.code? `Code: ${item.code}` : "" }
                             </Typography>
+                        </Box>
+                        {item.price && (
+                            <Box sx={{ minWidth: "90px" }} >
+                                <Typography variant="body2" color="text.secondary" >
+                                    <strong>Price:</strong> {item.price} €
+                                </Typography>
+                            </Box>
                         )}
-                        <Typography variant="body2" color="text.secondary" >
-                            { item.description?  `Descriptioln:${item.description}` : "" }
-                        </Typography>
+                        <Box sx={{ minWidth: "50px" }} >
+                            <Typography variant="body2" color="text.secondary" >
+                               <strong>Qty: </strong>{ totalStock(item._id) }
+                            </Typography>
+                        </Box>
                     </Box>
                 </CardContent>
 
@@ -109,6 +119,12 @@ const ItemCard = ({ item, onDelete, onEdit, onImageUpload }) => {
                     </IconButton>
                     <IconButton onClick={() => onDelete(item)} color="error" >
                         <DeleteIcon />
+                    </IconButton>
+                    <IconButton onClick={onIn} color="primary" >
+                        <InputTwoToneIcon />
+                    </IconButton>
+                    <IconButton onClick={onOut} color="error" >
+                        <OutputTwoTone />
                     </IconButton>
                 </Box>
             </Box>

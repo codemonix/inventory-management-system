@@ -1,5 +1,6 @@
 import TransferList from "../components/TransferList.jsx";
 
+
 const TransfersPage = () => {
     return (
         <div className="p-6">

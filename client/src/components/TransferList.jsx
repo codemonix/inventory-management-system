@@ -5,25 +5,24 @@ import TempTransferCard from "./TempTransferCard.jsx";
 import FinalizedTransferCard from "./FinalizedTransferCard.jsx";
 import StartTransferDialog from "./StartTransferDialog.jsx";
 import { fetchLocations } from "../redux/slices/locationsSlice.js";
-import StockActionDialog from "./stockActionDialog.jsx";
 import { logInfo } from "../utils/logger.js";
 import { selectTempTransferDetailed } from "../redux/selectors/transferSelector.js";
 import { loadItems } from "../redux/slices/itemsSlice.js";
+import { Dialog, DialogContent, DialogTitle } from "@mui/material";
+import TransferItemsList from "./TransferItemsList.jsx";
+
 
 
 
 
 const TransferList = () => {
-    const state = useSelector((state) => state);
-    console.log("TransferList state: ", state);
     const { transfers, tempTransfer } = useSelector((state) => state.transfer);
     const { items } = useSelector((state) => state.items);
     const populatedTempTransfer = useSelector(selectTempTransferDetailed);
-    // const { locations } = useSelector((state) => state.locations);
-    // logInfo("TransferList transfers: ", transfers);
-    // logInfo("TransferList tempTransfer: ", tempTransfer);
     const dispatch = useDispatch();
     const [showdialog, setShowdialog] = useState(false);
+    const [openItems, setOpenItems] = useState(false);
+    const [selectedTransfer, setSelectedTransfer] = useState(null);
 
     useEffect(() => {
         dispatch(loadTransfers());
@@ -36,6 +35,16 @@ const TransferList = () => {
     logInfo("TransferList tempTransfer: ", tempTransfer);
     logInfo("TransferList items: ", items);
     logInfo("TransferList populatedTempTransfer: ", populatedTempTransfer);
+
+    const handleOpenItems = (transfer) => {
+        setSelectedTransfer(transfer);
+        setOpenItems(true);
+    };
+
+    const handleCloseItems = () => {
+        setOpenItems(false);
+        setSelectedTransfer(null);
+    }
 
     const handleFinalize = () => {
         if (tempTransfer.items.length > 0) {
@@ -71,7 +80,7 @@ const TransferList = () => {
                     <p className="text-gray-500 italic">No finalized transfers available.</p>
                 ) : (
                  transfers.map((transfer) => (
-                    <FinalizedTransferCard key={ transfer._id } transfer={ transfer } />
+                    <FinalizedTransferCard key={ transfer._id } transfer={ transfer } onViewItems={ () => handleOpenItems(transfer) }/>
                 ))
                 )}
             </section>
@@ -83,6 +92,21 @@ const TransferList = () => {
                 onStartNewTransfer={handleStartNewTransfer}
                 />
             )}
+
+            { openItems && (
+                <Dialog open={openItems} onClose={handleCloseItems} fullWidth maxWidth="md" >
+                    <DialogTitle>Items in Transfer</DialogTitle>
+                    <DialogContent >
+                        { selectedTransfer && (
+                            <TransferItemsList items={selectedTransfer.items} 
+                                onDelete={ () => {}}
+                                onEdit={ () => {}}
+                                onConfirm={ () => {}} />
+                        )}
+                    </DialogContent>
+                </Dialog>
+            )}
+            
         </div>
     );
 };
