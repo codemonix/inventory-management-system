@@ -15,21 +15,22 @@ const locationsSlice = createSlice({
     name: 'locations',
     initialState: {
         locations: [],
-        loading: false,
+        status: 'idel',
         error: null,
     },
     reducers: {},
     extraReducers: (builder) => {
         builder
             .addCase(fetchLocations.pending, (state) => {
-                state.loading = true;
+                state.status = 'loading';
             })
             .addCase(fetchLocations.fulfilled, (state, action) => {
-                state.loading = false;
+                state.status = 'succeeded';
                 state.locations = action.payload;
             })
             .addCase(fetchLocations.rejected, (state, action) => {
-                state.loading = false;
+                state.status = 'failed';
+                logDebug("fetchLocations error: ", action.error.message);
                 state.error = action.error.message;
             });   
     },

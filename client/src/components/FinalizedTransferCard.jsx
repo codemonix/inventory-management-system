@@ -13,6 +13,7 @@ const FinalizedTransferCard = ({ transfer, onViewItems }) => {
                         <p><strong className="ml-2">To:</strong><span className="ml-1">{transfer.toLocation?.name || 'N/A'}</span></p>
 
                     </div>
+                    <p className="text-xs text-gray-500">Status:<strong className="ml-1">{transfer.status}</strong></p>
                     <p className="text-xs text-gray-500">ID: {transfer._id}</p>
                 </div>
                 <div className="flex items-center flex-col pl-2 ml-auto" >

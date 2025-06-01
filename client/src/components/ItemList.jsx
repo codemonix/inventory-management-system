@@ -12,6 +12,7 @@ const ItemList = ({ items, onDelete, onEdit, onImageUpload }) => {
     const [openInOutDialog, setOpenInOutDialog] = useState(false)
     const [currentItem, setCurrentItemId] = useState(null)
     const [inventory, setInventory] = useState([])
+    const [triggerUpdate, setTriggerUpdate] = useState(0)
     
 
     const dispatch = useDispatch()
@@ -19,8 +20,9 @@ const ItemList = ({ items, onDelete, onEdit, onImageUpload }) => {
     const locations = useSelector((state) => state.locations.locations)
     useEffect (() => {
         fetchInventory().then(setInventory).catch((error) => logError(error.message))
+        // dispatch(fetchInventory())
         dispatch(fetchLocations())
-    },[dispatch])
+    },[dispatch, triggerUpdate])
 
 
     logInfo('locations', locations)
@@ -43,6 +45,7 @@ const ItemList = ({ items, onDelete, onEdit, onImageUpload }) => {
             logError(error.message);
         } finally {
             handleClose();
+            setTriggerUpdate((prev) => prev + 1)
         }
 
     }

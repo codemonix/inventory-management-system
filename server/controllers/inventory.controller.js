@@ -114,7 +114,8 @@ export const updateInventory = async (type, req, res) => {
     try {
         const { itemId } = req.params;
         const { locationId, quantity, note } = req.body;
-        log(itemId, locationId);
+        log({locationId});
+        log("type of itemId:", itemId)
         const userId = req.user._id;
         // log(req.body);
 

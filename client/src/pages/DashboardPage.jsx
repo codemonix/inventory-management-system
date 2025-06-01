@@ -1,13 +1,14 @@
 import { useEffect, useState } from "react";
 import { fetchInventory, stockIn, stockOut } from "../services/inventoryServices.js";
 import ItemCardDashboard from "../components/ItemCardDashboard.jsx";
-// import ItemList from "../components/ItemList.jsx";
 import { useAuth } from "../context/AuthContext.jsx";
 import { getLocations } from "../services/locationsService.js"
 import StockActionDialog from "../components/stockActionDialog.jsx";
-import  { useDispatch }  from "react-redux";
+import  { useDispatch, useSelector }  from "react-redux";
 import { addItem } from "../redux/slices/transferSlice.js";
-import { logError } from "../utils/logger.js";
+import { logDebug, logError, logInfo } from "../utils/logger.js";
+import Inventory from "../../../server/models/inventory.model.js";
+import { loadTempTransfer, loadTransfers } from "../redux/slices/transferSlice.js";
 
 
 const locationColors = {
@@ -18,7 +19,7 @@ const locationColors = {
 
 
 const DashboardPage = () => {
-    const { isLoggedIn, user, loading } = useAuth();
+    const { isLoggedIn, loading } = useAuth();
     const [ items, setItems ] = useState([]);
     const [ error, setError ] = useState("");
     const [ locations , setLocations ] = useState([]);
@@ -26,14 +27,17 @@ const DashboardPage = () => {
     const [ currentItemId, setCurrentItemId ] = useState(null);
     const [ actionType, setActionType ] = useState('IN');
     const [ triggerUpdate, setTriggerUpdate ] = useState(0);
-    
-    console.log("DashboardPage -> user", user);
+    const [ defaultLocation, setDefaultLocation] = useState(null);
+    const tempTransfer = useSelector((state) => state.transfer.tempTransfer)
+
 
     const dispatch = useDispatch();
 
     useEffect(() => {
+        // logDebug("tempTransfer Updated:", tempTransfer)
         if (isLoggedIn) {
             fetchInventory().then(setItems).catch((error) => {
+                
                 logError("Error fetching items:", error.message);
                 setError(error.message || "Failed to fetch items. Please try again later.");
             });
@@ -45,6 +49,16 @@ const DashboardPage = () => {
         }
     }, [isLoggedIn, triggerUpdate]);
 
+    useEffect(() => {
+        dispatch(loadTempTransfer());
+        dispatch(loadTransfers())
+    }, [dispatch])
+
+    
+    logInfo("state tempTransfer:", tempTransfer)
+
+    logDebug("inventory", items) 
+
     if (loading) {
         return <div className="text-center">Loading...</div>;
     }
@@ -53,14 +67,18 @@ const DashboardPage = () => {
         return <p className="text-red-500">Please log in to view the dashboard.</p>;
     }
 
-    const handleClick = ( itemId, type ) => {
-        setCurrentItemId(itemId);
+    const handleClick = ( item, type ) => {
+        logInfo("handleClick -> item:", item)
+        setCurrentItemId(item.itemId);
         setActionType(type);
         setDialogOpen(true);
+        logInfo("tempT:", tempTransfer)
+        if (type === 'TRANSFER') setDefaultLocation(tempTransfer.fromLocation)
     };
 
     const handleSubmitDashbord = async ({ itemId, locationId, quantity }) => {
-        console.log("DashbordPage -> handleSubDash:", itemId, locationId, quantity)
+        logDebug("DashbordPage -> handleSubDash:", itemId, locationId, quantity)
+        logDebug("tempTransfer: ", tempTransfer)
         if (actionType === 'IN') {
             await stockIn (itemId, locationId, quantity );
             setTriggerUpdate((prev) => prev + 1 );
@@ -68,26 +86,33 @@ const DashboardPage = () => {
             await stockOut (itemId, locationId, quantity );
             setTriggerUpdate((prev) => prev + 1 );
         } else if (actionType === 'TRANSFER') {
+            setDefaultLocation(tempTransfer.fromLocation)
             console.log("handleAddToTransferClick: ", itemId);
-            handleAddItemToTempTransfer(itemId, quantity);
-            await stockOut (itemId, locationId, quantity );
+
+
+            
+            if (tempTransfer.fromLocation !== locationId) {
+                setError("Location mismatch!")
+                return;
+            } else {
+                // locationId is source location id to check in the backend
+                handleAddItemToTempTransfer(itemId, quantity, locationId);
+                logInfo("itemId:", itemId)
+                await stockOut (itemId, locationId, quantity );
+            }
+            
             setTriggerUpdate((prev) => prev + 1 );
         }
     };
-
-    // const handleAddToTransfer = (itemId, quantity) => {
-    //     console.log("handleAddToTransfer: ", itemId, quantity);
-    //     dispatch(addItem({ itemId, quantity }));
-    // }
 
     const handleClose = () => {
         setDialogOpen(false);
 
     };
 
-    const handleAddItemToTempTransfer = (itemId, quantity) => {
-        console.log("DashboardPage -> handleAddItemToTempTransfer:", itemId, quantity);
-        dispatch(addItem({ itemId, quantity }));
+    const handleAddItemToTempTransfer = (itemId, quantity, sourceLocationId) => {
+        logDebug("DashboardPage -> handleAddItemToTempTransfer:", itemId, quantity);
+        dispatch(addItem({ itemId, quantity, sourceLocationId }));
     }
 
 
@@ -104,9 +129,9 @@ const DashboardPage = () => {
                         item={item} 
                         locationColors={locationColors} 
                         locations={locations}
-                        onIn={() => handleClick(item.itemId, 'IN')}
-                        onOut={() => handleClick(item.itemId, 'OUT')}
-                        onAddToTransfer={() => handleClick(item.itemId, 'TRANSFER')}
+                        onIn={() => handleClick(item, 'IN')}
+                        onOut={() => handleClick(item, 'OUT')}
+                        onAddToTransfer={() => handleClick(item, 'TRANSFER')}
                          />
                 ))}
                 <StockActionDialog
@@ -116,6 +141,8 @@ const DashboardPage = () => {
                     itemId={currentItemId}
                     locations={locations}
                     type={actionType}
+                    errorMessage={error}
+                    defaultLocation={defaultLocation}
                 />
             </div>
 

@@ -11,7 +11,7 @@ export default function TransferItemsList({ items }) {
     return (
         <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }} >
             { items.map((itm) => (
-                <ItemCardTransfer key={itm._id} item={itm} />
+                <ItemCardTransfer key={itm.item._id} item={itm} />
             ))}
         </Box>
     )

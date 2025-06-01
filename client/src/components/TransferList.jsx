@@ -5,7 +5,7 @@ import TempTransferCard from "./TempTransferCard.jsx";
 import FinalizedTransferCard from "./FinalizedTransferCard.jsx";
 import StartTransferDialog from "./StartTransferDialog.jsx";
 import { fetchLocations } from "../redux/slices/locationsSlice.js";
-import { logInfo } from "../utils/logger.js";
+import { logDebug, logInfo } from "../utils/logger.js";
 import { selectTempTransferDetailed } from "../redux/selectors/transferSelector.js";
 import { loadItems } from "../redux/slices/itemsSlice.js";
 import { Dialog, DialogContent, DialogTitle } from "@mui/material";
@@ -16,25 +16,42 @@ import TransferItemsList from "./TransferItemsList.jsx";
 
 
 const TransferList = () => {
-    const { transfers, tempTransfer } = useSelector((state) => state.transfer);
-    const { items } = useSelector((state) => state.items);
+    const { transfers, tempTransfer, status } = useSelector((state) => state.transfer);
+    // const status = useSelector(( state ) => state.transfer.status)
+    // const { items } = useSelector((state) => state.items);
     const populatedTempTransfer = useSelector(selectTempTransferDetailed);
+    const locations = useSelector((state) => state.locations.locations);
     const dispatch = useDispatch();
     const [showdialog, setShowdialog] = useState(false);
     const [openItems, setOpenItems] = useState(false);
     const [selectedTransfer, setSelectedTransfer] = useState(null);
 
     useEffect(() => {
-        dispatch(loadTransfers());
-        dispatch(fetchLocations());
-        dispatch(loadTempTransfer());
         dispatch(loadItems());
-    }, [dispatch]);
+        dispatch(fetchLocations());
+        if (status === 'idle') {
+            dispatch(loadTransfers());
+            dispatch(loadTempTransfer());
+        }
+    }, [dispatch, status ]);
 
-    logInfo("TransferList transfers: ", transfers);
-    logInfo("TransferList tempTransfer: ", tempTransfer);
-    logInfo("TransferList items: ", items);
-    logInfo("TransferList populatedTempTransfer: ", populatedTempTransfer);
+    useEffect (() => {
+        logInfo("TransferList populatedTempTransfer:", populatedTempTransfer)
+    }, [populatedTempTransfer]);
+
+    useEffect(() => {
+        logInfo("TransferList transfers:", transfers)
+    }, [transfers]);
+
+    useEffect(() => {
+        logInfo("TransferList tempTransfer:", tempTransfer)
+    }, [tempTransfer])
+
+    useEffect(() => {
+        logInfo("TransferList locations:", locations)
+    }, [locations])
+
+    
 
     const handleOpenItems = (transfer) => {
         setSelectedTransfer(transfer);
@@ -49,6 +66,7 @@ const TransferList = () => {
     const handleFinalize = () => {
         if (tempTransfer.items.length > 0) {
             dispatch(finalizeTransfer());
+            dispatch(loadTransfers)
         }
     }
 
@@ -57,13 +75,18 @@ const TransferList = () => {
         setShowdialog(false);
     }
 
+    logDebug("poppulatedTemp -> TransferList -> befor return:", populatedTempTransfer)
+    logDebug("TransferList status:", status)
+
     return (
         <div className="p-4">
             <section className="mb-6">
                 <h2 className="text-xl font-bold mb-2">Temporary Transfer (In progress)</h2>
-            { populatedTempTransfer && populatedTempTransfer.items.length >= 0 ? (
-                <TempTransferCard tempTransfer={populatedTempTransfer} onFinalize={handleFinalize} />
-            ) : (
+            { !populatedTempTransfer || !populatedTempTransfer.fromLocation ? (
+                <>
+                    <p className="text-gray-500 italic" >Loading temporary transfer ... </p>
+                </>
+            ) : populatedTempTransfer.items.length === 0 ? (
                 <>
                     <p className="text-gray-500 italic">No active transfer in progress.</p>
                     <button onClick={() => setShowdialog(true)}
@@ -71,6 +94,9 @@ const TransferList = () => {
                         Start New Transfer
                     </button>
                 </>
+            ) : (
+                   <TempTransferCard populatedTempTransfer={populatedTempTransfer} 
+                        onFinalize={handleFinalize} />
             )}
             </section>
 

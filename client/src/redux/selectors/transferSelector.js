@@ -1,5 +1,5 @@
 import { createSelector } from "@reduxjs/toolkit";
-import { logDebug } from "../../utils/logger";
+import { logInfo } from "../../utils/logger";
 // import  selectAllItems  from "./itemsSelector.js";
 // import { selectAllLocations } from "./locationsSelector.js";
 
@@ -15,8 +15,8 @@ export const selectTempTransferDetailed = createSelector(
         if (!tempTransfer) {
             return null;
         }
-        logDebug("tempTransfer: ", tempTransfer);
-        logDebug("allLocations: ", allLocations);
+        logInfo("Selector tempTransfer: ", tempTransfer);
+        logInfo("allLocations: ", allLocations);
         const fromLocationDetails = allLocations.find((location) => location._id === tempTransfer.fromLocation);
         const toLocationDetails = allLocations.find((location) => location._id === tempTransfer.toLocation);
 

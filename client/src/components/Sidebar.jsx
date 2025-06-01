@@ -1,5 +1,5 @@
 import { useState} from "react";
-import { NavLink, Outlet } from "react-router-dom";
+import { NavLink } from "react-router-dom";
 import { getToken } from "../utils/auth.js";
 
 const Sidebar = () => {
@@ -33,8 +33,9 @@ const Sidebar = () => {
                         </svg>
                 </button>
             </div>
-            <aside className={`flex flex-col bg-gray-800 text-white w-64 p-4 space-y-4 absolute lg:relative transition-transform transform h-screen ${isOpen ? "translate-x-0" : "-translate-x-full"} lg:translate-x-0 lg:static`}>
-                {/* Logo or Title */}
+            <aside className={`flex flex-col bg-gray-800 text-white w-64 p-4 space-y-4 absolute lg:relative 
+                    transition-transform transform h-screen 
+                    ${isOpen ? "translate-x-0" : "-translate-x-full"} lg:translate-x-0 lg:static`}>
                 <h1 className="p-4 text-2xl font-bold">inventory</h1>
                 <nav className="flex flex-col p-4 space-y-2">
                     <NavLink to="/" className={linkClass}>

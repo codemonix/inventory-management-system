@@ -21,12 +21,20 @@ export const createTempTransfer = async (req, res) => {
 
 // Add item to temp transfer
 export const addItemToTempTransfer = async (req, res) => {
-    const { itemId, quantity } = req.body;
+    const { itemId, quantity, sourceLocationId } = req.body;
     const temp = await tempTransferModel.findOne();
     if (!temp) {
         return res.status(404).json({ message: 'Temp transfer not found' });
     }
-    temp.items.push({ itemId, quantity });
+    if (temp.fromLocation.toString() !== sourceLocationId) {
+        return res.status(400).json({ message: "Item is from a different location than the transfer source"})
+    }
+    const exist = temp.items.find(item => item.itemId.toString() === itemId)
+    if (exist) {
+        exist.quantity += quantity;
+    } else {
+        temp.items.push({ itemId, quantity });
+    }
     await temp.save();
     res.status(201).json(temp);
 };
@@ -60,6 +68,7 @@ export const finalizeTempTransfer = async (req, res) => {
         toLocation: temp.toLocation,
         items: cleanedItems,
         createdBy: req.user.id,
+        status: "in_transit"
     });
     try {
         await newTransfer.save();
