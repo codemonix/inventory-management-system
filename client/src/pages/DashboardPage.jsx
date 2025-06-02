@@ -6,9 +6,10 @@ import { getLocations } from "../services/locationsService.js"
 import StockActionDialog from "../components/stockActionDialog.jsx";
 import  { useDispatch, useSelector }  from "react-redux";
 import { addItem } from "../redux/slices/transferSlice.js";
-import { logDebug, logError, logInfo } from "../utils/logger.js";
-import Inventory from "../../../server/models/inventory.model.js";
+import { logDebug, logInfo } from "../utils/logger.js";
+// import Inventory from "../../../server/models/inventory.model.js";
 import { loadTempTransfer, loadTransfers } from "../redux/slices/transferSlice.js";
+// import { loadItems } from "../redux/slices/itemsSlice.js";
 
 
 const locationColors = {
@@ -29,6 +30,8 @@ const DashboardPage = () => {
     const [ triggerUpdate, setTriggerUpdate ] = useState(0);
     const [ defaultLocation, setDefaultLocation] = useState(null);
     const tempTransfer = useSelector((state) => state.transfer.tempTransfer)
+    // const {items, status} = useSelector(( state ) => state.items )
+    const transferStatus = useSelector((state) => state.transfer.status)
 
 
     const dispatch = useDispatch();
@@ -36,6 +39,7 @@ const DashboardPage = () => {
     useEffect(() => {
         // logDebug("tempTransfer Updated:", tempTransfer)
         if (isLoggedIn) {
+            // dispatch(loadItems())
             fetchInventory().then(setItems).catch((error) => {
                 
                 logError("Error fetching items:", error.message);
@@ -44,15 +48,17 @@ const DashboardPage = () => {
 
             getLocations().then(setLocations).catch((error) => {
                 console.error("Error getting locations:", error.message);
-                setError(error.message)
+                setError(error.message);
             })
-        }
-    }, [isLoggedIn, triggerUpdate]);
+        }}
+    , [isLoggedIn, triggerUpdate]);
 
     useEffect(() => {
-        dispatch(loadTempTransfer());
-        dispatch(loadTransfers())
-    }, [dispatch])
+        if (transferStatus === 'idle') {
+            dispatch(loadTempTransfer());
+            dispatch(loadTransfers())
+        }
+    }, [dispatch, transferStatus])
 
     
     logInfo("state tempTransfer:", tempTransfer)
