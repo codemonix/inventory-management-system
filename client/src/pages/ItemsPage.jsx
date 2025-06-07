@@ -12,15 +12,12 @@ import {
 import { loadItems, setPage, setLimit } from '../redux/slices/itemsSlice.js';
 import StatusHandler from '../components/StatusHandler.jsx';
 import PaginationControls from '../components/PaginationControls.jsx';
-import { Container } from '@mui/material';
 import Box from '@mui/material/Box';
-import Typography from '@mui/material/Typography';
 import ItemList from '../components/ItemList.jsx';
 import ItemForm from '../components/ItemForm';
 import ConfirmModal from '../components/ConfirmModal.jsx';
 import { deleteItem, updateItem } from '../services/itemsService.js';
 import EditItemDialog from '../components/ItemEditDialog.jsx';
-// import Item from '../../../server/models/item.model.js';
 import { logDebug, logError, logInfo } from '../utils/logger.js';
 
 const ItemsPage = () => {

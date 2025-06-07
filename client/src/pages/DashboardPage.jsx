@@ -1,10 +1,13 @@
 import { useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
+
 
 import {
     setPage,
-    // setLimit,
+    setLimit,
     // setSort
 } from '../redux/slices/dashboardSlice.js';
+import { selectDashboardPage, selectDashboardLimit } from "../redux/selectors/dashboardSelectors.js";
 import { getDashboardData } from "../redux/thunks/dashboardThunks.js";
 import StatusHandler from "../components/StatusHandler.jsx";
 import PaginationControls from "../components/PaginationControls.jsx";
@@ -42,13 +45,21 @@ const DashboardPage = () => {
 
 
     const dispatch = useDispatch();
-    const { items, totalItems, page, limit, sort, loading, error } = useSelector(( state ) => state.dashboard);
+    const { items, totalItems, sort, loading, error } = useSelector(( state ) => state.dashboard);
+    const page = useSelector(selectDashboardPage);
+    const limit = useSelector(selectDashboardLimit);
 
+   
+
+
+    const [ searchParams, setSearchParams ] = useSearchParams();
     useEffect(() => {
-        dispatch(getDashboardData({ page, limit, sort }))
-    },[ page, limit, sort, dispatch, triggerUpdate ]);
+        const pageParam = parseInt(searchParams.get('page')) || 1;
+        const limitParam = parseInt(searchParams.get('limit')) || 10;
 
-    // const totalPages = Math.ceil(totalItems / limit);
+        dispatch(setPage(pageParam));
+        dispatch(setLimit(limitParam));
+    }, [searchParams, dispatch]);
 
     useEffect(() => {
         // logDebug("tempTransfer Updated:", tempTransfer)
@@ -58,6 +69,16 @@ const DashboardPage = () => {
             })
         }}
     , [isLoggedIn]);
+
+     useEffect(() => {
+        dispatch(getDashboardData({ page, limit, sort }))
+    },[ page, limit, sort, dispatch, triggerUpdate ]);
+
+    useEffect(() => {
+        if (!searchParams.get('page') || !searchParams.get('limit')) {
+            setSearchParams({ page: 1, limit: 10 });
+        }
+    })
 
     useEffect(() => {
         if (transferStatus === 'idle') {
@@ -88,7 +109,12 @@ const DashboardPage = () => {
     };
 
     const handlePageChange = ( newPage ) => {
-        dispatch(setPage(newPage));
+        const params = Object.fromEntries(searchParams.entries());
+        setSearchParams({
+            ...params,
+            page: newPage
+        });
+        // dispatch(setPage(newPage));
     };
 
     const handleSubmitDashbord = async ({ locationId, quantity }) => {
