@@ -14,17 +14,20 @@ import {
 
 import CheckIcon from '@mui/icons-material/Check';
 import CloseIcon from '@mui/icons-material/Close';
+import { logInfo } from "../utils/logger";
 
-const StockActionDialog = ({ open, onClose, onSubmit, itemId, locations, type, errorMessage, defaultLocation }) => {
+const StockActionDialog = ({ open, onClose, onSubmit, locations, type, errorMessage, defaultLocation = null }) => {
     const [ locationId, setLocationId ] = useState('');
     const [ quantity, setQuantity ] = useState('');
+    logInfo("locations:", locations);
+    defaultLocation = defaultLocation || (locations.length > 0 ? locations[0]._id : '');
 
     useEffect(() => {
         setLocationId(defaultLocation)
     },[defaultLocation])
 
     const handleSubmit = () => {
-        onSubmit({ itemId, locationId, quantity: Number(quantity) });
+        onSubmit({ locationId, quantity: Number(quantity) });
         onClose();
     };
 

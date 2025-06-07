@@ -1,18 +1,36 @@
 import api from "../api/api.js";
+import { logError, logInfo } from "../utils/logger.js";
 
-export const fetchInventory = async () => {
-    const res = await api.get("/inventory");
-    console.log("InventoryServices -> fetchInventory:", res.data); // Log the inventory data to check if it's being retrieved correctly
-    return res.data; // { items: [...] }
+export const fetchInventory = async ({ page = 1, limit = 10, sort = 'name' }) => {
+    logInfo("page, limit, sort:", page, limit, sort)
+    try {
+        const res = await api.get(`/inventory?page=${page}&limit=${limit}&sort=${sort}`);
+        logInfo("InventoryServices -> fetchInventory:", res.data); 
+        return res.data; // { items: [...] }
+    } catch (error) {
+        logError("Fail to fetch inventory:", error.message);
+        throw error;
+    }
+};
+
+export const fetchFullInventory = async () => {
+    try {
+        const res = await api.get(`/inventory/full`);
+        logInfo("InventoryServices -> fetchFullInventory:", res.data);
+        return res.data;
+    } catch (error) {
+        logError("Fail to fetch full inventory:", error.message);
+        throw error;
+    }
 };
 
 export const stockIn = async (itemId, locationId, quantity ) => {
    try {
     const res = await api.post( `/inventory/${itemId}/in`, { locationId, quantity });
-    console.log("InventoryServices -> stockIn:", res.data);
+    logInfo("InventoryServices -> stockIn:", res.data);
     return res.data;
    } catch (error) {
-    console.error("Fail to add stock:", error.message);
+    logError("Fail to add stock:", error.message);
     throw error;
    };
 }
@@ -20,10 +38,10 @@ export const stockIn = async (itemId, locationId, quantity ) => {
 export const stockOut = async ( itemId, locationId, quantity ) => {
     try {
         const res = await api.post(`/inventory/${itemId}/out`, { locationId, quantity });
-        console.log("inventoryServices -> stockOut:", res.data);
+        logInfo("inventoryServices -> stockOut:", res.data);
         return res.data
     } catch (error) {
-        console.error("Fail to subtract stcok:", error.message);
+        logError("Fail to subtract stcok:", error.message);
         throw error;
     }
 };

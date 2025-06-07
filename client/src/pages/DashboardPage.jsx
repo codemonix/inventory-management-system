@@ -1,5 +1,14 @@
 import { useEffect, useState } from "react";
-import { fetchInventory, stockIn, stockOut } from "../services/inventoryServices.js";
+
+import {
+    setPage,
+    // setLimit,
+    // setSort
+} from '../redux/slices/dashboardSlice.js';
+import { getDashboardData } from "../redux/thunks/dashboardThunks.js";
+import StatusHandler from "../components/StatusHandler.jsx";
+import PaginationControls from "../components/PaginationControls.jsx";
+import { stockIn, stockOut } from "../services/inventoryServices.js";
 import ItemCardDashboard from "../components/ItemCardDashboard.jsx";
 import { useAuth } from "../context/AuthContext.jsx";
 import { getLocations } from "../services/locationsService.js"
@@ -7,9 +16,7 @@ import StockActionDialog from "../components/stockActionDialog.jsx";
 import  { useDispatch, useSelector }  from "react-redux";
 import { addItem } from "../redux/slices/transferSlice.js";
 import { logDebug, logInfo } from "../utils/logger.js";
-// import Inventory from "../../../server/models/inventory.model.js";
 import { loadTempTransfer, loadTransfers } from "../redux/slices/transferSlice.js";
-// import { loadItems } from "../redux/slices/itemsSlice.js";
 
 
 const locationColors = {
@@ -20,9 +27,9 @@ const locationColors = {
 
 
 const DashboardPage = () => {
-    const { isLoggedIn, loading } = useAuth();
-    const [ items, setItems ] = useState([]);
-    const [ error, setError ] = useState("");
+    const { isLoggedIn } = useAuth();
+    // const [ items, setItems ] = useState([]);
+    const [ localError, setLocalError ] = useState("");
     const [ locations , setLocations ] = useState([]);
     const [ dialogOpen, setDialogOpen ] = useState(false);
     const [ currentItemId, setCurrentItemId ] = useState(null);
@@ -35,39 +42,37 @@ const DashboardPage = () => {
 
 
     const dispatch = useDispatch();
+    const { items, totalItems, page, limit, sort, loading, error } = useSelector(( state ) => state.dashboard);
+
+    useEffect(() => {
+        dispatch(getDashboardData({ page, limit, sort }))
+    },[ page, limit, sort, dispatch, triggerUpdate ]);
+
+    // const totalPages = Math.ceil(totalItems / limit);
 
     useEffect(() => {
         // logDebug("tempTransfer Updated:", tempTransfer)
         if (isLoggedIn) {
-            // dispatch(loadItems())
-            fetchInventory().then(setItems).catch((error) => {
-                
-                logError("Error fetching items:", error.message);
-                setError(error.message || "Failed to fetch items. Please try again later.");
-            });
-
             getLocations().then(setLocations).catch((error) => {
                 console.error("Error getting locations:", error.message);
-                setError(error.message);
             })
         }}
-    , [isLoggedIn, triggerUpdate]);
+    , [isLoggedIn]);
 
     useEffect(() => {
         if (transferStatus === 'idle') {
             dispatch(loadTempTransfer());
             dispatch(loadTransfers())
         }
-    }, [dispatch, transferStatus])
+    }, [dispatch, transferStatus]);
 
-    
-    logInfo("state tempTransfer:", tempTransfer)
+    logInfo("state tempTransfer:", tempTransfer);
 
-    logDebug("inventory", items) 
+    logDebug("inventory", items);
 
-    if (loading) {
-        return <div className="text-center">Loading...</div>;
-    }
+    // if (loading) {
+    //     return <div className="text-center">Loading...</div>;
+    // }
     
     if (!isLoggedIn) {
         return <p className="text-red-500">Please log in to view the dashboard.</p>;
@@ -82,29 +87,33 @@ const DashboardPage = () => {
         if (type === 'TRANSFER') setDefaultLocation(tempTransfer.fromLocation)
     };
 
-    const handleSubmitDashbord = async ({ itemId, locationId, quantity }) => {
-        logDebug("DashbordPage -> handleSubDash:", itemId, locationId, quantity)
+    const handlePageChange = ( newPage ) => {
+        dispatch(setPage(newPage));
+    };
+
+    const handleSubmitDashbord = async ({ locationId, quantity }) => {
+        logDebug("DashbordPage -> handleSubDash:", currentItemId, locationId, quantity)
         logDebug("tempTransfer: ", tempTransfer)
         if (actionType === 'IN') {
-            await stockIn (itemId, locationId, quantity );
+            await stockIn (currentItemId, locationId, quantity );
             setTriggerUpdate((prev) => prev + 1 );
         } else if (actionType === 'OUT') {
-            await stockOut (itemId, locationId, quantity );
+            await stockOut (currentItemId, locationId, quantity );
             setTriggerUpdate((prev) => prev + 1 );
         } else if (actionType === 'TRANSFER') {
             setDefaultLocation(tempTransfer.fromLocation)
-            console.log("handleAddToTransferClick: ", itemId);
+            console.log("handleAddToTransferClick: ", currentItemId);
 
 
             
             if (tempTransfer.fromLocation !== locationId) {
-                setError("Location mismatch!")
+                setLocalError("Location mismatch!")
                 return;
             } else {
                 // locationId is source location id to check in the backend
-                handleAddItemToTempTransfer(itemId, quantity, locationId);
-                logInfo("itemId:", itemId)
-                await stockOut (itemId, locationId, quantity );
+                handleAddItemToTempTransfer(currentItemId, quantity, locationId);
+                logInfo("itemId:", currentItemId)
+                await stockOut (currentItemId, locationId, quantity );
             }
             
             setTriggerUpdate((prev) => prev + 1 );
@@ -113,6 +122,8 @@ const DashboardPage = () => {
 
     const handleClose = () => {
         setDialogOpen(false);
+        setLocalError("");
+        setCurrentItemId(null);
 
     };
 
@@ -126,31 +137,38 @@ const DashboardPage = () => {
     return (
         <div className="bg-gray-400 p-2">
             {/* <h2 className="text-center p-2">Welcome {user?.user.name}</h2> */}
-            {error && <p className="text-red-500">{error}</p>}
-            
-            <div className="p-2">
-                {items.map((item) => (
-                    <ItemCardDashboard 
-                        key={item.itemId} 
-                        item={item} 
-                        locationColors={locationColors} 
+            {localError && <p className="text-red-500">{localError}</p>}
+            <StatusHandler status={loading ? 'loading' : ""} error={error}>
+                <div className="p-2">
+                    {items.map((item) => (
+                        <ItemCardDashboard 
+                            key={item.itemId} 
+                            item={item} 
+                            locationColors={locationColors} 
+                            locations={locations}
+                            onIn={() => handleClick(item, 'IN')}
+                            onOut={() => handleClick(item, 'OUT')}
+                            onAddToTransfer={() => handleClick(item, 'TRANSFER')}
+                            />
+                    ))}
+                    <StockActionDialog
+                        open={dialogOpen}
+                        onClose={handleClose}
+                        onSubmit={handleSubmitDashbord}
+                        itemId={currentItemId}
                         locations={locations}
-                        onIn={() => handleClick(item, 'IN')}
-                        onOut={() => handleClick(item, 'OUT')}
-                        onAddToTransfer={() => handleClick(item, 'TRANSFER')}
-                         />
-                ))}
-                <StockActionDialog
-                    open={dialogOpen}
-                    onClose={handleClose}
-                    onSubmit={handleSubmitDashbord}
-                    itemId={currentItemId}
-                    locations={locations}
-                    type={actionType}
-                    errorMessage={error}
-                    defaultLocation={defaultLocation}
+                        type={actionType}
+                        errorMessage={error}
+                        defaultLocation={defaultLocation}
+                    />
+                </div>
+                <PaginationControls 
+                    page={page}
+                    totalCount={totalItems}
+                    limit={limit}
+                    onChange={handlePageChange}
                 />
-            </div>
+            </StatusHandler>
 
             {/* <div className="flex justify-center mt-4">
               <button onClick={logout} className="bg-red-500 text-white p-2 rounded-md">Logout</button>

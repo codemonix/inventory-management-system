@@ -6,12 +6,14 @@ import { logInfo } from "../../utils/logger";
 
 export const selectTempTransfer = (state) => state.transfer.tempTransfer;
 const selectAllLocations = (state) => state.locations.locations;
-const selectAllItems = (state) => state.items.items;
+const selectAllItems = (state) => state.items.fullList;
+
 
 
 export const selectTempTransferDetailed = createSelector(
     [selectTempTransfer, selectAllLocations, selectAllItems],
     (tempTransfer, allLocations, allItems) => {
+        console.log("transferSelector -> allItems ->", allItems)
         if (!tempTransfer) {
             return null;
         }

@@ -1,7 +1,9 @@
 import StatusHandler from "../components/StatusHandler.jsx";
 import TransferList from "../components/TransferList.jsx";
-import { useSelector } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
 import { logDebug } from "../utils/logger.js";
+import { useEffect } from "react";
+import { loadAllItems } from "../redux/slices/itemsSlice.js";
 
 
 
@@ -11,6 +13,10 @@ const TransfersPage = () => {
     // logDebug("state:", state)
     const status = useSelector(( state ) => state.transfer.status);
     const error = useSelector(( state ) => state.transfer.error);
+    const dispatch = useDispatch();
+    useEffect(() => {
+        dispatch(loadAllItems());
+    }, [dispatch]);
     logDebug("status:", status)
     return (
         <div className="p-6">

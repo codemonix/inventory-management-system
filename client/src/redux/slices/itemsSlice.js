@@ -1,23 +1,54 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import { getItems } from "../../services/itemsService.js";
+import { getAllItems, getPaginatedItems } from "../../services/itemsService.js";
 import { logInfo } from "../../utils/logger.js";
 
 export const loadItems = createAsyncThunk(
     'items/loadItems',
-    async () => {
-        const response = await getItems();
-        logInfo("loadItems response: ", response);
-        return response;
+    async ({ page, limit }, { rejectWithValue }) => {
+        try {
+            const data = await getPaginatedItems({ page, limit });
+            logInfo("loadPaginatedItems response: ", data);
+            return data;
+        } catch (error) {
+            return rejectWithValue(error.message)
+        }
     });
+
+export const loadAllItems = createAsyncThunk(
+    'items/loadAllItems',
+    async (_, { rejectWithValue }) => {
+        try {
+            const response = await getAllItems();
+            logInfo("loadAllItems response: ", response);
+            return response;
+        } catch (error) {
+            return rejectWithValue(error.message);
+        }
+    }
+)
+
+const initialState = {
+    fullList: [],
+    list: [],
+    statusFull: 'idle',
+    status: 'idle',
+    error: null,
+    page: 1,
+    limit: 20,
+    totalCount: 0,
+}
     
 const itemsSlice = createSlice({
     name: 'items',
-    initialState: {
-        items: [],
-        status: 'idle',
-        error: null,
+    initialState,
+    reducers:{
+        setPage: ( state, action ) => {
+            state.page = action.payload;
+        },
+        setLimit: ( state, action ) => {
+            state.limit = action.payload;
+        },
     },
-    reducers:{},
     extraReducers: (builder) => {
         builder
             .addCase(loadItems.pending, (state) => {
@@ -26,13 +57,28 @@ const itemsSlice = createSlice({
             })
             .addCase(loadItems.fulfilled, (state, action) => {
                 state.status = 'succeeded';
-                state.items = action.payload;
+                state.list = action.payload.items;
+                state.totalCount = action.payload.totalCount;
+                // state.items = action.payload;
             })
             .addCase(loadItems.rejected, (state, action) => {
                 state.status = 'failed';
+                state.error = action.error.message;
+            })
+            .addCase(loadAllItems.pending, (state) => {
+                state.statusFull = 'loading';
+                state.error = null;
+            })
+            .addCase(loadAllItems.fulfilled, (state, action) => {
+                state.statusFull = 'succeeded';
+                state.fullList = action.payload.items;
+            })
+            .addCase(loadAllItems.rejected, (state, action) => {
+                state.statusFull = 'failed';
                 state.error = action.error.message;
             });
     }
 });
 
+export const { setPage, setLimit } = itemsSlice.actions;
 export default itemsSlice.reducer;

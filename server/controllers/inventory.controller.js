@@ -5,9 +5,6 @@ import Item from "../models/item.model.js";
 import Location from "../models/location.model.js";
 import { logTransaction } from "../services/transactionService.js";
 
-// import { nanoid } from "nanoid";
-// import path from 'path';
-// import fs from 'fs';
 
 
 export async function createInventory(req, res) {
@@ -36,75 +33,230 @@ export async function createInventory(req, res) {
 
         res.status(201).json(newInventory);
 
-        // if (!req.file) {
-        //     return res.status(400).json({ error: 'Image file is required' });
-        // }
-
-        // const itemCode = nanoid(10); //unique item code
-        // const ext = path.extname(req.file.originalname).toLowerCase();   //get image extension
-        // const imageUrl = `/uploads/items/${itemCode}${ext}`;
-        // const oldPath = req.file.path;
-        // const newPath = path.resolve(`uploads/items/${itemCode}${ext}`);
-        // fs.renameSync(oldPath, newPath);
-
-        // const newItem = new Inventory({
-        //     name,
-        //     description,
-        //     itemCode,
-        //     imageUrl,
-        //     location: []
-        // });
-
-        // await newItem.save();
     } catch (error) {
         log(error.message);
         res.status(500).json({ error: 'Failed to create inventory item.' });
     }
 }
 
-// fetch all items
+
 export const getInventory = async (req, res) => {
+    log("req.body:", req.body)
     try {
-        const allItems = await Inventory.find()
-            .populate("itemId", "name imageUrl")
-            .populate("locationId", "name")
-            .lean()
-        // console.log('allItems', allItems);
-        const itemsMap = {};
 
-        allItems.forEach(item => {
-            // console.log('inventoryCont -> item', item.itemId);
-            // if (!item.itemId) {
-            //     console.log('ItemiD not found', item);
-            //     return;
-            // }
-            const itemkey = item.itemId._id.toString();
-            if (!itemsMap[itemkey]) {
-                itemsMap[itemkey] = {
-                    itemId: itemkey,
-                    name: item.itemId.name,
-                    image: item.itemId.imageUrl,
-                    stock: []
-                };
+        const page = Math.max(parseInt(req.query.page) || 1, 1);
+        const limit = Math.max(parseInt(req.query.limit) || 10, 10);
+
+        let sortStage = { "name" : 1 };
+        if (req.query.sort) {
+            const [ filed, dir ] = req.query.sort.split(':');
+            sortStage = { [filed] : dir === "desc" ? -1 : 1 };
+        } 
+
+        const countResult = await Inventory.aggregate([
+            {
+                $group: { _id: "$itemId"}
+            },
+            {
+                $count: "count"
             }
-            itemsMap[itemkey].stock.push({
-                locationId: item.locationId._id.toString(),
-                locationName: item.locationId.name,
-                quantity: item.quantity,
-            });
-        });
+        ]);
 
-        const itemsWithStock = Object.values(itemsMap)
-        // log('itemsWithStock', itemsWithStock);
-        // log('itemsMap', itemsMap);
-        log('allItems length', allItems.length);
+        const totalCount = (countResult[0] && countResult[0].count) || 0;
 
-        return res.json(itemsWithStock);
+     
+        const totalPages = Math.ceil(totalCount / limit);
+
+        const currentPage = page > totalPages && totalPages > 0 ? totalPages : page;
+
+        const skip = ( currentPage - 1 ) * limit
+
+        //  Build the aggregation pipeline that returns exactly one doc per itemId:
+
+        const pipeline = [ 
+            {
+                $lookup: {
+                    from:   "items",
+                    localField: "itemId",
+                    foreignField: "_id",
+                    as:     "item"
+                }
+            },
+            {
+                $unwind: "$item"
+            },
+            {
+                $lookup: {
+                    from:       "locations",
+                    localField: "locationId",
+                    foreignField: "_id",
+                    as:         "location"
+                }
+            },
+            {
+                $unwind: "$location"
+            },
+            {
+                $group: {
+                    _id:        "$itemId",
+                    name:       { $first: "$item.name" },
+                    image:      { $first: "$item.imageUrl" },
+                    stock:      {
+                        $push: {
+                            locationId:     "$location._id",
+                            locationName:   "$location.name",
+                            quantity:       "$quantity"
+                        }
+                    },
+                    totalStock: {$sum: "$quantity" }
+                }
+            },
+
+            {
+                $project: {
+                    _id:        0,
+                    itemId:     "$_id",
+                    name:       1,
+                    image:      1,
+                    stock:      1,
+                    totalStock: 1
+                }
+            },
+
+            { $sort: sortStage },
+            { $skip: skip },
+            { $limit: limit }
+        ];
+
+        const pagedInventoryWithnStock = await Inventory.aggregate(pipeline);
+        log("inventory.cont. -> getInventory, pagedInventory:", pagedInventoryWithnStock)
+
+
+        return res.json({
+            items: pagedInventoryWithnStock,
+            pagination: {
+                totalCount,
+                totalPages,
+                currentPage,
+                pageSize: limit
+            }
+        })
+
+        // const pagedInventory = itemsWithStock.slice(skip, skip  + limit);
+
+        // return res.json({
+        //     items: pagedInventory,
+        //     pagination: {
+        //         totalCount,
+        //         totalPages,
+        //         currentPage: page,
+        //         pageSize: limit
+        //     }
+        // });
     } catch (error) {
         log(error.message)
         return res.status(500).json({message: "Error getting inventory"});
     };
 };
+
+
+   // const allItems = await Inventory.find()
+        //     .populate("itemId", "name imageUrl")
+        //     .populate("locationId", "name")
+        //     .lean()
+        // // console.log('allItems', allItems);
+        // const itemsMap = {};
+
+        // allItems.forEach(item => {
+        //     // console.log('inventoryCont -> item', item.itemId);
+        //     // if (!item.itemId) {
+        //     //     console.log('ItemiD not found', item);
+        //     //     return;
+        //     // }
+        //     const itemkey = item.itemId._id.toString();
+        //     if (!itemsMap[itemkey]) {
+        //         itemsMap[itemkey] = {
+        //             itemId: itemkey,
+        //             name: item.itemId.name,
+        //             image: item.itemId.imageUrl,
+        //             stock: []
+        //         };
+        //     }
+        //     itemsMap[itemkey].stock.push({
+        //         locationId: item.locationId._id.toString(),
+        //         locationName: item.locationId.name,
+        //         quantity: item.quantity,
+        //     });
+        // });
+
+        // const itemsWithStock = Object.values(itemsMap)
+        // log('allItems length', allItems.length);
+        // const totalCount = itemsWithStock.length;
+export const getFullInventory = async (req, res) => {
+    
+    try {
+        const pipeline = [ 
+            {
+                $lookup: {
+                    from:   "items",
+                    localField: "itemId",
+                    foreignField: "_id",
+                    as:     "item"
+                }
+            },
+            {
+                $unwind: "$item"
+            },
+            {
+                $lookup: {
+                    from:       "locations",
+                    localField: "locationId",
+                    foreignField: "_id",
+                    as:         "location"
+                }
+            },
+            {
+                $unwind: "$location"
+            },
+            {
+                $group: {
+                    _id:        "$itemId",
+                    name:       { $first: "$item.name" },
+                    image:      { $first: "$item.imageUrl" },
+                    stock:      {
+                        $push: {
+                            locationId:     "$location._id",
+                            locationName:   "$location.name",
+                            quantity:       "$quantity"
+                        }
+                    },
+                    totalStock: {$sum: "$quantity" }
+                }
+            },
+
+            {
+                $project: {
+                    _id:        0,
+                    itemId:     "$_id",
+                    name:       1,
+                    image:      1,
+                    stock:      1,
+                    totalStock: 1
+                }
+            },
+
+            { $sort: { name: 1 } }
+        ];
+
+        const fullInventory = await Inventory.aggregate(pipeline);
+        log("inventory.controller -> getFullInventory, inventory:", fullInventory);
+        
+        res.json(fullInventory);
+    } catch (error) {
+        log(error.message);
+        res.status(500).json({ message: "Error getting full inventory" });
+    }
+}
 
 
 // Update item

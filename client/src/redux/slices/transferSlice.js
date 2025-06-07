@@ -91,6 +91,7 @@ const transferSlice = createSlice({
                 items: [],
             };
             state.status = 'idel';
+            state.error = null;
         }
     },
     extraReducers: ( builder ) => {

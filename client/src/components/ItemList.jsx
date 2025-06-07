@@ -5,12 +5,12 @@ import { stockIn, stockOut } from "../services/inventoryServices.js";
 import { useDispatch, useSelector } from "react-redux";
 import { logDebug, logError, logInfo } from "../utils/logger.js";
 import { fetchLocations } from "../redux/slices/locationsSlice.js";
-import { fetchInventory } from "../services/inventoryServices.js";
+import { fetchFullInventory } from "../services/inventoryServices.js";
 
 const ItemList = ({ items, onDelete, onEdit, onImageUpload }) => {
     const [actionType, setActionType] = useState('IN')
     const [openInOutDialog, setOpenInOutDialog] = useState(false)
-    const [currentItem, setCurrentItemId] = useState(null)
+    const [currentItemId, setCurrentItemId] = useState(null)
     const [inventory, setInventory] = useState([])
     const [triggerUpdate, setTriggerUpdate] = useState(0)
     
@@ -19,7 +19,7 @@ const ItemList = ({ items, onDelete, onEdit, onImageUpload }) => {
     // dispatch(fetchLocations())
     const locations = useSelector((state) => state.locations.locations)
     useEffect (() => {
-        fetchInventory().then(setInventory).catch((error) => logError(error.message))
+        fetchFullInventory().then(setInventory).catch((error) => logError(error.message))
         // dispatch(fetchInventory())
         dispatch(fetchLocations())
     },[dispatch, triggerUpdate])
@@ -33,13 +33,13 @@ const ItemList = ({ items, onDelete, onEdit, onImageUpload }) => {
         setOpenInOutDialog(true)
     }
 
-    const handleSubmit = async ({ itemId, locationId, quantity}) => {
-        logInfo("itemId, locationId:", itemId, locationId);
+    const handleSubmit = async ({ locationId, quantity}) => {
+        logInfo("itemId, locationId:", currentItemId, locationId);
         try {
             if (actionType === 'IN') {
-                await stockIn (itemId, locationId, quantity);
+                await stockIn (currentItemId, locationId, quantity);
             } else if (actionType === 'OUT') {
-                await stockOut (itemId, locationId, quantity)
+                await stockOut (currentItemId, locationId, quantity)
             }
         } catch (error) {
             logError(error.message);
@@ -56,8 +56,8 @@ const ItemList = ({ items, onDelete, onEdit, onImageUpload }) => {
         );
         
         if (match.length === 0) return 0;
-        logDebug('match', match)
-        logDebug('match.stock', match[0].stock)
+        // logDebug('match', match)
+        // logDebug('match.stock', match[0].stock)
         const total = match[0].stock.reduce((sum, entry) => sum + entry.quantity, 0)
         return total
     }
@@ -89,7 +89,6 @@ const ItemList = ({ items, onDelete, onEdit, onImageUpload }) => {
                 onClose={handleClose}
                 onSubmit={handleSubmit}
                 locations={locations}
-                itemId={currentItem}
                 type={actionType}
                 />
         </div>

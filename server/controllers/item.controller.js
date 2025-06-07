@@ -2,9 +2,10 @@
 import Item from "../models/item.model.js";
 import Inventory from "../models/inventory.model.js";
 import { nanoid } from "nanoid";
+import { debugLog } from "../utils/logger.js";
 
 export async function createItem(req, res) {
-    console.log('item controller -> createItem:', req.body);
+    debugLog('item controller -> createItem:', req.body);
     try {
         const { name, category, price } = req.body;
 
@@ -14,30 +15,61 @@ export async function createItem(req, res) {
 
         const itemCode = nanoid(10);
         let imageUrl = req.file? `/uploads/items/${req.file.filename}` : '/uploads/items/default.jpg';
+        const nameLower = name.toLowerCase();
 
         const newItem = new Item({
             name,
+            nameLower,
             code: itemCode,
             category,
             price,
             imageUrl
         });
         const savedItem = await newItem.save();
-        log({ savedItem });
+        debugLog({ savedItem });
         res.status(201).json({ message: 'Item created successfully', item: savedItem});
     } catch (error) {
-        log(error.message);
+        if (error.code === 11000 && error.keyPattern.nameLower) {
+            return res.status(400).json({ message: "Item with this name already exist (case-insensitive)"});
+        }
+        debugLog(error.message);
         res.status(500).json({ error: 'Failed to create item.' });
     }
 }
 
 export async function getItems(req, res) {
+    debugLog("req.query:", req.query)
     try {
-        const items = await Item.find();
-        res.status(200).json(items)
+        const page = Math.max( 1, parseInt(req.query.page, 10) || 1);
+        const limit = Math.max( 1, parseInt(req.query.limit, 10) || 20);
+        const skip = ( page - 1 ) * limit;
+        const totalCount = await Item.countDocuments();
+
+        const items = await Item
+            .find({})
+            .sort({ createdAt: -1 })
+            .skip(skip)
+            .limit(limit)
+            .lean();
+
+        // const items = await Item.find();
+        return res.status(200).json({ items, totalCount})
     } catch (error) {
-        log(error.message);
-        res.status(500).json({ error: 'Fail to fetch items.'});
+        debugLog(error.message);
+        return res.status(500).json({ error: 'Fail to fetch items.'});
+    }
+}
+
+export async function getAllItems(req, res) {
+    try {
+        const items = await Item.find({}).sort({ createdAt: -1 }).lean();
+        if (!items || items.length === 0) {
+            return res.status(404).json({ error: 'No items found' });
+        }
+        res.status(200).json({ items });
+    } catch (error) {
+        debugLog(error.message);
+        res.status(500).json({ error: 'Failed to fetch items' });
     }
 }
 
@@ -98,7 +130,7 @@ export async function updateItem(req, res) {
         const updateItem = await Item.findByIdAndUpdate(
             itemId,
             { name, category, price },
-            { new: true }
+            { new: true, runValidators: true, context: 'query' }
         );
 
         if (!updateItem) {
@@ -107,6 +139,9 @@ export async function updateItem(req, res) {
 
         res.status(200).json({ message: 'Item updated successfully', item: updateItem });
     } catch (error) {
+        if ( error.code === 11000 && error.keyPattern.nameLower) {
+            return res.status(400).json( { message: "Another item already has this name (case-insensitive)"})
+        }
         log(error.message);
         res.status(500).json({ error: 'Failed to update item' });
     }

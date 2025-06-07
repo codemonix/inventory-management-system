@@ -1,7 +1,31 @@
 import api from "../api/api.js";
+import { logError, logInfo } from "../utils/logger.js";
 // import axios from "axios";
 
-export const getItems = async () => api.get("/items").then((res) => res.data); // { items: [...] }
+/*
+    *
+
+*/
+export const getAllItems = async () => {
+    const response = await api.get("/items/all");
+    logInfo("getAllItems response:", response);
+    return response.data; // { items: [{ id, name, description, price, imageUrl }] }
+}
+
+export const getPaginatedItems = async ({ page = 1, limit = 20 }) => {
+    try {
+        const response = await api.get(`/items?page=${page}&limit=${limit}`);
+        logInfo("getPainatedItems response:", response)
+        return response.data
+    } catch (error) {
+        if (error.response && error.response.status === 400) {
+            throw new Error(error.response.data.message);
+        }
+        logError("Failed to fetch items:", error)
+        throw Error("Failed to create item.")
+    }
+    
+}
 
 export const createItem = async (item) => api.post("/items", item).then((res) => res.data); // { item: { id, name, description, price } }
 

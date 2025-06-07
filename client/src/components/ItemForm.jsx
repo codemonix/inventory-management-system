@@ -1,21 +1,29 @@
 import { useState } from "react";
 import { createItem } from "../services/itemsService.js";
+import { logError, logInfo } from "../utils/logger.js";
+import { Alert } from "@mui/material";
 
 export default function ItemForm({ onItemCreated }) {
     const [name , setName] = useState("");
-    console.log("ItemForm -> name", name);
+    const [errorMessage, setErrorMessage] = useState("");
+    logInfo("ItemForm -> name", name);
 
     const handleSubmit = async () => {
         // e.preventDefault();
+        setErrorMessage("");
         const newItem = { name };
-        console.log("ItemForm -> newItem", newItem);
+        logInfo("ItemForm -> newItem", newItem);
         try {
             const createdItem = await createItem(newItem);
-            console.log("ItemForm -> createdItem", createdItem);
+            logInfo("ItemForm -> createdItem", createdItem);
+            logInfo("ItemForm -> createdItem.message:", createdItem.message)
             onItemCreated(createdItem); // Call the callback function with the created item
             setName(""); // Clear the input field after submission
         } catch (error) {
-            console.error("ItemForm -> Error creating item:", error.message);
+            logError("ItemForm -> Error creating item:", error);
+            if (error.response && error.response.data && error.response.data.message) {
+                setErrorMessage(error.response.data.message);
+            }
         }
     };
 
@@ -25,6 +33,11 @@ export default function ItemForm({ onItemCreated }) {
             handleSubmit();
         }} className="flex flex-col items-center bg-gray-300 p-4 rounded-md shadow-md mb-4">
             <h2 className="text-lg font-semibold mb-4">Add New Item</h2>
+            {errorMessage && (
+                    <Alert severity="error" sx={{ mt: 2 }}>
+                        {errorMessage}
+                    </Alert>
+            )}
             <input
                 type="text"
                 value={name}
