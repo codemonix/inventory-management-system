@@ -1,5 +1,4 @@
 
-import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthProvider.jsx';
 import { useAuth } from './context/AuthContext.jsx';
@@ -11,6 +10,14 @@ import Layout from './components/Layout.jsx';
 import ItemsPage from './pages/ItemsPage.jsx';
 import LocationsPage from './pages/LocationsPage.jsx';
 import TransfersPage from './pages/TranfersPage.jsx';
+import AdminLayout from './components/AdminLayout.jsx';
+import UsersPage from './pages/admin/UsersPage.jsx';
+import LogsPage from './pages/admin/LogsPage.jsx';
+
+function RequireAdmin({ children }) {
+  const { isAdmin } = useAuth();
+  return isAdmin ? children : <Navigate to="/dashboard"  replace />;
+}
 
 function App() {
 
@@ -21,19 +28,23 @@ function App() {
           {/* Public routes */}
           <Route path="/" element={<RedirectToCorrectPage />} />
           <Route path="/login" element={<LoginPage />} />
+          { /* Protected Routes */ }
           <Route element={<PrivateRoutes />}>
             <Route path="/logout" element={<LogoutPage />} />
-            <Route path='/dashboard' element={<Layout />}>
-              <Route index element={<DashboardPage />} />
+            <Route path='/' element={<Layout />}>
+              <Route path='dashboard' element={<DashboardPage />} />
+              <Route path='items' element={<ItemsPage />} />
+              <Route path='locations' element={<LocationsPage />} />
+              <Route path='transfers' element={<TransfersPage />} />
             </Route>
-            <Route path='/items' element={<Layout />}>
-              <Route index element={<ItemsPage />} />
-            </Route>
-            <Route path='/locations' element={<Layout />}>
-              <Route index element={<LocationsPage />} />
-            </Route>
-            <Route path='/transfers' element={<Layout />}>
-              <Route index element={<TransfersPage />} />
+            <Route path='/admin/*' element={
+              <RequireAdmin>
+                 <AdminLayout />
+              </RequireAdmin>
+            } >
+              <Route index element={<Navigate to="users" replace />} />
+              <Route path='users' element={<UsersPage />} />
+              <Route path='logs' element={<LogsPage />} />
             </Route>
           </Route>
         </Routes>

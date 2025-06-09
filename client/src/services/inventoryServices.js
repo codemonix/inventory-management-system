@@ -1,11 +1,11 @@
 import api from "../api/api.js";
 import { logError, logInfo } from "../utils/logger.js";
 
-export const fetchInventory = async ({ page = 1, limit = 10, sort = 'name' }) => {
-    logInfo("page, limit, sort:", page, limit, sort)
+export const fetchInventory = async ({ page = 1, limit = 10, sort = 'name', search = null }) => {
+    logInfo("page, limit, sort, search:", page, limit, sort, search);
     try {
-        const res = await api.get(`/inventory?page=${page}&limit=${limit}&sort=${sort}`);
-        logInfo("InventoryServices -> fetchInventory:", res.data); 
+        const res = await api.get(`/inventory?page=${page}&limit=${limit}&sort=${sort}&search=${search}`);
+        logInfo("InventoryServices -> fetchInventory:", res.data);
         return res.data; // { items: [...] }
     } catch (error) {
         logError("Fail to fetch inventory:", error.message);

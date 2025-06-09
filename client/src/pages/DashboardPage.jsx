@@ -5,7 +5,8 @@ import { useSearchParams } from "react-router-dom";
 import {
     setPage,
     setLimit,
-    // setSort
+    setSort,
+    setSearch
 } from '../redux/slices/dashboardSlice.js';
 import { selectDashboardPage, selectDashboardLimit } from "../redux/selectors/dashboardSelectors.js";
 import { getDashboardData } from "../redux/thunks/dashboardThunks.js";
@@ -20,6 +21,7 @@ import  { useDispatch, useSelector }  from "react-redux";
 import { addItem } from "../redux/slices/transferSlice.js";
 import { logDebug, logInfo } from "../utils/logger.js";
 import { loadTempTransfer, loadTransfers } from "../redux/slices/transferSlice.js";
+import SearchFilterBar from "../components/SearchFilterBar.jsx";
 
 
 const locationColors = {
@@ -45,7 +47,7 @@ const DashboardPage = () => {
 
 
     const dispatch = useDispatch();
-    const { items, totalItems, sort, loading, error } = useSelector(( state ) => state.dashboard);
+    const { items, totalItems, sort, loading, error, search } = useSelector(( state ) => state.dashboard);
     const page = useSelector(selectDashboardPage);
     const limit = useSelector(selectDashboardLimit);
 
@@ -56,9 +58,13 @@ const DashboardPage = () => {
     useEffect(() => {
         const pageParam = parseInt(searchParams.get('page')) || 1;
         const limitParam = parseInt(searchParams.get('limit')) || 10;
+        const searchParam = searchParams.get('search') || '';
+        const sortParam = searchParams.get('sort') || 'name_asc';
 
         dispatch(setPage(pageParam));
         dispatch(setLimit(limitParam));
+        dispatch(setSearch(searchParam));
+        dispatch(setSort(sortParam));
     }, [searchParams, dispatch]);
 
     useEffect(() => {
@@ -71,8 +77,8 @@ const DashboardPage = () => {
     , [isLoggedIn]);
 
      useEffect(() => {
-        dispatch(getDashboardData({ page, limit, sort }))
-    },[ page, limit, sort, dispatch, triggerUpdate ]);
+        dispatch(getDashboardData({ page, limit, sort, search }))
+    },[ page, limit, sort, dispatch, search, triggerUpdate ]);
 
     useEffect(() => {
         if (!searchParams.get('page') || !searchParams.get('limit')) {
@@ -98,6 +104,17 @@ const DashboardPage = () => {
     if (!isLoggedIn) {
         return <p className="text-red-500">Please log in to view the dashboard.</p>;
     }
+
+    const updateSearchParams = (newParams) => {
+        setSearchParams({
+            page,
+            limit,
+            search,
+            sort,
+            ...newParams
+        });
+    };
+
 
     const handleClick = ( item, type ) => {
         logInfo("handleClick -> item:", item)
@@ -165,6 +182,24 @@ const DashboardPage = () => {
             {/* <h2 className="text-center p-2">Welcome {user?.user.name}</h2> */}
             {localError && <p className="text-red-500">{localError}</p>}
             <StatusHandler status={loading ? 'loading' : ""} error={error}>
+                <SearchFilterBar 
+                    search={search}
+                    limit={limit}
+                    page={page}
+                    sort={sort}
+                    onSearchChange={(newSearch) => {
+                        dispatch(setSearch(newSearch));
+                        updateSearchParams({ search: newSearch, page: 1 });
+                    }}
+                    onLimitChange={(newLimit) => {
+                        dispatch(setLimit(newLimit));
+                        updateSearchParams({ limit: newLimit, page: 1 });
+                    }}
+                    onSortChange={(newSort) => {
+                        dispatch(setSort(newSort));
+                        updateSearchParams({ sort: newSort, page: 1 });
+                    }}
+                />
                 <div className="p-2">
                     {items.map((item) => (
                         <ItemCardDashboard 

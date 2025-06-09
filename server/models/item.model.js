@@ -30,6 +30,8 @@ itemSchema.pre('findOneAndUpdate', function (next) {
     next();
 })
 
+itemSchema.index({ name: 'text'});
+
 const Item = new mongoose.model('Item', itemSchema);
 export default Item;
 

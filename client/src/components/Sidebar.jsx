@@ -1,8 +1,16 @@
 import { useState} from "react";
 import { NavLink } from "react-router-dom";
+import InventoryIcon from '@mui/icons-material/Inventory';
 import { getToken } from "../utils/auth.js";
+import { useAuth } from "../context/AuthContext.jsx";
+import  AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
+
 
 const Sidebar = () => {
+
+    const { isAdmin } = useAuth();
+    console.log("Sidebar -> isAdmin", isAdmin);
+
     const linkClass = ({ isActive }) => {
         return isActive ? "text-blue-500 font-bold" : "text-white hover:text-blue-500";
     };
@@ -12,7 +20,9 @@ const Sidebar = () => {
 
     const toggleSidebar = () => {
         setIsOpen(!isOpen);
-    }
+    };
+
+
 
     return (
         <div className="relative lg:flex">
@@ -42,7 +52,8 @@ const Sidebar = () => {
                         Home
                     </NavLink>
                     <NavLink to="/dashboard" className={ linkClass } >
-                        Dashboard
+                        <InventoryIcon fontSize="small" />
+                        <span className="ml-2">Dashboard</span>
                     </NavLink>
                     <NavLink to="/items" className={ linkClass }>
                         Items
@@ -53,6 +64,16 @@ const Sidebar = () => {
                     <NavLink to="/transfers" className={ linkClass }>
                         Transfers
                     </NavLink>
+                    {isAdmin && (
+                        <NavLink to="/admin" className={linkClass}>
+                            <div className="flex items-center">
+                                <AdminPanelSettingsIcon fontSize="small" />
+                                <span className="ml-2">Admin Panel</span>
+                            </div>
+                        </NavLink>
+                            
+                    )}
+                    
                     { isAuth && (<NavLink to="/logout "
                     className="mt-auto block px-3 py-2 m-4 rounded bg-red-400 hover:bg-red-500 text-center">
                         Logout

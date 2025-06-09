@@ -1,12 +1,13 @@
 import { createSlice } from "@reduxjs/toolkit";
-import { getDashboardData } from "../thunks/dashboardThunks";
+import { getDashboardData } from "../thunks/dashboardThunks.js";
 
 const initialState = {
     items: [],
     totalItems: 0,
     page: 1,
     limit: 10,
-    sort: 'name',
+    sort: 'name_asc',
+    search: '',
     loading: false,
     error: null
 };
@@ -24,6 +25,9 @@ const dashboardSlice = createSlice({
         setSort( state, action ) {
             state.sort = action.payload;
         },
+        setSearch( state, action ) {
+            state.search = action.payload;
+        },
     },
 
     extraReducers: (builder) => {
@@ -35,7 +39,7 @@ const dashboardSlice = createSlice({
             .addCase(getDashboardData.fulfilled, ( state, action ) => {
                 state.loading = false;
                 state.items = action.payload.items;
-                state.totalItems = action.payload.totalCount;
+                state.totalItems = action.payload.pagination.totalCount;
             })
             .addCase(getDashboardData.rejected, ( state, action ) => {
                 state.loading = false;
@@ -44,6 +48,6 @@ const dashboardSlice = createSlice({
     },
 });
 
-export const { setPage, setLimit, setSort } = dashboardSlice.actions;
+export const { setPage, setLimit, setSort, setSearch } = dashboardSlice.actions;
 
 export default dashboardSlice.reducer;

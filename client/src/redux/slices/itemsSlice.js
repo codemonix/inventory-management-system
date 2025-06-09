@@ -4,9 +4,9 @@ import { logInfo } from "../../utils/logger.js";
 
 export const loadItems = createAsyncThunk(
     'items/loadItems',
-    async ({ page, limit }, { rejectWithValue }) => {
+    async ({ page, limit, search, sort }, { rejectWithValue }) => {
         try {
-            const data = await getPaginatedItems({ page, limit });
+            const data = await getPaginatedItems({ page, limit, search, sort });
             logInfo("loadPaginatedItems response: ", data);
             return data;
         } catch (error) {
@@ -35,6 +35,8 @@ const initialState = {
     error: null,
     page: 1,
     limit: 20,
+    search: '',
+    sort: 'name_asc',
     totalCount: 0,
 }
     
@@ -48,6 +50,12 @@ const itemsSlice = createSlice({
         setLimit: ( state, action ) => {
             state.limit = action.payload;
         },
+        setSearch: ( state, action ) => {
+            state.search = action.payload;
+        },
+        setSort: ( state, action ) => {
+            state.sort = action.payload;
+        }
     },
     extraReducers: (builder) => {
         builder
@@ -80,5 +88,5 @@ const itemsSlice = createSlice({
     }
 });
 
-export const { setPage, setLimit } = itemsSlice.actions;
+export const { setPage, setLimit, setSearch, setSort } = itemsSlice.actions;
 export default itemsSlice.reducer;

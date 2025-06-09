@@ -12,10 +12,10 @@ export const getAllItems = async () => {
     return response.data; // { items: [{ id, name, description, price, imageUrl }] }
 }
 
-export const getPaginatedItems = async ({ page = 1, limit = 20 }) => {
+export const getPaginatedItems = async ({ page = 1, limit = 20, search = "", sort = "name_asc" }) => {
     try {
-        const response = await api.get(`/items?page=${page}&limit=${limit}`);
-        logInfo("getPainatedItems response:", response)
+        const response = await api.get(`/items?page=${page}&limit=${limit}&search=${search}&sort=${sort}`);
+        logInfo("getPaginatedItems response:", response)
         return response.data
     } catch (error) {
         if (error.response && error.response.status === 400) {

@@ -43,17 +43,45 @@ export async function getItems(req, res) {
         const page = Math.max( 1, parseInt(req.query.page, 10) || 1);
         const limit = Math.max( 1, parseInt(req.query.limit, 10) || 20);
         const skip = ( page - 1 ) * limit;
-        const totalCount = await Item.countDocuments();
+        // const totalCount = await Item.countDocuments();
+
+
+        // search
+        const search = req.query.search ? req.query.search.trim() : '';
+
+        //sort
+        // const ALLOWED_SORTS = [ 'name', 'careatedAt', 'price', 'stock' ];
+        // let sortField = req.query.sort || 'name';
+        // let sortOrder = req.query.order === 'desc' ? -1 : 1;
+        const filter = {};
+
+        if (search) {
+        const escapeRegex = (str) =>
+            str.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&');
+
+        filter.name = { $regex: escapeRegex(search), $options: 'i' };
+        }
+
+
+        const sortOptions = {};
+        if (req.query.sort) {
+            const sortField = req.query.sort.split('_')[0];
+            const sortOrder = req.query.sort.split('_')[1] === 'desc' ? -1 : 1;
+            sortOptions[sortField] = sortOrder;
+        }
+
+
 
         const items = await Item
-            .find({})
-            .sort({ createdAt: -1 })
+            .find(filter)
+            .sort(sortOptions)
             .skip(skip)
             .limit(limit)
             .lean();
 
         // const items = await Item.find();
-        return res.status(200).json({ items, totalCount})
+        const totalCount = await Item.countDocuments(filter);
+        return res.status(200).json({ items, totalCount });
     } catch (error) {
         debugLog(error.message);
         return res.status(500).json({ error: 'Fail to fetch items.'});

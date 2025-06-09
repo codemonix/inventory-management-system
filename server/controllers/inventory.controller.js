@@ -41,15 +41,18 @@ export async function createInventory(req, res) {
 
 
 export const getInventory = async (req, res) => {
-    log("req.body:", req.body)
+    log("req.query:", req.query);
     try {
 
-        const page = Math.max(parseInt(req.query.page) || 1, 1);
-        const limit = Math.max(parseInt(req.query.limit) || 10, 10);
+        const page = Math.max(parseInt(req.query.page) || 1);
+        const limit = Math.max(parseInt(req.query.limit) || 10);
+
+        console.log("page:", page, "limit:", limit);
+        console.log("search:", req.query.search);
 
         let sortStage = { "name" : 1 };
         if (req.query.sort) {
-            const [ filed, dir ] = req.query.sort.split(':');
+            const [ filed, dir ] = req.query.sort.split('_');
             sortStage = { [filed] : dir === "desc" ? -1 : 1 };
         } 
 
@@ -63,9 +66,11 @@ export const getInventory = async (req, res) => {
         ]);
 
         const totalCount = (countResult[0] && countResult[0].count) || 0;
+        log("inventory.controller -> getInventory, totalCount:", totalCount);
 
      
         const totalPages = Math.ceil(totalCount / limit);
+        log("inventory.controller -> getInventory, totalPages:", totalPages);
 
         const currentPage = page > totalPages && totalPages > 0 ? totalPages : page;
 
@@ -84,6 +89,36 @@ export const getInventory = async (req, res) => {
             },
             {
                 $unwind: "$item"
+            },];
+
+            if (req.query.search) {
+                const escapeRegex = (str) =>
+                    str.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&');
+                pipeline.push({
+                    $match: {
+                        "item.name": { $regex: escapeRegex(req.query.search), $options: 'i' }
+                    }
+                })
+            }
+        // pipeline.push(
+        //     {
+        //         $match: {
+        //             "item.name": { $regex: req.query.search || '', $options: 'i' }
+        //         }
+        //     },);
+
+
+        pipeline.push(
+            {
+                $lookup: {
+                    from:       "locations",
+                    localField: "locationId",
+                    foreignField: "_id",
+                    as:         "location"
+                }
+            },
+            {
+                $unwind: "$location"
             },
             {
                 $lookup: {
@@ -126,7 +161,7 @@ export const getInventory = async (req, res) => {
             { $sort: sortStage },
             { $skip: skip },
             { $limit: limit }
-        ];
+        );
 
         const pagedInventoryWithnStock = await Inventory.aggregate(pipeline);
         log("inventory.cont. -> getInventory, pagedInventory:", pagedInventoryWithnStock)

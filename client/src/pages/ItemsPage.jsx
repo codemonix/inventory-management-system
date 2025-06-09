@@ -7,9 +7,11 @@ import {
     selectItemsError,
     selectItemsPage,
     selectItemsLimit,
-    selectItemsTotalCount
-} from '../redux/selectors/itemsSelector.js'
-import { loadItems, setPage, setLimit } from '../redux/slices/itemsSlice.js';
+    selectItemsTotalCount,
+    selectItemsSort,
+    selectItemsSearch
+} from '../redux/selectors/itemsSelector.js';
+import { loadItems, setPage, setLimit, setSearch, setSort } from '../redux/slices/itemsSlice.js';
 import StatusHandler from '../components/StatusHandler.jsx';
 import PaginationControls from '../components/PaginationControls.jsx';
 import Box from '@mui/material/Box';
@@ -19,6 +21,7 @@ import ConfirmModal from '../components/ConfirmModal.jsx';
 import { deleteItem, updateItem } from '../services/itemsService.js';
 import EditItemDialog from '../components/ItemEditDialog.jsx';
 import { logDebug, logError, logInfo } from '../utils/logger.js';
+import SearchFilterBar from '../components/SearchFilterBar.jsx';
 
 const ItemsPage = () => {
 
@@ -32,6 +35,8 @@ const ItemsPage = () => {
     const page = useSelector(selectItemsPage);
     const limit = useSelector(selectItemsLimit);
     const totalCount = useSelector(selectItemsTotalCount);
+    const sort = useSelector(selectItemsSort);
+    const search = useSelector(selectItemsSearch);
 
 
 
@@ -54,14 +59,18 @@ const ItemsPage = () => {
     useEffect(() => {
         const pageParam = parseInt(searchParams.get('page')) || 1;
         const limitParam = parseInt(searchParams.get('limit')) || 10;
+        const searchParam = searchParams.get('search') || '';
+        const sortParam = searchParams.get('sort') || 'name_asc';
 
         dispatch(setPage(pageParam));
         dispatch(setLimit(limitParam))
+        dispatch(setSearch(searchParam));
+        dispatch(setSort(sortParam));
     }, [ searchParams, dispatch])
 
     useEffect(() => {
-        dispatch(loadItems({ page, limit }));
-    }, [dispatch, page, limit, triggerUpdate]);
+        dispatch(loadItems({ page, limit, sort, search }));
+    }, [dispatch, page, limit, sort, search, triggerUpdate]);
 
     useEffect(() => {
         if (!searchParams.get('page') || !searchParams.get('limit')) {
@@ -78,6 +87,18 @@ const ItemsPage = () => {
         });
         // dispatch(setPage(newPage)) // loadItems will re‐fire in the useEffect because `page` changed
     };
+
+    const updateSearchParams = (newParams) => {
+        setSearchParams({
+            page,
+            limit,
+            search,
+            sort,
+            ...newParams
+        });
+    };
+
+
 
     const toggleItemForm = () => {
         setShowItemForm((prev) => !prev);
@@ -184,6 +205,23 @@ const ItemsPage = () => {
             </div>
             <StatusHandler status={status} error={error} loadingMessage='Loading Items ...' >
                 <Box >
+                    <SearchFilterBar 
+                        search={search}
+                        limit={limit}
+                        sort={sort}
+                        onSearchChange={(newSearch) => {
+                            dispatch(setSearch(newSearch));
+                            updateSearchParams({ search: newSearch, page: 1 });
+                        }}
+                        onLimitChange={(newLimit) => {
+                            dispatch(setLimit(newLimit));
+                            updateSearchParams({ limit: newLimit, page: 1 });
+                        }}
+                        onSortChange={(newSort) => {
+                            dispatch(setSort(newSort));
+                            updateSearchParams({ sort: newSort });
+                        }}
+                    />
                     <ItemList items={items} onDelete={handleDelete} 
                         onEdit={handleEdit} 
                         onImageUpload={handleImageUpload}
