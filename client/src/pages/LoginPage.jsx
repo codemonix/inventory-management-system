@@ -2,6 +2,7 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext.jsx";
+import { Typography, Link } from "@mui/material";
 
 import LoginForm from "../components/LoginForm.jsx";
 
@@ -29,6 +30,9 @@ const LoginPage = () => {
 
                         <LoginForm />
                     </div>
+                    <Typography variant="body2" mt={2}>
+                        Don’t have an account? <Link to="/register">Register</Link>
+                    </Typography>
                 </div>
             )
 

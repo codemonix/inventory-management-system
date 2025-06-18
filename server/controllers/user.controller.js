@@ -57,12 +57,12 @@ export const toggleUserActive = async (req, res) => {
 // PUT /api/users/:id
 export const updateUser = async (req, res) => {
     const { id } = req.params;
-    const { name, email, role } = req.body;
+    const { name, email, role, isActive, isApproved } = req.body;
 
     try {
         const user = await User.findByIdAndUpdate(
             id,
-            { name, email, role },
+            { name, email, role, isActive, isApproved },
             { new: true }
         );
         if (!user) return res.status(404).json({ error: "User not found" });

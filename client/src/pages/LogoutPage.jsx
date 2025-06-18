@@ -1,15 +1,17 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { removeToken } from "../utils/auth.js";
+// import { removeToken } from "../utils/auth.js";
+import { useAuth } from "../context/AuthContext";
 
 
 const LogoutPage = () => {
     const navigate = useNavigate();
+    const { logout } = useAuth();
 
     useEffect(() => {
-        removeToken();
+        logout();
         navigate("/login", { replace: true }); // Redirect to login page after logout
-    }, [navigate]);
+    }, [navigate, logout]);
 
     console.log("Logged out successfully");
     return null;

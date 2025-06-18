@@ -13,6 +13,7 @@ import {
 } from "@mui/material";
 import { useDispatch } from "react-redux";
 import { updateUserDetails } from "../../redux/thunks/userThunks.js";
+import { logInfo } from "../../utils/logger.js";
 
 const EditUserDialog = ({ open, onClose, user }) => {
     const dispatch = useDispatch();
@@ -54,6 +55,7 @@ const EditUserDialog = ({ open, onClose, user }) => {
     };
 
     const handleSubmit = () => {
+        logInfo("formData:", formData)
         dispatch(updateUserDetails({ id: user._id, ...formData }));
         onClose();
     };
@@ -90,8 +92,8 @@ const EditUserDialog = ({ open, onClose, user }) => {
                         value={formData.role}
                         onChange={handleChange}
                     >
-                    {[ "admin", "manager", "user" ].map( (role) => (
-                        <MenuItem key={role} value={role}  >
+                    {[ "admin", "manager", "user" ].map( (r) => (
+                        <MenuItem key={r} value={r}  >
 
                         </MenuItem>
                     ))}

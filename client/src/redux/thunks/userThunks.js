@@ -18,6 +18,7 @@ export const fetchUsers = createAsyncThunk(
 export const updateUserDetails = createAsyncThunk(
     'users/updateUserDetails',
     async ( { id, ...data }) => {
+        logInfo("thunk data:", data)
         const res = await updateUser( id, data );
         return res.data;
     });

@@ -11,10 +11,11 @@ import ItemsPage from './pages/ItemsPage.jsx';
 import LocationsPage from './pages/LocationsPage.jsx';
 import TransfersPage from './pages/TranfersPage.jsx';
 import ManageLayout from './components/admin/ManageLayout.jsx';
-import UsersPage from './pages/admin/UsersPage.jsx';
 import LogsPage from './pages/admin/LogsPage.jsx';
 import SettingsPage from './pages/admin/SettingsPage.jsx';
 import UserManagementPage from './pages/admin/UserManagementPage.jsx';
+import RegisterPage from './pages/RegisterPage.jsx';
+
 
 function RequireAdmin({ children }) {
   const { isAdmin } = useAuth();
@@ -29,6 +30,7 @@ function App() {
         <Routes>
           {/* Public routes */}
           <Route path="/" element={<RedirectToCorrectPage />} />
+          <Route path='/register' element={<RegisterPage />} />
           <Route path="/login" element={<LoginPage />} />
           { /* Protected Routes */ }
           <Route element={<PrivateRoutes />}>

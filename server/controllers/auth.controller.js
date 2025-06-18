@@ -9,9 +9,13 @@ export async function  registerUser(req, res) {
     
     try {
         const { name, email , password , role = 'user' } = req.body;
+        if ( !name || !email || !password) {
+            return res.status(400).json({ message: "All fileds are required" });
+        }
+
 
         const existing = await User.findOne({ email });
-        if (existing) return res.status(400).json({ error: 'Email already registered' });
+        if (existing) return res.status(409).json({ error: 'Email already registered' });
 
         const hashed = await bcrypt.hash(password, 10);
 
