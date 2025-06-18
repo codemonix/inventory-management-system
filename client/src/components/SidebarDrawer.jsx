@@ -5,14 +5,14 @@ import LensTwoToneIcon from '@mui/icons-material/LensTwoTone';
 import MenuIcon from '@mui/icons-material/Menu';
 // import { link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext.jsx";
-import { getToken } from "../utils/auth.js";
+// import { getToken } from "../utils/auth.js";
 import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
 
 
 function SidebarDrawer() {
-    const { isAdmin } = useAuth();
-    const isAuth = !!getToken();
+    const { isAdmin, isLoggedIn, isManager } = useAuth();
     const [isOpen, setIsOpen] = useState(false);
+    const isManagerOrAdmin = isAdmin || isManager;
     console.log("SidebarDrawer -> isAdmin", isAdmin);
 
     const toggleSidebar = () => {
@@ -56,12 +56,12 @@ function SidebarDrawer() {
                     </ListItem>
                 ))}
             </List>
-                {isAuth && isAdmin && (
+                {isLoggedIn && isManagerOrAdmin && (
                     <>  
                         <Divider />
                         <List>
                             <ListItem disablePadding>
-                                <NavLink to="/admin" style={ { textDecoration: 'none', width: '100%'}}>
+                                <NavLink to="/manage" style={ { textDecoration: 'none', width: '100%'}}>
                                     {({ isActive}) => (
                                         <ListItemButton
                                             sx={{
@@ -77,7 +77,7 @@ function SidebarDrawer() {
                                                 <ListItemIcon sx={{ color: '#fff'}} >
                                                     <AdminPanelSettingsIcon fontSize="small" />
                                                 </ListItemIcon>
-                                                <ListItemText primary="Admin Panel" />
+                                                <ListItemText primary="Manage" />
                                             </ListItemButton>
                                     )}
                                 </NavLink>
@@ -87,7 +87,7 @@ function SidebarDrawer() {
                 )}
         </Box>
 
-        { isAuth && (
+        { isLoggedIn && (
             <Box sx={{ mt: 'auto'}} >
                 <Divider />
                 <List >

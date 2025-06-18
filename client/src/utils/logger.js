@@ -1,4 +1,4 @@
-const ENABLE_LOGGING = import.meta.env.VITE_LOG_MODE === 'true';
+const ENABLE_LOGGING = import.meta.env.VITE_LOG_MODE ;
 
 function getCallerInfo(errorArg) {
     const error = errorArg instanceof Error ? errorArg : new Error();

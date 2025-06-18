@@ -13,7 +13,7 @@ export const AuthProvider = ({ children }) => {
     // eslint-disable-next-line no-unused-vars
     const [ loading, setLoading ] = useState(true);
     const [ isAdmin, setIsAdmin ] = useState(false);
-    
+    const [ isManager, setIsManager ] = useState(false);
 
     useEffect(() => {
         const token = localStorage.getItem("token");
@@ -22,7 +22,9 @@ export const AuthProvider = ({ children }) => {
                 .then((userData) => {
                     setUser(userData); // Set user data in state
                     const isAdmin = userData?.user.role === "admin"; // Check if user is admin based on role
+                    const isManager = userData?.user.role === "manager"; // Check if user is manager based on role
                     setIsAdmin(isAdmin);
+                    setIsManager(isManager);
                     setIsLoggedIn(true);
                     logDebug("User data fetched successfully userData, user", userData, user); // Log user data to check if it's being retrieved correctly
 
@@ -63,11 +65,11 @@ export const AuthProvider = ({ children }) => {
         setUser(null);
     };
 
-    // isAdmin = user?.role === "admin";
+    console.log("AuthProvider -> isadmin", isAdmin);
     console.log("AuthProvider -> isAdmin", user?.role);
 
     return (
-        <AuthContext.Provider value={{ isLoggedIn, user, login, logout, isAdmin }}>
+        <AuthContext.Provider value={{ isLoggedIn, user, login, logout, isAdmin, isManager }}>
             {children}
         </AuthContext.Provider>
     );

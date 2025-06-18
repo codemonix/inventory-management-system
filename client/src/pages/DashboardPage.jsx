@@ -18,9 +18,9 @@ import { useAuth } from "../context/AuthContext.jsx";
 import { getLocations } from "../services/locationsService.js"
 import StockActionDialog from "../components/stockActionDialog.jsx";
 import  { useDispatch, useSelector }  from "react-redux";
-import { addItem } from "../redux/slices/transferSlice.js";
+import { addItem, loadTempTransfer, loadTransfers } from "../redux/slices/transferSlice.js";
 import { logDebug, logInfo } from "../utils/logger.js";
-import { loadTempTransfer, loadTransfers } from "../redux/slices/transferSlice.js";
+// import { loadTempTransfer, loadTransfers } from "../redux/slices/transferSlice.js";
 import SearchFilterBar from "../components/SearchFilterBar.jsx";
 
 

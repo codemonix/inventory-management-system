@@ -6,10 +6,18 @@ import { useAuth } from "../context/AuthContext.jsx";
 import  AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
 
 
-const Sidebar = () => {
+const ManageSideDrawer = () => {
 
-    const { isAdmin } = useAuth();
+    const { isAdmin, isManager } = useAuth();
     console.log("Sidebar -> isAdmin", isAdmin);
+    console.log("Sidebar -> isManager", isManager);
+
+    const links = [
+        { to: "/manage", label: "Home" },
+        { to: "/manage/users", label: "Users" },
+        { to: "/manage/logs", label: "Logs" },
+        { to: "/manage/settings", label: "Settings" },
+    ]
 
     const linkClass = ({ isActive }) => {
         return isActive ? "text-blue-500 font-bold" : "text-white hover:text-blue-500";
@@ -64,20 +72,9 @@ const Sidebar = () => {
                     <NavLink to="/transfers" className={ linkClass }>
                         Transfers
                     </NavLink>
-                    {isAdmin && (
-                        <NavLink to="/admin" className={linkClass}>
-                            <div className="flex items-center">
-                                <AdminPanelSettingsIcon fontSize="small" />
-                                <span className="ml-2">Admin Panel</span>
-                            </div>
-                        </NavLink>
-                            
-                    )}
+                   
                     
-                    { isAuth && (<NavLink to="/logout "
-                    className="mt-auto block px-3 py-2 m-4 rounded bg-red-400 hover:bg-red-500 text-center">
-                        Logout
-                    </NavLink>)}
+                    
                 </nav>
             </aside>
             <div className={`lg:ml-56 p-4`}>
@@ -87,4 +84,4 @@ const Sidebar = () => {
     );
 };
 
-export default Sidebar;
+export default ManageSideDrawer;

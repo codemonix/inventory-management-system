@@ -72,11 +72,11 @@ const ItemsPage = () => {
         dispatch(loadItems({ page, limit, sort, search }));
     }, [dispatch, page, limit, sort, search, triggerUpdate]);
 
-    useEffect(() => {
-        if (!searchParams.get('page') || !searchParams.get('limit')) {
-            setSearchParams({ page: 1, limit: 10})
-        }
-    })
+    // useEffect(() => {
+    //     if (!searchParams.get('page') || !searchParams.get('limit')) {
+    //         setSearchParams({ page: 1, limit: 10})
+    //     }
+    // })
 
     const handlePageChange = ( newPage ) => { 
         const params = Object.fromEntries(searchParams.entries())

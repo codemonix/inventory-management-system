@@ -10,13 +10,15 @@ import Layout from './components/Layout.jsx';
 import ItemsPage from './pages/ItemsPage.jsx';
 import LocationsPage from './pages/LocationsPage.jsx';
 import TransfersPage from './pages/TranfersPage.jsx';
-import AdminLayout from './components/AdminLayout.jsx';
+import ManageLayout from './components/admin/ManageLayout.jsx';
 import UsersPage from './pages/admin/UsersPage.jsx';
 import LogsPage from './pages/admin/LogsPage.jsx';
+import SettingsPage from './pages/admin/SettingsPage.jsx';
+import UserManagementPage from './pages/admin/UserManagementPage.jsx';
 
 function RequireAdmin({ children }) {
   const { isAdmin } = useAuth();
-  return isAdmin ? children : <Navigate to="/dashboard"  replace />;
+  return isAdmin ? children : <div>You do not have permission to view this page.</div>;
 }
 
 function App() {
@@ -37,14 +39,15 @@ function App() {
               <Route path='locations' element={<LocationsPage />} />
               <Route path='transfers' element={<TransfersPage />} />
             </Route>
-            <Route path='/admin/*' element={
+            <Route path='/manage' element={
               <RequireAdmin>
-                 <AdminLayout />
+                 <ManageLayout />
               </RequireAdmin>
-            } >
+              }>
               <Route index element={<Navigate to="users" replace />} />
-              <Route path='users' element={<UsersPage />} />
+              <Route path='users' element={<UserManagementPage />} />
               <Route path='logs' element={<LogsPage />} />
+              <Route path='settings' element={<SettingsPage />} />
             </Route>
           </Route>
         </Routes>
