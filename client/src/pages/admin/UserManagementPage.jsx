@@ -125,12 +125,12 @@ const UserManagementPage = () => {
         {
             field: "avatar",
             headerName: "",
-            windth: 60,
+            // windth: 20,
             renderCell: (params) => (
                 <Avatar
                     src={`https://api.dicebear.com/5.x/initials/svg?seed=${params.row.name}`}
                     alt={params.row.name}
-                    // sx={{ width: 40, height: 40 }}
+                    // sx={{ width: 20, height: 20 }}
                 />
             ),
             sortable: false,
@@ -138,7 +138,7 @@ const UserManagementPage = () => {
         },
         { field: "name", headerName: "Name", flex: 1 },
         { field: "email", headerName: "Email", flex: 1.5 },
-        { field: "role", headerName: "Role", width: 120 },
+        { field: "role", headerName: "Role" },
         {
             field: "isActive",
             headerName: "Active",
@@ -154,7 +154,7 @@ const UserManagementPage = () => {
         {
             field: "isApproved",
             headerName: "Approved",
-            width: 110,
+            flex: 1,
             renderCell: (params) => (params.row.isApproved ? '✅' : '❌'),
         },
         {
@@ -167,7 +167,7 @@ const UserManagementPage = () => {
         {
             field: "actions",
             headerName: "Actions",
-            width: 80,
+            flex: 1,
             sortable: false,
             renderCell: (params) => (
                 <Tooltip title="Edit">
@@ -179,36 +179,40 @@ const UserManagementPage = () => {
         },
     ];
 
-    logInfo("state:", useSelector((state) => state))
+    logInfo("users:", users)
 
     return (
-        <Box p={2}>
+        <Box p={2} maxWidth="lg" mx="auto">
             <Typography variant="h5" gutterBottom>
                 User Management
             </Typography>
-
-            <SearchFilterBar 
-                search={search}
-                limit={limit}
-                page={page}
-                sort={sort}
-                onSearchChange={handleSearchChange}
-                onSortChange={handleSortChange}
-            />
-            <StatusHandler status={status} error={error} >
-                <DataGrid 
-                    rows={users}
-                    columns={columns}
-                    pagination
-                    paginationMode='server'
-                    rowCount={totalCount}
-                    page={ page - 1 }
-                    pageSize={limit}
-                    onPageChange={handlePageChange}
-                    onPageSizeChange={handlePageSizeChange}
-                    getRowId={ (row) => row._id }
-                    autoHeight
+            <Box mb={2} >
+                <SearchFilterBar 
+                    search={search}
+                    limit={limit}
+                    page={page}
+                    sort={sort}
+                    onSearchChange={handleSearchChange}
+                    onSortChange={handleSortChange}
                 />
+            </Box>
+            <StatusHandler status={status} error={error} >
+                <Box sx={{ width: '100%', overflowX: 'auto' }}>
+                    <DataGrid
+                        sx={{ width: '100%'}}
+                        rows={users}
+                        columns={columns}
+                        pagination
+                        paginationMode='server'
+                        rowCount={totalCount}
+                        page={ page - 1 }
+                        pageSize={limit}
+                        onPageChange={handlePageChange}
+                        onPageSizeChange={handlePageSizeChange}
+                        getRowId={ (row) => row._id }
+                        overflow: hidden
+                    />
+                </Box>
             </StatusHandler>
             { selectedUser && 
                 <EditUserDialog 

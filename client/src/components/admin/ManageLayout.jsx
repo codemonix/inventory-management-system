@@ -37,7 +37,7 @@ export default function AdminLayout() {
                 </Toolbar>
             </AppBar>
             <ManageSideDrawer open={open} onClose={() => setOpen(false)} toggleSidebar={toggleSidebar} />
-            <main style={{ flexGrow: 1, padding: '80px 24px 24px'}}>
+            <main style={{ width: '100%', padding: '80px 24px 24px'}}>
                 <Outlet />
             </main>
             {/* <Drawer 
