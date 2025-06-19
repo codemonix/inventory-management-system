@@ -1,9 +1,17 @@
 import api from "../api/api.js";
+import { logError } from "../utils/logger.js";
 
 
 export const loginApi = async ( email, password ) => {
-    const res = await api.post("/auth/login", { email, password });
-    return res.data; // { token, user }
+    try {
+        const res = await api.post("/auth/login", { email, password });
+        return res.data; // { token, user }
+    } catch (error) {
+        logError("loginApi:", error)
+        throw error
+    }
+    
+    
 };
 
 export const register = async ( email, password ) => {

@@ -2,6 +2,7 @@ import { useState, useContext } from "react";
 // import { useAuth } from "../context/AuthContext.jsx";
 import { useNavigate } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext.jsx";
+import { logError } from "../utils/logger.js";
 // import { setToken } from "../utils/auth.js";
 // import { login } from "../utils/api.js";
 
@@ -25,7 +26,8 @@ function LoginForm () {
             await login(email, password); // Call the login function from AuthContext
             navigate("/dashboard"); // Redirect to dashboard after successful login
         } catch (error) {
-            console.error("Login error:", error.message);
+            logError("Login error:", error.message);
+            setError(error.response.data.message)
 
         }
     };

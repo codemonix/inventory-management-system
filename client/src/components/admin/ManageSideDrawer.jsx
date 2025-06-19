@@ -1,6 +1,7 @@
 
-import { Drawer, List, ListItemButton, Divider, ListItem, ListItemText, IconButton, Box, Typography } from "@mui/material";
+import { Drawer, List, ListItemButton, ListItemIcon, Divider, ListItem, ListItemText, IconButton, Box, Typography } from "@mui/material";
 import CloseIcon from '@mui/icons-material/Close';
+// import { HomeIcon } from '@mui/icons-material';
 // import { useState } from "react";
 // import { isLoggedIn } from "../../utils/auth";
 import MenuIcon from '@mui/icons-material/Menu';
@@ -67,6 +68,23 @@ const ManageSideDrawer = ({ open, onClose, toggleSidebar }) => {
                                     },
                                 }}>
                                 <ListItemText primary="Logout" sx={{ textAlign: 'center'}}/>
+                            </ListItemButton>
+                        </NavLink>
+                    </ListItem>
+                    <ListItem  disablePadding>
+                         <NavLink to="/dashboard" style={{ textDecoration: 'none', width: '100%' }} >
+                            <ListItemButton 
+                                sx={{ 
+                                    backgroundColor: '#3b82f6',
+                                    color: '#fff',
+                                    borderRadius: 1,
+                                    m: 1,
+                                    px: 2,
+                                    '&:hover': {
+                                        backgroundColor: 'rgba(0, 98, 189, 0.96)',
+                                    },
+                                }}>
+                                <ListItemText primary="Dashboard" sx={{ textAlign: 'center'}}/>
                             </ListItemButton>
                         </NavLink>
                     </ListItem>

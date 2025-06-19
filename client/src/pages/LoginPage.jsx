@@ -1,8 +1,8 @@
 
 import { useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link as RouterLink } from "react-router-dom";
 import { useAuth } from "../context/AuthContext.jsx";
-import { Typography, Link } from "@mui/material";
+import { Typography, Link, Box } from "@mui/material";
 
 import LoginForm from "../components/LoginForm.jsx";
 
@@ -20,20 +20,17 @@ const LoginPage = () => {
 
         <>
             {!user && (
-
-                <div className="max-w-md mx-auto p-4">
-                    <div className="w-full max-w-md p-6 border rounded-lg shadow-lg bg-white">
-                        <h2 className="text-3xl font-bold text-center mb-4">Welcome to inventory management system</h2>
-                        <h3 className="text-2xl font-semibold text-center mb-6">Login</h3>
-
-                        {/* {error && <p className="text-red-500 text-sm text-center">{error}</p>} */}
-
-                        <LoginForm />
-                    </div>
+                <Box maxWidth='400px' mx='auto' mt={10} bgcolor="white" p={4} borderRadius={4}>
+                    <Typography variant="body2" component='span'>Welcome to Inventory System</Typography>
+                    <Typography variant="h6" mb={2} >Please Login</Typography>
+                    <LoginForm />
                     <Typography variant="body2" mt={2}>
-                        Don’t have an account? <Link to="/register">Register</Link>
+                        Don’t have an account? 
+                        <Link component={RouterLink} to="/register"> Register</Link>
                     </Typography>
-                </div>
+                </Box>
+
+                
             )
 
             }

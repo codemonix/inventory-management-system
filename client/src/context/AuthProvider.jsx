@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { AuthContext } from "./AuthContext.jsx";
 import { loginApi, fetchUserData } from "../services/authServices.js";
-import { logDebug } from "../utils/logger.js";
+import { logDebug, logError, logInfo } from "../utils/logger.js";
 
 
 export const AuthProvider = ({ children }) => {
@@ -48,15 +48,22 @@ export const AuthProvider = ({ children }) => {
     const login = async (email, password) => {
         try {
             const res = await loginApi(email, password);
+            logInfo("loing res.user:", res.user)
             if (res && res.token) {
-                logDebug("AuthContext response:", res); // Log the token to check if it's being retrieved correctly
+                // logDebug("AuthContext response:", res); // Log the token to check if it's being retrieved correctly
                 localStorage.setItem("token", res.token); // Store token in local storage
-                const userData = await fetchUserData(res.token); // Fetch user data using the token
+                const userData = res.user; // Fetch user data using the token
                 setUser(userData); // Set user data in state
+                const isAdmin = userData.role === 'admin';
+                const isManager = userData.role === 'manager';
                 setIsLoggedIn(true);
+                setIsAdmin(isAdmin);
+                setIsManager(isManager);
+                
             }
     } catch (error) {
-        console.error("Login failed:", error.message);
+        logError("Login failed:", error.message);
+        throw error;
     }
     };
     const logout = () => {

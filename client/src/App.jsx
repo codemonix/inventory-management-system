@@ -18,8 +18,9 @@ import RegisterPage from './pages/RegisterPage.jsx';
 
 
 function RequireAdmin({ children }) {
-  const { isAdmin } = useAuth();
-  return isAdmin ? children : <div>You do not have permission to view this page.</div>;
+  const { isAdmin, isManager } = useAuth();
+  const isAdminOrManager = isAdmin || isManager;
+  return isAdminOrManager ? children : <div>You do not have permission to view this page.</div>;
 }
 
 function App() {

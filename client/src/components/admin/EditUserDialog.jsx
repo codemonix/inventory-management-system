@@ -94,7 +94,7 @@ const EditUserDialog = ({ open, onClose, user }) => {
                     >
                     {[ "admin", "manager", "user" ].map( (r) => (
                         <MenuItem key={r} value={r}  >
-
+                            {r}
                         </MenuItem>
                     ))}
                     </TextField>

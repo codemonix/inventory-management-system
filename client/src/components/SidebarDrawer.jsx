@@ -13,7 +13,7 @@ function SidebarDrawer() {
     const { isAdmin, isLoggedIn, isManager } = useAuth();
     const [isOpen, setIsOpen] = useState(false);
     const isManagerOrAdmin = isAdmin || isManager;
-    console.log("SidebarDrawer -> isAdmin", isAdmin);
+    console.log("SidebarDrawer -> isAdminOrManager", isManagerOrAdmin);
 
     const toggleSidebar = () => {
         setIsOpen((prev) => !prev);
