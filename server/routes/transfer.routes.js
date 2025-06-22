@@ -19,7 +19,7 @@ router.delete('/temp/remove/:itemId', auth, removeItemFromTempTransfer);
 router.post('/temp/finalize', auth, finalizeTempTransfer);
 
 router.post('/', auth, createTransfer);
-router.put('/:id/complete', auth, confirmTransfer);
+router.put('/:id/confirm', auth, confirmTransfer);
 router.get('/', auth, getAllTransfers);
 
 export default router;

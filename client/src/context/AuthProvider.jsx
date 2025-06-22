@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { AuthContext } from "./AuthContext.jsx";
-import { loginApi, fetchUserData } from "../services/authServices.js";
+import { loginApi, fetchUserData, registerApi } from "../services/authServices.js";
 import { logDebug, logError, logInfo } from "../utils/logger.js";
 
 
@@ -72,11 +72,30 @@ export const AuthProvider = ({ children }) => {
         setUser(null);
     };
 
+    const register = async ({name, email, password} ) => {
+        try {
+            const { token, user } = await registerApi(name, email, password);
+            logInfo("register -> user:", user)
+            logInfo("register -> token", token)
+            logInfo("is user approved?", user.isApproved)
+            if (user.isApproved) {
+                localStorage.setItem('token', token);
+                setUser(user);
+                setIsAdmin(user.role === 'admin');
+                setIsManager(user.role === 'manager');
+                setIsLoggedIn(true);
+            }
+        } catch (error) {
+            logError("Register failed:", error.message);
+            throw error;
+        }
+    }
+
     console.log("AuthProvider -> isadmin", isAdmin);
     console.log("AuthProvider -> isAdmin", user?.role);
 
     return (
-        <AuthContext.Provider value={{ isLoggedIn, user, login, logout, isAdmin, isManager }}>
+        <AuthContext.Provider value={{ isLoggedIn, user, login, logout, register, isAdmin, isManager }}>
             {children}
         </AuthContext.Provider>
     );

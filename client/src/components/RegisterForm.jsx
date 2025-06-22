@@ -1,11 +1,12 @@
 import { useNavigate } from 'react-router-dom';
-import { useState } from 'react';
+import { useContext, useState } from 'react';
 import { TextField, Button } from '@mui/material';
+import { AuthContext } from '../context/AuthContext';
 
-import api from '../api/api';
 
 const RegisterForm = ({ onError }) => {
     const navigate = useNavigate();
+    const { register } = useContext(AuthContext);
     const [ formData, setFormData ] = useState({ name: '', email: '', password: '' });
 
     const handleChange = (e) => {
@@ -15,8 +16,7 @@ const RegisterForm = ({ onError }) => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
-            const response = await api.post('auth/register', formData );
-            localStorage.setItem('token', response.token);
+            await register(formData );
             navigate('/');
         } catch (error) {
             onError?.(error.response?.data?.message || "Registration failed");

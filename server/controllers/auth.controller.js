@@ -1,6 +1,9 @@
 import bcrypt from 'bcryptjs';
 import User from '../models/users.model.js';
 import generateToken from '../utils/generateToken.js';
+import log from '../utils/logger.js'
+
+
 
 // const JWT_SECRET = process.env.JWT_SECRET || 'dev_secret';
 
@@ -18,8 +21,8 @@ export async function  registerUser(req, res) {
         if (existing) return res.status(409).json({ error: 'Email already registered' });
 
         const hashed = await bcrypt.hash(password, 10);
-
-        const newUser = new User({ name, email, password: hashed, role });
+        const isApproved = process.env.DEFAULT_USER_APPROVED;
+        const newUser = new User({ name, email, password: hashed, role, isApproved });
         await newUser.save();
 
         //JWT token
@@ -32,6 +35,7 @@ export async function  registerUser(req, res) {
                 name: newUser.name,
                 email: newUser.email,
                 role: newUser.role,
+                isApproved: newUser.isApproved,
             },
             token,
         });

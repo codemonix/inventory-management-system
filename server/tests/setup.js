@@ -1,22 +1,31 @@
-// import mongoose from "mongoose";
-// import { MongoMemoryServer } from "mongodb-memory-server";
+import mongoose from 'mongoose';
+import { startMongoMemoryServer, stopMongoMemoryServer } from './mongoServer';
 
-// let mongo;
 
-// beforeAll(async () => {
-//     mongo = await MongoMemoryServer.create();
-//     const uri = mongo.getUri();
-//     await mongoose.connect(uri);
-// });
+beforeAll( async () => {
 
-// afterEach(async () => {
-//     const collections = await mongoose.connection.db.collections();
-//     for (let collection of collections) {
-//         await collection.deleteMany();
-//     }
-// });
+    const mongo = await startMongoMemoryServer();
+    const uri = mongo.getUri();
 
-// afterAll(async () => {
-//     await mongoose.disconnect();
-//     await mongo.stop();
-// })
+    console.log("MongoMemoryServer running at", uri);
+
+    if (!uri.startsWith("mongodb://127.0.0.1") && !uri.startsWith("mongodb://localhost")) {
+        throw new Error(`Unsafe DB URI detected: ${uri}`);
+        }
+    const conn = await mongoose.connect(uri);
+    console.log("connection:", conn.connection.readyState);
+
+    if (mongoose.connection.readyState !== 0) {
+        await mongoose.disconnect()
+    }
+
+    await mongoose.connect(uri);
+    
+});
+
+
+afterAll( async () => {
+    await mongoose.connection.dropDatabase();
+    await mongoose.disconnect();
+    await stopMongoMemoryServer();
+});

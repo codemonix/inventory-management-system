@@ -4,6 +4,7 @@ import Inventory from "../models/inventory.model.js";
 import Item from "../models/item.model.js";
 import Location from "../models/location.model.js";
 import { logTransaction } from "../services/transactionService.js";
+import log from '../utils/logger.js';
 
 
 
@@ -301,8 +302,8 @@ export const updateInventory = async (type, req, res) => {
     try {
         const { itemId } = req.params;
         const { locationId, quantity, note } = req.body;
-        log({locationId});
-        log("type of itemId:", itemId)
+        log({locationId, type});
+        log("type of itemId, note:", itemId, note)
         const userId = req.user._id;
         // log(req.body);
 

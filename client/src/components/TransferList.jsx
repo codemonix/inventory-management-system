@@ -1,6 +1,6 @@
 import { useSelector, useDispatch } from "react-redux";
 import { useState, useEffect } from "react";
-import { finalizeTransfer, createTransfer, loadTransfers, loadTempTransfer } from "../redux/slices/transferSlice.js";
+import { finalizeTransfer, createTransfer, loadTransfers, loadTempTransfer, confirmTransfer } from "../redux/slices/transferSlice.js";
 import TempTransferCard from "./TempTransferCard.jsx";
 import FinalizedTransferCard from "./FinalizedTransferCard.jsx";
 import StartTransferDialog from "./StartTransferDialog.jsx";
@@ -10,6 +10,7 @@ import { selectTempTransferDetailed } from "../redux/selectors/transferSelector.
 import { loadItems } from "../redux/slices/itemsSlice.js";
 import { Dialog, DialogContent, DialogTitle } from "@mui/material";
 import TransferItemsList from "./TransferItemsList.jsx";
+import ConfirmModal from "./ConfirmModal.jsx";
 
 
 
@@ -25,6 +26,7 @@ const TransferList = () => {
     const [showdialog, setShowdialog] = useState(false);
     const [openItems, setOpenItems] = useState(false);
     const [selectedTransfer, setSelectedTransfer] = useState(null);
+    const [confirmOpen, setConfirmOpen] = useState(false);
 
     useEffect(() => {
         dispatch(loadItems());
@@ -51,7 +53,20 @@ const TransferList = () => {
         logInfo("TransferList locations:", locations)
     }, [locations])
 
-    
+    const handleTransferConfirm = ( transfer ) => {
+        if (transfer.status !== 'confirmed') {
+            setSelectedTransfer( transfer );
+            setConfirmOpen(true)
+        } else {
+            logInfo("transfer already confirmed!")
+        }
+        console.log("TransferList -> handleTransferConfirm -> ",transfer)
+    };
+
+    const handleConfirmTransfer = () => {
+        dispatch(confirmTransfer(selectedTransfer));
+    }
+
 
     const handleOpenItems = (transfer) => {
         setSelectedTransfer(transfer);
@@ -106,7 +121,9 @@ const TransferList = () => {
                     <p className="text-gray-500 italic">No finalized transfers available.</p>
                 ) : (
                  transfers.map((transfer) => (
-                    <FinalizedTransferCard key={ transfer._id } transfer={ transfer } onViewItems={ () => handleOpenItems(transfer) }/>
+                    <FinalizedTransferCard key={ transfer._id } transfer={ transfer } onViewItems={ () => handleOpenItems(transfer) }
+                        onConfirm={ () => handleTransferConfirm(transfer)}
+                    />
                 ))
                 )}
             </section>
@@ -132,6 +149,13 @@ const TransferList = () => {
                     </DialogContent>
                 </Dialog>
             )}
+            <ConfirmModal 
+                open={confirmOpen}
+                title='Confirm Transfer'
+                message='Are you sure the items have arrived at the destinaion?'
+                onClose={ () => setConfirmOpen(false)}
+                onConfirm={handleConfirmTransfer}
+            />
             
         </div>
     );

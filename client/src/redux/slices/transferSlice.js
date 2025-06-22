@@ -7,7 +7,7 @@ import { logDebug, logInfo } from "../../utils/logger.js";
 
 import { getTransfers, getTempTransfer, 
     createTempTransfer, addItemToTempTransfer, 
-    finalizeTempTransfer, removeItemFromTempTransfer } from "../../services/transfersServices.js";
+    finalizeTempTransfer, removeItemFromTempTransfer, confirmTransfer as confirmTransferApi } from "../../services/transfersServices.js";
 
 export const loadTransfers = createAsyncThunk(
     'transfer/loadTransfers',
@@ -64,6 +64,19 @@ export const removeItem = createAsyncThunk(
         const response = await removeItemFromTempTransfer( { itemId } );
         logInfo("removeItemFromTempTransfer response: ", response);
         return response;
+    }
+);
+
+export const confirmTransfer = createAsyncThunk(
+    'transfer/confirmTransfer',
+    async ( transferId, thunkApi ) => {
+        try {
+            const response = await confirmTransferApi( transferId );
+            logInfo('confirmTransfer response:', response);
+            return response;
+        } catch (error) {
+            return thunkApi.rejectWithValue(error.response?.data?.message || 'Confirm failed')
+        }
     }
 );
 
@@ -195,6 +208,18 @@ const transferSlice = createSlice({
                 state.error = action.error.message
                 logDebug("Remove item from tempTransfer failed:", action.error.message)
             })
+            .addCase(confirmTransfer.pending, ( state ) => {
+                state.status = 'loading';
+                state.error = null;
+            })
+            .addCase(confirmTransfer.fulfilled, ( state, action ) => {
+                state.status = 'succeeded';
+                state.error = null;
+                const index = state.transfers.findIndex( t => t._id === action.payload.transfer._id);
+                if ( index !== -1 ) {
+                    state.transfers[index] = action.payload.transfer;
+                }
+            });
     },
 });
 

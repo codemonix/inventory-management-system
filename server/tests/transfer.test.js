@@ -1,116 +1,101 @@
 
 import request from 'supertest';
-import mongoose from 'mongoose';
 import app from '../app.js';
-import Location from '../models/location.model.js';
 import User from '../models/users.model.js';
-import Transfer from '../models/transfer.model.js';
-// import jwt from 'jsonwebtoken';
-// import bcrypt from 'bcryptjs';
-import Item from '../models/item.model.js';
-// import Inventory from '../models/inventory.model';
-import { nanoid } from 'nanoid';
-// import Inventory from '../models/inventory.model.js';
-// import { updateInventory } from '../controllers/inventory.controller.js';
-// import { from } from 'form-data';
 
+let token, locA, locB, itemId, transfer;
 
-
-let token, fromLocation, toLocation, itemId;
 beforeAll(async () => {
-    const userRes = await request(app)
+    // Create admin user
+    const res = await request(app)
         .post('/api/auth/register')
         .send({
-            name: 'Test User',
-            email: `test-${nanoid(4)}@email.com`,
-            password: 'testpass123',
+            name: 'Transfer',
+            email: 'transfer@test.com',
+            password: '123456',
             isApproved: true,
             role: 'admin'
         });
 
-    token = userRes.body.token;
+    token = res.body.token;
+    const users = await User.find();
+    console.log("user registered user list -> ", users.map((user) => user.email));
 
     // Create two locations
-    const fromLoc = await Location.create({ name: 'From Location'});
-    const toLoc = await Location.create({ name: 'To Location' });
-    fromLocation = fromLoc._id;
-    toLocation = toLoc._id;
-    // console.log('token:', token)
+    const [ a, b ] = await Promise.all([
+        request(app)
+            .post('/api/locations')
+            .set('Authorization', `Bearer ${token}`)
+            .send({ name: 'LocA'}),
+        request(app)
+            .post('/api/locations')
+            .set('Authorization', `Bearer ${token}`)
+            .send({ name: 'LocB'})
+    ]);
+    console.log("transfer.test locA:", a.body.location._id);
+    locA = a.body.location._id;
+    locB = b.body.location._id;
 
-    const item = await Item.create({
-        name: 'Test Item ' + nanoid(4),
-        code: 'TEST-' + nanoid(6),
-    });
-    console.log('item name:', item.name);
-    itemId = item._id
-    try {
-        // const itemStock = 
-        await request(app)
-            .post('/api/inventory')
-            .set('Authorization', `Bearer ${token}`)
-            .send({ itemId: itemId, locationId: fromLocation, quantity: 0 })
-        // console.log(itemStock);
-        // const itemUpdate = 
-        await request(app)
-            .put(`/api/inventory/${itemId}/quantity`)
-            .set('Authorization', `Bearer ${token}`)
-            .send({ locationId: fromLocation, quantity: 5} );
-            // console.log(itemUpdate);
-    } catch (error) {
-        console.error(error.message);
-        console.log("Cannot update item quantity -> transfer.test");
-    }
+    // Create Item
+    const item = await request(app)
+        .post('/api/items')
+        .set('Authorization', `Bearer ${token}`)
+        .send({ name: 'TransferItem' });
+    itemId = item.body.item._id;
+
+    // Add quantity to created item
+    await request(app)
+        .post(`/api/inventory/${itemId}/in`)
+        .set('Authorization', `Bearer ${token}`)
+        .send({ locationId: locA, quantity: 20 });
+});
+
+describe('Transfer Logic', () => {
     
-});
-
-afterAll(async () => {
-    await User.deleteMany({});
-    await Location.deleteMany({});
-    await Item.deleteMany({});
-    await Transfer.deleteMany({});
-    await mongoose.disconnect();
-    console.log('Disconnected from MongoDB and closed the app.');
-    // await setTimeout(1000);
-    const handles = process._getActiveRequests();
-    console.log('Active handles:', handles);
-});
-
-describe('Transfer API', () => {
-    it('should create a valid transfer', async () => {
-        log({ fromLocation, toLocation, itemId });
+    it('initialize temp transfer', async () => {
+        console.log("transfer logic token:", token)
         const res = await request(app)
-            .post('/api/transfers')
+            .post('/api/transfers/temp/init')
             .set('Authorization', `Bearer ${token}`)
-            .send({
-                fromLocation: fromLocation,
-                toLocation: toLocation,
-                items: [
-                    {
-                        item: itemId,
-                        quantity: 3
-                    }
-                ]
-            });
-        expect(res.statusCode).toBe(201);
-        expect(res.body.transfer).toHaveProperty('_id');
-        expect(res.body.transfer.fromLocation.toString()).toBe(fromLocation.toString());
-        expect(res.body.transfer.toLocation.toString()).toBe(toLocation.toString());
-        expect(res.body.transfer.items.length).toBe(1);
-        expect(res.body.transfer.items[0].quantity).toBe(3);
+            .send({ fromLocation: locA, toLocation: locB })
+        const users = await User.find();
+        console.log("init temp user list -> ", users.map((user) => user.email));
+        console.log("init temp trans. -> ", res.body)
+        expect(res.statusCode).toBe(201)
     });
 
-    it('should fail to create a transfer without items', async () => {
+    it('adds item to tempTransfer', async () => {
         const res = await request(app)
-            .post('/api/transfers')
+            .post('/api/transfers/temp/add')
             .set('Authorization', `Bearer ${token}`)
-            .send({
-                fromLocation: fromLocation,
-                toLocation: toLocation,
-                items: []
-            });
-        expect(res.statusCode).toBe(400);
-        expect(res.body.error).toMatch(/empty/i);
+            .send({ itemId, quantity: 5, sourceLocationId: locA });
+
+        expect(res.statusCode).toBe(201)
+        console.log("adds item to temp:", res.body)
     });
 
-});
+    it('finalaize temp transfer', async () => {
+        const res = await request(app)
+            .post('/api/transfers/temp/finalize')
+            .set('Authorization', `Bearer ${token}`)
+            
+        transfer = res.body;
+        console.log("finalize temp trans.", transfer);
+        expect(res.statusCode).toBe(201)
+    })
+
+    it('confirms transfer updates inventory', async () => {
+        console.log("transfer_id -> :", transfer._id)
+        const res = await request(app)
+            .put(`/api/transfers/${transfer._id}/confirm`)
+            .set('Authorization', `Bearer ${token}`)
+         console.log("cinfirm trans:", res.body)
+        expect(res.statusCode).toBe(200);
+       
+    })
+})
+
+
+
+
 

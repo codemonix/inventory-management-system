@@ -29,3 +29,5 @@ export function debugLog(...args) {
         console.log(`Debug Log (unknown location):`, ...args);
     }
 }
+
+export default debugLog

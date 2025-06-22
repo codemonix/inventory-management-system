@@ -1,7 +1,7 @@
 import { logInfo } from "../utils/logger";
 
 
-const FinalizedTransferCard = ({ transfer, onViewItems }) => {
+const FinalizedTransferCard = ({ transfer, onViewItems, onConfirm }) => {
     logInfo(transfer.items[0])
 
     return (
@@ -18,7 +18,16 @@ const FinalizedTransferCard = ({ transfer, onViewItems }) => {
                 </div>
                 <div className="flex items-center flex-col pl-2 ml-auto" >
                     <button onClick={onViewItems} className="px-4 py-1 cursor-pointer bg-blue-400 rounded text-white m-1 w-30 " >Items</button>
-                    <button className="px-4 py-1 cursor-pointer bg-blue-400 rounded text-white m-1 w-30">Confirm</button>
+                    <button 
+                        onClick={onConfirm}
+                        disabled={transfer.status === 'confirmed'}
+                        className={`px-4 py-1 rounded text-white m-1 w-30 ${
+                            transfer.status === 'confirmed' ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-400 cursor-pointer'
+                        }`}
+                        >
+                        Confirm
+                    </button>
+                    {/* <button onClick={onConfirm} className="px-4 py-1 cursor-pointer bg-blue-400 rounded text-white m-1 w-30">Confirm</button> */}
                 </div>
             </div>
 

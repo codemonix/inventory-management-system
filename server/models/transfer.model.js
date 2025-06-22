@@ -54,9 +54,11 @@ const transferSchema = new mongoose.Schema({
     },
     status: {
         type: String,
-        enum: [ 'assembling','in_transit', 'comleted'],
+        enum: [ 'assembling','in_transit', 'confirmed'],
         default: 'assembling'
-    }
+    },
+    confirmedAt: Date,
+    confirmedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
 }, { timestamps: true });
 
 export default mongoose.model('Transfer', transferSchema);

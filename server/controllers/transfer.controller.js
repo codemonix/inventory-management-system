@@ -1,8 +1,9 @@
 
-import TransferPackage from '../models/transfer.model.js';
+import Transfer from '../models/transfer.model.js';
 import Inventory from '../models/inventory.model.js';
 import tempTransferModel from '../models/tempTransfer.model.js';
 import { debugLog } from '../utils/logger.js';
+import log from '../utils/logger.js'
 
 
 export const getTempTransfer = async (req, res) => {
@@ -63,7 +64,7 @@ export const finalizeTempTransfer = async (req, res) => {
         quantity: i.quantity
     }));
 
-    const newTransfer = new TransferPackage({
+    const newTransfer = new Transfer({
         fromLocation: temp.fromLocation,
         toLocation: temp.toLocation,
         items: cleanedItems,
@@ -112,7 +113,7 @@ export const createTransfer = async ( req, res ) => {
         await Promise.all(updates);
 
         // Create transfer with pending status
-        const transfer = await TransferPackage.create({
+        const transfer = await Transfer.create({
             fromLocation,
             toLocation,
             items,
@@ -130,9 +131,11 @@ export const createTransfer = async ( req, res ) => {
 // Confirm transfer received at destination
 export const confirmTransfer = async (req, res) => {
     try {
-        const { transferId } = req.params;
-        const transfer = TransferPackage.findById(transferId);
-
+        const { id } = req.params;
+        log("transferId -> ", id)
+        const transfer = await Transfer.findById(id);
+        log(transfer);
+        log(transfer.toLocation);
         if (!transfer) {
             res.status(400).json({ message: 'Transfer not found' });
         }
@@ -144,7 +147,9 @@ export const confirmTransfer = async (req, res) => {
         // add items to destination
         const updates =[];
         for (const { item, quantity } of transfer.items) {
-            const destStock = await Inventory.findOne({ item, location: transfer.toLocation });
+            log("item.id -> ", item )
+            const destStock = await Inventory.findOne({ itemId: item, locationId: transfer.toLocation });
+            log("destStock -> ", destStock)
 
 
             if (destStock) {
@@ -152,8 +157,8 @@ export const confirmTransfer = async (req, res) => {
                 updates.push(destStock.save());
             } else {
                 updates.push(Inventory.create({
-                    item,
-                    location: transfer.toLocation,
+                    itemId: item,
+                    locationId: transfer.toLocation,
                     quantity
                 }));
             }
@@ -161,13 +166,14 @@ export const confirmTransfer = async (req, res) => {
         await Promise.all(updates);
 
         // Update transfer status to received
-        transfer.status = 'received';
+        transfer.status = 'confirmed';
         await transfer.save();
 
         res.status(200).json({ message: 'Transfer received and stock updated', transfer });
     } catch (error) {
         log(error.message);
         res.status(500).json({ message: 'Failed to confirm transfer' });
+        
     }
 };
 
@@ -175,7 +181,7 @@ export const confirmTransfer = async (req, res) => {
 
 export const getAllTransfers = async (req, res) => {
     try {
-        const transfers = await TransferPackage.find()
+        const transfers = await Transfer.find()
             .populate('fromLocation')
             .populate('toLocation')
             .populate('items.item')

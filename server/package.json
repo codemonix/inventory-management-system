@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "nodemon server.js",
     "start": "node server.js",
-    "test": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js --runInBand"
+    "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js --runInBand",
+    "test:mongo": "node --experimental-vm-modules node_modules/jest/bin/jest.js tests/MongoMemoryServer.test.js"
   },
   "dependencies": {
     "bcryptjs": "^3.0.2",

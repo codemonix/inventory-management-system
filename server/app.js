@@ -3,7 +3,7 @@
 import express from 'express';
 import dotenv from 'dotenv';
 import cors from 'cors';
-import connectDB from './config/db.config.js';
+
 import inventoryRoutes from './routes/inventory.routes.js';
 import helmet from 'helmet';
 import morgan from 'morgan';
@@ -15,7 +15,6 @@ import userRoutes from './routes/user.routes.js';
 
 dotenv.config();
 
-connectDB();
 
 const app = express();
 app.use(cors());
