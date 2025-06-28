@@ -1,6 +1,6 @@
 
 import api from "../api/api";
-// import { logInfo } from "../utils/logger";
+// import { logInfo } from "../utils/logger";       
 
 export const getUsers = () => {
     const data = api.get('/users');

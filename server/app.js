@@ -12,6 +12,7 @@ import authRouts from './routes/auth.routes.js';
 import itemRoutes from './routes/item.routes.js';
 import locationRoutes from './routes/location.routes.js';
 import userRoutes from './routes/user.routes.js';
+import setupRoutes from './routes/setup.routes.js';
 
 dotenv.config();
 
@@ -29,6 +30,7 @@ app.use('/uploads', express.static('uploads'));
 app.use('/api/items', itemRoutes);
 app.use('/api/locations', locationRoutes);
 app.use('/api/users', userRoutes);
+app.use('/api/setup', setupRoutes)
 
 
 export default app;

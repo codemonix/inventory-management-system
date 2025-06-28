@@ -15,6 +15,7 @@ import LogsPage from './pages/admin/LogsPage.jsx';
 import SettingsPage from './pages/admin/SettingsPage.jsx';
 import UserManagementPage from './pages/admin/UserManagementPage.jsx';
 import RegisterPage from './pages/RegisterPage.jsx';
+import SetupPage from './pages/admin/SetupPage.jsx';
 
 
 function RequireAdmin({ children }) {
@@ -30,9 +31,10 @@ function App() {
       <Router>
         <Routes>
           {/* Public routes */}
-          <Route path="/" element={<RedirectToCorrectPage />} />
+          <Route path='/setup' element={<SetupPage />} />
           <Route path='/register' element={<RegisterPage />} />
           <Route path="/login" element={<LoginPage />} />
+          <Route index element={<RedirectToCorrectPage />} />
           { /* Protected Routes */ }
           <Route element={<PrivateRoutes />}>
             <Route path="/logout" element={<LogoutPage />} />
