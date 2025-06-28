@@ -114,16 +114,16 @@ const ItemCard = ({ item, onIn, onOut, onDelete, onEdit, onImageUpload, totalSto
                 </CardContent>
 
                 <Box sx={{ display: "flex", gap: 1, px: 1, pb: 1 }}>
-                    <IconButton onClick={(e) => onEdit(item, e.currentTarget)} color="Primary" >
+                    <IconButton onClick={(e) => onEdit(item, e.currentTarget)} color="Primary" aria-label="edit">
                         <EditIcon />
                     </IconButton>
-                    <IconButton onClick={() => onDelete(item)} color="error" >
+                    <IconButton onClick={() => onDelete(item)} color="error" aria-label="delete">
                         <DeleteIcon />
                     </IconButton>
-                    <IconButton onClick={onIn} color="primary" >
+                    <IconButton onClick={onIn} color="primary" aria-label="stock-in">
                         <InputTwoToneIcon />
                     </IconButton>
-                    <IconButton onClick={onOut} color="error" >
+                    <IconButton onClick={onOut} color="error" aria-label="stock-out" >
                         <OutputTwoTone />
                     </IconButton>
                 </Box>

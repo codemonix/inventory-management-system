@@ -3,6 +3,9 @@ import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 
 
+
+
+
 const backendUrl = "http://localhost:5000";
 console.log("Backend URL:", backendUrl); // Log the backend URL to check if it's being retrieved correctly
 
@@ -20,4 +23,9 @@ export default defineConfig({
   plugins: [
     react(),
     tailwindcss()],
+  test: {
+    globals: true,
+    environment: 'jsdom',
+    setupFiles: './src/setupTests.js',
+  },
 })

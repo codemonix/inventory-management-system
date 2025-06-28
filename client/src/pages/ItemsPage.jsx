@@ -26,9 +26,7 @@ import SearchFilterBar from '../components/SearchFilterBar.jsx';
 const ItemsPage = () => {
 
     const dispatch = useDispatch()
-
     const [ searchParams, setSearchParams ] = useSearchParams();
-
     const items = useSelector(selectItemsList);
     const status = useSelector(selectItemsStatus);
     const error = useSelector(selectItemsError);
@@ -38,9 +36,6 @@ const ItemsPage = () => {
     const sort = useSelector(selectItemsSort);
     const search = useSelector(selectItemsSearch);
 
-
-
-    // const [items, setItems] = useState([]);
     const [showConfirm, setShowConfirm] = useState(false);
     const [itemToDelete, setItemToDelete] = useState(null);
     const [itemToEdit, setItemToEdit] = useState(null);
@@ -48,13 +43,6 @@ const ItemsPage = () => {
     const [triggerUpdate, setTriggerUpdate] = useState(0);
     const [showEditForm, setShowEditForm] = useState(false);
     const [showItemForm, setShowItemForm] = useState(false);
-    // const [openInOutDialog, setOpenInOutDialog ] = useState(false)
-    // const [itemInOut, setItemInOut] = useState(null);
-    // const [actionType, setActionType] = useState('IN');
-    
-    // useEffect(() => {
-    //     getItems().then(setItems).catch((error) => console.error("Error fetching items:", error.message));
-    // }, [triggerUpdate]);
 
     useEffect(() => {
         const pageParam = parseInt(searchParams.get('page')) || 1;
@@ -72,11 +60,6 @@ const ItemsPage = () => {
         dispatch(loadItems({ page, limit, sort, search }));
     }, [dispatch, page, limit, sort, search, triggerUpdate]);
 
-    // useEffect(() => {
-    //     if (!searchParams.get('page') || !searchParams.get('limit')) {
-    //         setSearchParams({ page: 1, limit: 10})
-    //     }
-    // })
 
     const handlePageChange = ( newPage ) => { 
         const params = Object.fromEntries(searchParams.entries())
@@ -85,7 +68,6 @@ const ItemsPage = () => {
             page: newPage,
             limit: limit
         });
-        // dispatch(setPage(newPage)) // loadItems will re‐fire in the useEffect because `page` changed
     };
 
     const updateSearchParams = (newParams) => {
@@ -97,8 +79,6 @@ const ItemsPage = () => {
             ...newParams
         });
     };
-
-
 
     const toggleItemForm = () => {
         setShowItemForm((prev) => !prev);
@@ -167,7 +147,6 @@ const ItemsPage = () => {
 
     const handleEditFormSave = async (savedItem) => {
         logInfo("Saved item:", savedItem);
-        // setItems((prevItems) => prevItems.map(item => item._id === savedItem._id ? savedItem : item));
         const updatedItems = items.map( (item) => 
             item._id === savedItem._id ? savedItem : item
         );
@@ -178,16 +157,9 @@ const ItemsPage = () => {
         setItemToEdit(null); // Clear the editing item
         setTriggerUpdate(prev => prev + 1); // Trigger re-render to show updated item
 
-
     }
 
-    // const handleInOutClick = (itemId, type ) => {
-    //     setItemInOut(itemId)
-    //     setActionType(type)
-    //     setOpenInOutDialog(true)
-    // }
-
-
+    console.log('Items from store:', items)
     logInfo("items length", items.length);
     return (
         <div>
