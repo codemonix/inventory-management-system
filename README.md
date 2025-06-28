@@ -130,5 +130,3 @@ This project is licensed under the MIT License — see the [LICENSE](LICENSE) fi
 
 * Implement undo/redo functionality with Redux
 * Add password reset via email support
-
-*This project was developed for a real client and serves as a demonstration of professional-level backend and frontend engineering in a real-world setting.*
