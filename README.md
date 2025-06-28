@@ -120,11 +120,7 @@ A robust, full-stack Inventory Management System to track items, locations, and 
 
 ---
 
-## 📜 License
 
-This project is licensed under the MIT License — see the [LICENSE](LICENSE) file for details.
-
----
 
 ## 💡 Future Roadmap
 
