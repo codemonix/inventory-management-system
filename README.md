@@ -116,7 +116,7 @@ A robust, full-stack Inventory Management System to track items, locations, and 
 | DELETE | `/api/items/:id`   | Delete item                     |
 | ...    | ...                | ...                             |
 
-*(Add full list of routes here)*
+* will be updated
 
 ---
 
