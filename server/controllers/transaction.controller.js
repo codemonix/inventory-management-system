@@ -1,10 +1,11 @@
-import { getTransactionLogs } from "../services/transactionService";
-import log from '../utils/logger';
+import { getTransactionLogs } from "../services/transactionService.js";
+import log, { debugLog } from '../utils/logger.js';
 
 
 export async function fetchLogsHandler(req, res) {
     try {
         const { search, sortBy, sortOrder, skip, limit } = req.query
+        debugLog("search:", search)
         const { logs, total } = await getTransactionLogs({
             search,
             sortBy,

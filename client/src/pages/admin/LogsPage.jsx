@@ -23,6 +23,7 @@ import { debounce } from "@mui/material";
 export default function LogsPage() {
     const dispatch = useDispatch();
     const { items, loading, hasMore, skip } = useSelector((state) => state.transactions);
+    console.log("LogsPage -> items", items)
     const [ searchParams, setSearchParams ] = useSearchParams();
 
     const search = searchParams.get( 'search' ) || '';
@@ -38,7 +39,7 @@ export default function LogsPage() {
                 dispatch(fetchLogs({ search, sortBy, sortOrder, skip, limit: 20 }));
             }
         });
-        if (node) observer.current.observer(node);
+        if (node) observer.current.observe(node);
     }, [loading, hasMore, search, sortBy, sortOrder,skip, dispatch]);
 
     // Handle debounced search
@@ -105,7 +106,7 @@ export default function LogsPage() {
                         </TableRow>
                     </TableHead>
                     <TableBody >
-                        {items.map((tx, idx) => {
+                        {items.map((tx, idx) => (
                             <TableRow 
                                 key={tx._id}
                                 ref={idx === items.length -1 ? lastRowRef : null}
@@ -118,7 +119,7 @@ export default function LogsPage() {
                                 <TableCell >{tx.locationId?.name}</TableCell>
                                 <TableCell >{tx.note}</TableCell>
                             </TableRow>
-                        })}
+                        ))}
                     </TableBody>
                 </Table>
             </TableContainer>

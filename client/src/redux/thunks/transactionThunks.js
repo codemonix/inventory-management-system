@@ -4,6 +4,7 @@ import { getLogs } from "../../services/transactionServices";
 export const fetchLogs = createAsyncThunk(
     'logs/fetchLogs',
     async ( params, thunkAPI ) => {
+        console.log("fetchLogs Thunk params: -> ", params)
         try {
             const response = await getLogs(params);
             return response;

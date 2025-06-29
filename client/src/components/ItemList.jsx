@@ -65,7 +65,7 @@ const ItemList = ({ items, onDelete, onEdit, onImageUpload }) => {
     const handleClose = () => {
         setOpenInOutDialog(false)
     }
-    // console.log("ItemList -> items", items);
+    
     return (
         <div className=" p-2">
             { items.map((item) => (

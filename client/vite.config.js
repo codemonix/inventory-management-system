@@ -13,6 +13,7 @@ console.log("Backend URL:", backendUrl); // Log the backend URL to check if it's
 export default defineConfig({
   // this is for accessing imade for items from backend whithout cors problem
   server: {
+    host: true,
     proxy: {
       '/uploads': {
         target: backendUrl,

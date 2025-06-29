@@ -10,7 +10,7 @@ import EditIcon from "@mui/icons-material/Edit";
 import InputTwoToneIcon from '@mui/icons-material/InputTwoTone'
 import OutputTwoTone from '@mui/icons-material/OutputTwoTone'
 import imageCompressor from "browser-image-compression";
-// import axios from "axios";
+import ImageWithCameraOver from "./ImageWithCameraOver";
 import { useState } from "react";
 import api from "../api/api";
 import { logInfo } from "../utils/logger";
@@ -27,7 +27,7 @@ const ItemCard = ({ item, onIn, onOut, onDelete, onEdit, onImageUpload, totalSto
     logInfo("totalStock", totalStock( item._id))
 
     const handleImageChange = () => {
-        console.log("ItemCard -> handleImageChange -> item", item.code);
+        logInfo("ItemCard -> handleImageChange -> item", item.code);
         const input = document.createElement("input");
         input.type = "file";
         input.accept = "image/*";
@@ -130,13 +130,7 @@ const ItemCard = ({ item, onIn, onOut, onDelete, onEdit, onImageUpload, totalSto
             </Box>
             
             { item.imageUrl && (
-                <Box 
-                component="img"
-                src={item.imageUrl}
-                alt={item.name}
-                onDoubleClick={handleImageChange}
-                sx={{ width: 100, height: "100%", objectFit: "cover", borderRadius: 1, ml: 1, cursor: "pointer" }}/>
-                
+                <ImageWithCameraOver imageUrl={item.imageUrl} onChange={handleImageChange} />
             )}
             {loading && ( <div>Loading...</div>)}
         </Card>
