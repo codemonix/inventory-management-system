@@ -1,19 +1,12 @@
 
-import { Drawer, List, ListItemButton, ListItemIcon, Divider, ListItem, ListItemText, IconButton, Box, Typography } from "@mui/material";
+import { Drawer, List, ListItemButton, Divider, ListItem, ListItemText, IconButton, Box, Typography } from "@mui/material";
 import CloseIcon from '@mui/icons-material/Close';
-// import { HomeIcon } from '@mui/icons-material';
-// import { useState } from "react";
-// import { isLoggedIn } from "../../utils/auth";
 import MenuIcon from '@mui/icons-material/Menu';
-
 import { NavLink } from "react-router-dom";
-// import ManageSideDrawer from "../_ManageSidebar";
 
 const drawerWidth = 240;
 
 const ManageSideDrawer = ({ open, onClose, toggleSidebar }) => {
-    // const [isOpen, setIsOpen] = useState(open);
-    console.log("ManageSideDrawer -> open", open);
 
     const navItems = [
         { to: '/manage/users', label: 'User Management' },
@@ -21,9 +14,6 @@ const ManageSideDrawer = ({ open, onClose, toggleSidebar }) => {
         { to: '/manage/logs', label: 'Log Monitoring' },
     ];
 
-    // const toggleSidebar = () => {
-    //     setIsOpen((prev) => !prev);
-    // }
 
     const linkStyles = ({ isActive}) => ({
     color: isActive ? '#1976d2' : 'inherit',
@@ -97,14 +87,10 @@ const ManageSideDrawer = ({ open, onClose, toggleSidebar }) => {
 
     return (
         <div>
-            {/* <IconButton onClick={onClose} sx={{ position: 'fixed', top: 0, left: 10, zIndex: 1000 }}>
-                <MenuIcon fontSize="large" />
-            </IconButton> */}
             <IconButton onClick={toggleSidebar} sx={{ position: 'fixed', top: 0, left: 10, zIndex: 1000 }}>
                 <MenuIcon fontSize="large" />
             </IconButton>
             <Drawer open={open} onClose={onClose} >
-
                 {drawerContent}
             </Drawer>
         </div>

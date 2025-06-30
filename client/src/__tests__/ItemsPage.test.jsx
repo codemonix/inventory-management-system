@@ -8,24 +8,15 @@ vi.mock('../redux/slices/itemsSlice.js', async () => {
     const actual = await import('../redux/slices/itemsSlice.js');
     return {
         ...actual,
-        loadItems: () => () => {}
-        // fetchItems: vi.fn(() => {
-        //     console.log("MOK fetch items");
-        //     return () => {};
-        // }),
+        loadItems: () => () => {} //dommy function for dispatch
     }
 })
 
-
-
+// The order of import matters
 import itemsReducer from '../redux/slices/itemsSlice.js';
 import locationReducer from "../redux/slices/locationsSlice.js"
 import ItemsPage from '../pages/ItemsPage.jsx';
 import { Provider } from "react-redux";
-
-
-
-
 
 describe('ItemsPage', () => {
     it('renders item from store', () => {

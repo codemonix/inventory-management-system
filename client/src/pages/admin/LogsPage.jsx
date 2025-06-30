@@ -1,4 +1,4 @@
-import { useEffect, useRef, useCallback } from "react";
+import { useEffect, useRef, useCallback, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchLogs } from "../../redux/thunks/transactionThunks";
 import { resetLogs } from "../../redux/slices/transactionLogSlice";
@@ -25,6 +25,7 @@ export default function LogsPage() {
     const { items, loading, hasMore, skip } = useSelector((state) => state.transactions);
     console.log("LogsPage -> items", items)
     const [ searchParams, setSearchParams ] = useSearchParams();
+    const [ searchText, setSearchText ] = useState('');
 
     const search = searchParams.get( 'search' ) || '';
     const sortBy = searchParams.get( 'sortBy' ) || 'createdAt';
@@ -48,17 +49,24 @@ export default function LogsPage() {
         debounce(value => {
             setSearchParams(prev => {
                 const newParams = new URLSearchParams(prev);
-                newParams.set('searsh', value);
+                if (value) {
+                    newParams.set('search', value);
+                } else {
+                    newParams.delete('search')
+                }
                 return newParams;
             });
         }, 400 )
     ).current;
 
     const handleSearchChange = e => {
-        debauncedSearch(e.target.value);
+        const value = e.target.value;
+        setSearchText(value);
+        debauncedSearch(value);
     };
 
     const handleResetFilter = () => {
+        setSearchText('');
         setSearchParams({});
     };
 
@@ -80,8 +88,8 @@ export default function LogsPage() {
 
     return (
         <div >
-            <Stack direction={"row"} spacing={2} alignItems={"center"} marginY={2} >
-                <TextField label="Search logs" fullWidth defaultValue={search} onChange={handleSearchChange} />
+            <Stack direction={"row"} spacing={2} alignItems={"center"} marginY={2} bgcolor={'rgba(255,255,255,0.7)'} p={1} borderRadius={1}>
+                <TextField label="Search logs" fullWidth value={searchText} onChange={handleSearchChange} />
                 <Button variant="outlined" onClick={handleResetFilter}>Reset</Button>
             </Stack>
 
@@ -93,6 +101,7 @@ export default function LogsPage() {
                                 <TableSortLabel active={sortBy === 'createdAt'} 
                                     direction={sortOrder}
                                     onClick={() => handleSort('creaytedAt')}
+                                    sx={{ width: 50, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'}}
                                 >
                                     Time
                                 </TableSortLabel>
@@ -111,7 +120,9 @@ export default function LogsPage() {
                                 key={tx._id}
                                 ref={idx === items.length -1 ? lastRowRef : null}
                             >
-                                <TableCell>{new Date(tx.createdAt).toLocaleString()}</TableCell>
+                                <TableCell
+                                    sx={{ width: 50, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'}}
+                                    >{new Date(tx.createdAt).toLocaleString()}</TableCell>
                                 <TableCell >{tx.itemId?.name}</TableCell>
                                 <TableCell >{tx.type}</TableCell>
                                 <TableCell >{tx.quantity}</TableCell>
@@ -132,11 +143,3 @@ export default function LogsPage() {
         </div>
     )
 }
-
-
-
-// const LogsPage = () => {
-//     return <div> Admin - Log Monitoring</div>;
-// };
-
-// export default LogsPage;

@@ -1,13 +1,13 @@
 import { useSelector, useDispatch } from "react-redux";
 import { useState, useEffect } from "react";
-import { finalizeTransfer, createTransfer, loadTransfers, loadTempTransfer, confirmTransfer } from "../redux/slices/transferSlice.js";
+import { finalizeTransfer, createTransfer, loadTransfers, loadTempTransfer, confirmTransfer, clearTempTransferState } from "../redux/slices/transferSlice.js";
 import TempTransferCard from "./TempTransferCard.jsx";
 import FinalizedTransferCard from "./FinalizedTransferCard.jsx";
 import StartTransferDialog from "./StartTransferDialog.jsx";
 import { fetchLocations } from "../redux/slices/locationsSlice.js";
 import { logDebug, logInfo } from "../utils/logger.js";
 import { selectTempTransferDetailed } from "../redux/selectors/transferSelector.js";
-import { loadItems } from "../redux/slices/itemsSlice.js";
+import { loadAllItems } from "../redux/slices/itemsSlice.js";
 import { Dialog, DialogContent, DialogTitle } from "@mui/material";
 import TransferItemsList from "./TransferItemsList.jsx";
 import ConfirmModal from "./ConfirmModal.jsx";
@@ -16,26 +16,27 @@ import ConfirmModal from "./ConfirmModal.jsx";
 
 
 
+
 const TransferList = () => {
-    const { transfers, tempTransfer, status } = useSelector((state) => state.transfer);
-    // const status = useSelector(( state ) => state.transfer.status)
-    // const { items } = useSelector((state) => state.items);
+    const { transfers, tempTransfer, transferStatus, tempTransferStatus } = useSelector((state) => state.transfer);
     const populatedTempTransfer = useSelector(selectTempTransferDetailed);
-    const locations = useSelector((state) => state.locations.locations);
     const dispatch = useDispatch();
     const [showdialog, setShowdialog] = useState(false);
     const [openItems, setOpenItems] = useState(false);
     const [selectedTransfer, setSelectedTransfer] = useState(null);
     const [confirmOpen, setConfirmOpen] = useState(false);
 
+
     useEffect(() => {
-        dispatch(loadItems());
-        dispatch(fetchLocations());
-        if (status === 'idle') {
+        if (transferStatus === 'idle') {
             dispatch(loadTransfers());
             dispatch(loadTempTransfer());
         }
-    }, [dispatch, status ]);
+    }, [dispatch, transferStatus ]);
+
+    useEffect(() => {
+        dispatch(loadAllItems());
+    },[])
 
     useEffect (() => {
         logInfo("TransferList populatedTempTransfer:", populatedTempTransfer)
@@ -50,21 +51,23 @@ const TransferList = () => {
     }, [tempTransfer])
 
     useEffect(() => {
-        logInfo("TransferList locations:", locations)
-    }, [locations])
+        dispatch(fetchLocations());
+        // logInfo("TransferList locations:", locations)
+    },[])
 
-    const handleTransferConfirm = ( transfer ) => {
+    const handleTransferConfirmDialog = ( transfer ) => {
         if (transfer.status !== 'confirmed') {
             setSelectedTransfer( transfer );
             setConfirmOpen(true)
         } else {
             logInfo("transfer already confirmed!")
         }
-        console.log("TransferList -> handleTransferConfirm -> ",transfer)
+        logInfo("TransferList -> handleTransferConfirm -> ",transfer)
     };
 
     const handleConfirmTransfer = () => {
         dispatch(confirmTransfer(selectedTransfer));
+        setConfirmOpen(false);
     }
 
 
@@ -79,29 +82,35 @@ const TransferList = () => {
     }
 
     const handleFinalize = () => {
-        if (tempTransfer.items.length > 0) {
-            dispatch(finalizeTransfer());
-            dispatch(loadTransfers)
+        if (tempTransfer?.items?.length > 0) {
+            dispatch(finalizeTransfer()).then((result) => {
+                if (finalizeTransfer.fulfilled.match(result)) {
+                    return dispatch(clearTempTransferState())
+                }
+            }).then(() => dispatch(loadTransfers())).then(() => dispatch(loadTempTransfer()));
         }
     }
 
     const handleStartNewTransfer = ( fromLocation, toLocation ) => {
-        dispatch(createTransfer({fromLocation, toLocation}));
+        dispatch(createTransfer({fromLocation, toLocation})).then(
+            dispatch(loadTempTransfer())
+        );
+
         setShowdialog(false);
     }
 
     logDebug("poppulatedTemp -> TransferList -> befor return:", populatedTempTransfer)
-    logDebug("TransferList status:", status)
+    logDebug("TransferList status:", transferStatus)
 
     return (
         <div className="p-4">
             <section className="mb-6">
                 <h2 className="text-xl font-bold mb-2">Temporary Transfer (In progress)</h2>
-            { !populatedTempTransfer || !populatedTempTransfer.fromLocation ? (
+            { tempTransferStatus === 'loading' ? (
                 <>
                     <p className="text-gray-500 italic" >Loading temporary transfer ... </p>
                 </>
-            ) : populatedTempTransfer.items.length === 0 ? (
+            ) : !tempTransfer ? (
                 <>
                     <p className="text-gray-500 italic">No active transfer in progress.</p>
                     <button onClick={() => setShowdialog(true)}
@@ -122,7 +131,7 @@ const TransferList = () => {
                 ) : (
                  transfers.map((transfer) => (
                     <FinalizedTransferCard key={ transfer._id } transfer={ transfer } onViewItems={ () => handleOpenItems(transfer) }
-                        onConfirm={ () => handleTransferConfirm(transfer)}
+                        onConfirm={ () => handleTransferConfirmDialog(transfer)}
                     />
                 ))
                 )}

@@ -40,7 +40,7 @@ const SearchFilterBar = ({search, limit, sort, onSearchChange, onLimitChange, on
             sx={{
                 display: "flex",
                 gap: 2,
-                padding: 2,
+                padding: 1,
                 marginBottom: 2,
                 flexWrap: "wrap",
                 alignItems: "center",

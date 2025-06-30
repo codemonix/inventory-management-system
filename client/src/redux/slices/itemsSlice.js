@@ -10,7 +10,9 @@ export const loadItems = createAsyncThunk(
             logInfo("loadPaginatedItems response: ", data);
             return data;
         } catch (error) {
-            return rejectWithValue(error.message)
+            const message = error.response?.data?.message || error.message;
+            console.error("Rejected loadItems with:", message);
+            return rejectWithValue(error.response?.data?.message || error.message)
         }
     });
 
@@ -71,7 +73,7 @@ const itemsSlice = createSlice({
             })
             .addCase(loadItems.rejected, (state, action) => {
                 state.status = 'failed';
-                state.error = action.error.message;
+                state.error = action.payload || action.error.message;
             })
             .addCase(loadAllItems.pending, (state) => {
                 state.statusFull = 'loading';

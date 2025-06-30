@@ -11,7 +11,7 @@ import { loadAllItems } from "../redux/slices/itemsSlice.js";
 const TransfersPage = () => {
     // const state = useSelector((state) => state)
     // logDebug("state:", state)
-    const status = useSelector(( state ) => state.transfer.status);
+    const status = useSelector(( state ) => state.transfer.trasferStatus);
     const error = useSelector(( state ) => state.transfer.error);
     const dispatch = useDispatch();
     useEffect(() => {

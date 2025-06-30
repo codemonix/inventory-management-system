@@ -6,15 +6,6 @@ import ListAltIcon from '@mui/icons-material/ListAlt';
 import ManageSideDrawer from './ManageSideDrawer';
 import { useState } from 'react';
 
-// const drawerWidth = 240;
-
-// const linkStyles = ({ isActive}) => ({
-//     color: isActive ? '#1976d2' : 'inherit',
-//     fontWeight: isActive ? 'bold' : 'normal',
-//     textDecoration: 'none',
-// });
-
-
 
 export default function AdminLayout() {
     const [ open, setOpen ] = useState(false);
@@ -40,36 +31,6 @@ export default function AdminLayout() {
             <main style={{ width: '100%', padding: '80px 24px 24px'}}>
                 <Outlet />
             </main>
-            {/* <Drawer 
-                variant='permanent'
-                sx={{ 
-                    width: drawerWidth,
-                    flexShrink: 0,
-                    '& .MuiDrawer-paper': {
-                        width: drawerWidth,
-                        boxSizing: 'border-box',
-                    },
-                }}
-                >
-                <Toolbar />
-                <List >
-                    <ListItemButton component={NavLink} to='users' style={linkStyles} >
-                        <ListItemIcon>
-                            <SupervisorAccountIcon />
-                        </ListItemIcon>
-                        <ListItemText primary='User Management' />
-                    </ListItemButton>
-
-                    <ListItemButton component={NavLink} to='logs' style={linkStyles} >
-                        <ListItemIcon>
-                            <ListAltIcon />
-                        </ListItemIcon>
-                        <ListItemText primary='Log Monitoring' />
-                    </ListItemButton>
-                </List>
-            </Drawer> */}
-            
-            
         </div>
     );
 }

@@ -1,4 +1,4 @@
-import { expect } from "vitest"
+import { expect, test } from "vitest"
 
 
 test('adds number correctly', () => {
