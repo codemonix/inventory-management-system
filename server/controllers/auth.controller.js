@@ -18,7 +18,11 @@ export async function  registerUser(req, res) {
 
 
         const existing = await User.findOne({ email });
-        if (existing) return res.status(409).json({ error: 'Email already registered' });
+        // log(existing);
+        if (existing) {
+            log('Email already exist!')
+            return res.status(409).json({ error: 'Email already registered' });
+        } 
 
         const hashed = await bcrypt.hash(password, 10);
         const isApproved = process.env.DEFAULT_USER_APPROVED;
@@ -53,6 +57,7 @@ export async function loginUser(req, res) {
         // check if user exists
         const { email, password } = req.body;
         const user = await User.findOne({ email });
+        log(user)
         if (!user || !user.isActive) {
             return res.status(401).json({ message: 'Invalid credentials or inactive account' });
         }
