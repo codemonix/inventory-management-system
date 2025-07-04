@@ -2,7 +2,7 @@ import mongoose from 'mongoose';
 import { startMongoMemoryServer, stopMongoMemoryServer } from './mongoServer';
 import dotenv from 'dotenv';
 
-dotenv.config({ path: '.env.test '})
+dotenv.config({ path: '.env.test'})
 
 let mongo;
 
