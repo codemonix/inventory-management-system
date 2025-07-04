@@ -16,14 +16,11 @@ const ItemList = ({ items, onDelete, onEdit, onImageUpload }) => {
     
 
     const dispatch = useDispatch()
-    // dispatch(fetchLocations())
     const locations = useSelector((state) => state.locations.locations)
     useEffect (() => {
         fetchFullInventory().then(setInventory).catch((error) => logError(error.message))
-        // dispatch(fetchInventory())
         dispatch(fetchLocations())
     },[dispatch, triggerUpdate])
-
 
     logInfo('locations', locations)
     logDebug('Items', items)
@@ -56,8 +53,6 @@ const ItemList = ({ items, onDelete, onEdit, onImageUpload }) => {
         );
         
         if (match.length === 0) return 0;
-        // logDebug('match', match)
-        // logDebug('match.stock', match[0].stock)
         const total = match[0].stock.reduce((sum, entry) => sum + entry.quantity, 0)
         return total
     }

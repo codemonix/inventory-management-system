@@ -7,7 +7,7 @@ import { logDebug, logError, logInfo } from "../utils/logger.js";
 export const AuthProvider = ({ children }) => {
     const [isLoggedIn, setIsLoggedIn] = useState(() => {
         const token = localStorage.getItem("token");
-        return !!token; // Check if token exists to set initial logged-in state
+        return !!token;                      // Check if token exists to set initial logged-in state
     });
     const [ user, setUser ] = useState(null);
     // eslint-disable-next-line no-unused-vars
@@ -20,13 +20,13 @@ export const AuthProvider = ({ children }) => {
         if (token) {
             fetchUserData(token)
                 .then((userData) => {
-                    setUser(userData); // Set user data in state
-                    const isAdmin = userData?.user.role === "admin"; // Check if user is admin based on role
-                    const isManager = userData?.user.role === "manager"; // Check if user is manager based on role
+                    setUser(userData);      // Set user data in state
+                    const isAdmin = userData?.user.role === "admin";        // Check if user is admin based on role
+                    const isManager = userData?.user.role === "manager";    // Check if user is manager based on role
                     setIsAdmin(isAdmin);
                     setIsManager(isManager);
                     setIsLoggedIn(true);
-                    logDebug("User data fetched successfully userData, user", userData, user); // Log user data to check if it's being retrieved correctly
+                    logDebug("User data fetched successfully userData, user", userData, user);
 
                 })
                 .catch((error) => {
@@ -41,7 +41,7 @@ export const AuthProvider = ({ children }) => {
             setLoading(false);
         }
 
-    }, []); // Run this effect only once when the component mounts
+    }, []); 
 
 
 
@@ -50,10 +50,9 @@ export const AuthProvider = ({ children }) => {
             const res = await loginApi(email, password);
             logInfo("loing res.user:", res.user)
             if (res && res.token) {
-                // logDebug("AuthContext response:", res); // Log the token to check if it's being retrieved correctly
-                localStorage.setItem("token", res.token); // Store token in local storage
-                const userData = res.user; // Fetch user data using the token
-                setUser(userData); // Set user data in state
+                localStorage.setItem("token", res.token); 
+                const userData = res.user;      // Fetch user data using the token
+                setUser(userData);              // Set user data in state
                 const isAdmin = userData.role === 'admin';
                 const isManager = userData.role === 'manager';
                 setIsLoggedIn(true);

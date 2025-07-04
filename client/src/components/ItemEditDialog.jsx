@@ -1,16 +1,12 @@
 
 import { Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField } from '@mui/material';
 import { useState } from 'react';
-// import { logDebug } from '../utils/logger';
-// import { Check, X } from 'lucide-icons-react'; 
 
 const EditItemDialog = ({ open, onClose, item, onSave }) => {
     const [formData, setFormData] = useState({
         name: item?.name,
         price: item?.price,
     });
-
-
 
     const handleChange = (e) => {
         setFormData((prevData) => ({
@@ -21,10 +17,7 @@ const EditItemDialog = ({ open, onClose, item, onSave }) => {
 
     const handleSubmit = async () => {
         try {
-            // const updateItem = await updateItem(item._id, formData);
             onSave(formData);
-            // logDebug("editButtonRef:", editButtonRef);
-            
             onClose();
         } catch (error) {
             logError(error.message);
@@ -32,7 +25,6 @@ const EditItemDialog = ({ open, onClose, item, onSave }) => {
     };
 
     const handleClose = () => {
-        
         onClose();
     }
 

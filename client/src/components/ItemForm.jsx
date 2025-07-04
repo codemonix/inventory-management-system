@@ -9,7 +9,6 @@ export default function ItemForm({ onItemCreated }) {
     logInfo("ItemForm -> name", name);
 
     const handleSubmit = async () => {
-        // e.preventDefault();
         setErrorMessage("");
         const newItem = { name };
         logInfo("ItemForm -> newItem", newItem);
@@ -17,8 +16,8 @@ export default function ItemForm({ onItemCreated }) {
             const createdItem = await createItem(newItem);
             logInfo("ItemForm -> createdItem", createdItem);
             logInfo("ItemForm -> createdItem.message:", createdItem.message)
-            onItemCreated(createdItem); // Call the callback function with the created item
-            setName(""); // Clear the input field after submission
+            onItemCreated(createdItem);         // Call the callback function with the created item
+            setName("");                        // Clear the input field after submission
         } catch (error) {
             logError("ItemForm -> Error creating item:", error);
             if (error.response && error.response.data && error.response.data.message) {

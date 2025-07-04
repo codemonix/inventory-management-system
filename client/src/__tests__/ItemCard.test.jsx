@@ -13,6 +13,7 @@ const mockItem = {
     },
 };
 
+// External function simulation
 const totalStockMock = vi.fn().mockReturnValue(12);
 
 describe('ItemCard', () => {

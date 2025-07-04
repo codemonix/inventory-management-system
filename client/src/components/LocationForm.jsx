@@ -10,8 +10,8 @@ export default function LocationForm({ onLocationCreated }) {
         const newLocation = { name };
         try {
             const createdLocation = await createLocation(newLocation);
-            onLocationCreated(createdLocation); // Call the callback function with the created location
-            setName(''); // Clear the input field after submission
+            onLocationCreated(createdLocation);     // Call the callback function with the created location
+            setName('');                            // Clear the input field after submission
         } catch (error) {
             console.error('LocationForm -> Error creating location:', error.message);
         };

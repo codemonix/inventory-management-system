@@ -6,26 +6,15 @@ import {
     Typography,
     IconButton,
     Tooltip,
-    Dialog,
-    DialogTitle,
-    DialogContent,
-    DialogActions,
-    Button,
-    TextField,
-    MenuItem,
     Switch,
-    FormControlLabel,
 } from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
 import { useSelector, useDispatch } from "react-redux";
-// import dayis from "dayjs";
-// import relativeTime from "dayjs/plugin/relativeTime";
 import {
     setSearch,
     setPage,
     setLimit,
     setSort
-    // selectUsers,
 } from "../../redux/slices/usersSlice.js";
 
 import { fetchUsers, toggleUserActive } from "../../redux/thunks/userThunks.js";
@@ -37,7 +26,6 @@ import StatusHandler from "../../components/StatusHandler.jsx";
 import SearchFilterBar from "../../components/SearchFilterBar.jsx";
 import { logInfo } from "../../utils/logger.js";
 
-// dayis.extend(relativeTime);
 
 const UserManagementPage = () => {
     const dispatch = useDispatch();
@@ -125,12 +113,10 @@ const UserManagementPage = () => {
         {
             field: "avatar",
             headerName: "",
-            // windth: 20,
             renderCell: (params) => (
                 <Avatar
                     src={`https://api.dicebear.com/5.x/initials/svg?seed=${params.row.name}`}
                     alt={params.row.name}
-                    // sx={{ width: 20, height: 20 }}
                 />
             ),
             sortable: false,

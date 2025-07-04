@@ -1,11 +1,22 @@
 import mongoose from 'mongoose';
 import { startMongoMemoryServer, stopMongoMemoryServer } from './mongoServer';
 
+let mongo;
 
 beforeAll( async () => {
+    let uri;
 
-    const mongo = await startMongoMemoryServer();
-    const uri = mongo.getUri();
+    // const mongo = await startMongoMemoryServer();
+    // const uri = mongo.getUri();
+
+    if (process.env.MONGO_URI) {
+        uri = process.env.MONGO_URI;
+        console.log("Using external Mongo URI:", uri);
+    } else {
+        mongo = await startMongoMemoryServer();
+        uri = mongo.getUri();
+        console.log("Using in-memory MongoDB:", uri);
+    }
 
     console.log("MongoMemoryServer running at", uri);
 

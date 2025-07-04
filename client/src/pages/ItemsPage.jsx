@@ -92,8 +92,6 @@ const ItemsPage = () => {
         dispatch( { type: 'items/setItems', payload: updatedItems});
     };
 
-   
-
     const handleDelete = (item) => {
         logInfo("Item to delete:", item);
         setItemToDelete(item);
@@ -104,7 +102,6 @@ const ItemsPage = () => {
         if (itemToDelete) {
             try{
                 await deleteItem(itemToDelete._id);
-                // setItems((prevItems) => prevItems.filter((item) => item._id !== itemToDelete._id));
                 const updatedItems = items.filter( (item) => item._id !== itemToDelete._id);
                 dispatch({ type: 'items/setItems', payload: updatedItems })
                 setShowConfirm(false);
@@ -133,15 +130,15 @@ const ItemsPage = () => {
 
     const handleEdit = (item) => {
         logInfo("Item to edit:", item);
-        setItemToEdit(item) ; // Set the item to be edited
-        setShowEditForm(true); // Show the edit form
+        setItemToEdit(item) ; 
+        setShowEditForm(true); 
         
         logDebug("setItemToEdit:", itemToEdit);
     }
 
     const handleEditFormClose = () => {
-        setItemToEdit(null); // Clear the editing item
-        setShowEditForm(false); // Close the edit form
+        setItemToEdit(null); 
+        setShowEditForm(false); 
         
     }
 
@@ -151,10 +148,9 @@ const ItemsPage = () => {
             item._id === savedItem._id ? savedItem : item
         );
         dispatch({ type: 'items/setItems', payload: updatedItems });
-        // const updatedEditItem = 
         updateItem(itemToEdit._id, savedItem)
-        setShowEditForm(false); // Close the edit form
-        setItemToEdit(null); // Clear the editing item
+        setShowEditForm(false); 
+        setItemToEdit(null); 
         setTriggerUpdate(prev => prev + 1); // Trigger re-render to show updated item
 
     }
@@ -167,7 +163,6 @@ const ItemsPage = () => {
                 <ItemForm onItemCreated={ () => setTriggerUpdate((prev) => prev + 1) } item={itemToEdit} />
             )}
             <div className="flex justify-center items-center pt-2">
-                {/* <h3 className="text-2xl font-bold">Items</h3> */}
                 <button
                     className="bg-blue-500 text-white px-4 py-2 rounded"
                     onClick={toggleItemForm}

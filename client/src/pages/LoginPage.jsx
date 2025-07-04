@@ -31,9 +31,7 @@ const LoginPage = () => {
                 </Box>
 
                 
-            )
-
-            }
+            )}
         </>
     );
 };

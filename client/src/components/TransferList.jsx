@@ -13,10 +13,6 @@ import TransferItemsList from "./TransferItemsList.jsx";
 import ConfirmModal from "./ConfirmModal.jsx";
 
 
-
-
-
-
 const TransferList = () => {
     const { transfers, tempTransfer, transferStatus, tempTransferStatus } = useSelector((state) => state.transfer);
     const populatedTempTransfer = useSelector(selectTempTransferDetailed);
@@ -52,7 +48,6 @@ const TransferList = () => {
 
     useEffect(() => {
         dispatch(fetchLocations());
-        // logInfo("TransferList locations:", locations)
     },[])
 
     const handleTransferConfirmDialog = ( transfer ) => {

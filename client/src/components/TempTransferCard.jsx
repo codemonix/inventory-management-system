@@ -18,7 +18,6 @@ const TempTransferCard = ({ populatedTempTransfer, onFinalize }) => {
                     <li key={item.itemId} className="border-b py-1 flex justify-between text-sm">
                         <span>{item.name? item.name : "Item Name"}</span>
                         <span className="text-gray-700" >Qty: {item.quantity}</span>
-                        {/* {item.itemId} - {item.quantity} pcs */}
                     </li>
                 ))}
             </ul>

@@ -1,11 +1,8 @@
 import { useState } from "react";
 import { NavLink } from "react-router-dom";
-import { Box, Button, Drawer, Divider, List, ListItem, ListItemButton, ListItemIcon, ListItemText, IconButton } from "@mui/material";
-import LensTwoToneIcon from '@mui/icons-material/LensTwoTone';
+import { Box, Drawer, Divider, List, ListItem, ListItemButton, ListItemIcon, ListItemText, IconButton } from "@mui/material";
 import MenuIcon from '@mui/icons-material/Menu';
-// import { link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext.jsx";
-// import { getToken } from "../utils/auth.js";
 import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
 
 
@@ -26,15 +23,13 @@ function SidebarDrawer() {
         { label: "Locations", to: "/locations" },
         { label: "Transfers", to: "/transfers" },
     ];
-    // color:rgb(91, 117, 171)
   const getNavItemStyles = (isActive) => ({
-  backgroundColor: isActive ? '#1e40af' : 'transparent', // active: blue-900
-  color: isActive ? '#ffffff' : 'rgb(58, 91, 161)', // active: white, inactive: gray-200
-  borderRadius: 1,
+  backgroundColor: isActive ? '#1e40af' : 'transparent', 
+  color: isActive ? '#ffffff' : 'rgb(58, 91, 161)', 
   m: 1,
   px: 2,
   '&:hover': {
-    backgroundColor: '#1d4ed8', // hover: blue-700
+    backgroundColor: '#1d4ed8', 
     color: '#fff',
   },
 });

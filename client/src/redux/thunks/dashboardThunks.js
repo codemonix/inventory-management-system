@@ -7,7 +7,6 @@ export const getDashboardData = createAsyncThunk(
     async ( params, thunkAPI ) => {
         try {
             const response = await fetchInventory(params);
-            // console.log("Dashboard Thunk Response:", response);
             return response;
         } catch (error) {
             return thunkAPI.rejectWithValue(error.message || 'Error loading dashboard');

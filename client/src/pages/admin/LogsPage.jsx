@@ -44,7 +44,6 @@ export default function LogsPage() {
     }, [loading, hasMore, search, sortBy, sortOrder,skip, dispatch]);
 
     // Handle debounced search
-
     const debauncedSearch = useRef(
         debounce(value => {
             setSearchParams(prev => {

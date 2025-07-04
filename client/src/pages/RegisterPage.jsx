@@ -4,7 +4,6 @@ import { Box, Typography, Alert, Link } from '@mui/material';
 import RegisterForm from "../components/RegisterForm";
 
 
-
 const RegisterPage = () => {
     const [ error, setError ] = useState(null)
     

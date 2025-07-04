@@ -7,11 +7,8 @@ import { logDebug } from '../utils/logger';
 const StartTransferDialog = ({ open, onClose, onStartNewTransfer }) => {
     const [ fromLocation, setFromLocation ] = useState("");
     const [ toLocation, setToLocation ] = useState("");
-    // const state = useSelector((state) => state);
-    // logDebug("StartTransferDialog state: ", state);
     const locations = useSelector((state) => state.locations.locations);
     
-
     logDebug("StartTransferDialog locations: ", locations);
 
     const handleStartTransfer = () => {

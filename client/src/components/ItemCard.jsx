@@ -14,7 +14,6 @@ import ImageWithCameraOver from "./ImageWithCameraOver";
 import { useState } from "react";
 import api from "../api/api";
 import { logInfo } from "../utils/logger";
-// import { useRef } from "react";
 
 const defaultImage = "/uploads/items/default.jpg"; // Placeholder image URL
 

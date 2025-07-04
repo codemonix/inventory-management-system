@@ -1,13 +1,9 @@
 import { createSelector } from "@reduxjs/toolkit";
 import { logInfo } from "../../utils/logger";
-// import  selectAllItems  from "./itemsSelector.js";
-// import { selectAllLocations } from "./locationsSelector.js";
-
 
 export const selectTempTransfer = (state) => state.transfer.tempTransfer;
 const selectAllLocations = (state) => state.locations.locations;
 const selectAllItems = (state) => state.items.fullList;
-
 
 
 export const selectTempTransferDetailed = createSelector(
@@ -39,19 +35,3 @@ export const selectTempTransferDetailed = createSelector(
         };
     }
 );
-
-
-// export const selectTempTransferItemsWithDetails = createSelector(
-//     [selectTempTransfer, selectAllItems],
-//     (tempTransferItems, allItems) => {
-//         return tempTransferItems.map(({ itemId, quantity}) => {
-//             const item = allItems.find((i) => i._id === itemId);
-//             return {
-//                 itemId,
-//                 quantity,
-//                 name: item ? item.name : "Unknown Item",
-//                 image: item ? item.imageUrl : null,
-//             };
-//         });
-//     }
-// )

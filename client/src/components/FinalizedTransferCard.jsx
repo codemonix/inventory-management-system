@@ -27,7 +27,6 @@ const FinalizedTransferCard = ({ transfer, onViewItems, onConfirm }) => {
                         >
                         Confirm
                     </button>
-                    {/* <button onClick={onConfirm} className="px-4 py-1 cursor-pointer bg-blue-400 rounded text-white m-1 w-30">Confirm</button> */}
                 </div>
             </div>
 

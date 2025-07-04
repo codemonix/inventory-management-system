@@ -1,7 +1,5 @@
 import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-
-
 import {
     setPage,
     setLimit,
@@ -20,7 +18,6 @@ import StockActionDialog from "../components/stockActionDialog.jsx";
 import  { useDispatch, useSelector }  from "react-redux";
 import { addItem, loadTempTransfer, loadTransfers } from "../redux/slices/transferSlice.js";
 import { logDebug, logInfo } from "../utils/logger.js";
-// import { loadTempTransfer, loadTransfers } from "../redux/slices/transferSlice.js";
 import SearchFilterBar from "../components/SearchFilterBar.jsx";
 
 
@@ -33,7 +30,6 @@ const locationColors = {
 
 const DashboardPage = () => {
     const { isLoggedIn } = useAuth();
-    // const [ items, setItems ] = useState([]);
     const [ localError, setLocalError ] = useState("");
     const [ locations , setLocations ] = useState([]);
     const [ dialogOpen, setDialogOpen ] = useState(false);
@@ -41,18 +37,13 @@ const DashboardPage = () => {
     const [ actionType, setActionType ] = useState('IN');
     const [ triggerUpdate, setTriggerUpdate ] = useState(0);
     const [ defaultLocation, setDefaultLocation] = useState(null);
-    const tempTransfer = useSelector((state) => state.transfer.tempTransfer)
-    // const {items, status} = useSelector(( state ) => state.items )
-    const transferStatus = useSelector((state) => state.transfer.status)
-
+    const tempTransfer = useSelector((state) => state.transfer.tempTransfer);
+    const transferStatus = useSelector((state) => state.transfer.status);
 
     const dispatch = useDispatch();
     const { items, totalItems, sort, loading, error, search } = useSelector(( state ) => state.dashboard);
     const page = useSelector(selectDashboardPage);
     const limit = useSelector(selectDashboardLimit);
-
-   
-
 
     const [ searchParams, setSearchParams ] = useSearchParams();
     useEffect(() => {
@@ -68,7 +59,6 @@ const DashboardPage = () => {
     }, [searchParams, dispatch]);
 
     useEffect(() => {
-        // logDebug("tempTransfer Updated:", tempTransfer)
         if (isLoggedIn) {
             getLocations().then(setLocations).catch((error) => {
                 console.error("Error getting locations:", error.message);
@@ -96,10 +86,6 @@ const DashboardPage = () => {
     logInfo("state tempTransfer:", tempTransfer);
 
     logDebug("inventory", items);
-
-    // if (loading) {
-    //     return <div className="text-center">Loading...</div>;
-    // }
     
     if (!isLoggedIn) {
         return <p className="text-red-500">Please log in to view the dashboard.</p>;
@@ -131,7 +117,6 @@ const DashboardPage = () => {
             ...params,
             page: newPage
         });
-        // dispatch(setPage(newPage));
     };
 
     const handleSubmitDashbord = async ({ locationId, quantity }) => {
@@ -179,7 +164,6 @@ const DashboardPage = () => {
 
     return (
         <div className="bg-gray-400 p-2">
-            {/* <h2 className="text-center p-2">Welcome {user?.user.name}</h2> */}
             {localError && <p className="text-red-500">{localError}</p>}
             <StatusHandler status={loading ? 'loading' : ""} error={error}>
                 <SearchFilterBar 
@@ -230,10 +214,6 @@ const DashboardPage = () => {
                     onChange={handlePageChange}
                 />
             </StatusHandler>
-
-            {/* <div className="flex justify-center mt-4">
-              <button onClick={logout} className="bg-red-500 text-white p-2 rounded-md">Logout</button>
-            </div> */}
         </div>
     );
 };

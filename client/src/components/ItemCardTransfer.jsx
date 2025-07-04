@@ -17,9 +17,6 @@ export default function ItemCardTransfer ({item}) {
                         {item.item.name} : {item.quantity}
                     </Typography>
                 </Box>
-                {/* <Typography variant="caption" sx={{ ml: 1}}>
-                    Qty: {item.quantity}
-                </Typography> */}
         </Card>
     )
 }

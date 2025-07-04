@@ -13,7 +13,6 @@ import { logDebug } from "../utils/logger";
 
 const ItemCardDashboard = ({ item, onIn, onOut, locationColors, onAddToTransfer }) => {
     logDebug("ItemCardDashboard -> item", item);
-    
     return (
         <Card sx={{ display: "flex",
                     justifyContent: "space-between",
@@ -42,8 +41,6 @@ const ItemCardDashboard = ({ item, onIn, onOut, locationColors, onAddToTransfer 
                 <Box sx={{ display: "flex", gap: 1, px: 2, pb: 1 }}>
                     <StockDetails item={item} locationColors={locationColors} />
                 </Box>
-
-                
             </Box>
             { item.image && (
                 <Box 

@@ -69,10 +69,7 @@ export default function SetupPage() {
         );
     }
 
-    if (!needSetup) {
-        // navigate('/login');
-        return null
-    }
+    if (!needSetup) return null;
 
 
     return (

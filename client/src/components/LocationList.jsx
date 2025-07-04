@@ -1,12 +1,8 @@
 import { useAuth } from "../context/AuthContext";
 
-
-
-
 export default function LocationList({ locations, onDelete }) {
     const { isAdmin, isManager } = useAuth();
     const isAdminOrManager = isAdmin || isManager; 
-    // console.log("LocationList -> last location", locations[locations.length - 1]);
     return (
         <ul className="space-y-2" >
             {locations.map((location) => (

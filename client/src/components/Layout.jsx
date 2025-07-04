@@ -14,7 +14,6 @@ const Layout = () => {
             <h1 className="text-center p-3">Welcome <span >{user? user.name : ""}</span></h1>
             <SidebarDrawer />
             <main className="flex-1">
-                {/* <h1>Welcome Layout</h1> */}
                 <Outlet />
             </main>
         </div>

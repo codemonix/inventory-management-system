@@ -1,9 +1,7 @@
 
 
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-// import  getTransfers, getTempTransfer, createTempTransfer, addItemToTempTransfer, finalizeTempTransfer  from "../../services/transfersServices.js";
 import { logDebug, logInfo } from "../../utils/logger.js";
-// import { getTempTransfer, createTempTransfer, addItemToTempTransfer,finalizeTempTransfer, removeItemFromTempTransfer } from "../services/transfersServices.js";
 
 import { getTransfers, getTempTransfer, 
     createTempTransfer, addItemToTempTransfer, 
@@ -67,6 +65,7 @@ export const removeItem = createAsyncThunk(
     }
 );
 
+// this one is Not for tempTransfer
 export const confirmTransfer = createAsyncThunk(
     'transfer/confirmTransfer',
     async ( transferId, thunkApi ) => {
