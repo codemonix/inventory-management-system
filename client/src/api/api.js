@@ -1,7 +1,7 @@
 import axios from "axios";
 import { getToken } from "../utils/auth.js";
 
-const API = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000/api";
+const API = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000/api"; // fall back to local if exist
 
 const api = axios.create({
     baseURL: API,
