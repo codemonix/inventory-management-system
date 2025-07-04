@@ -32,6 +32,7 @@ describe('Auth Endpoints', () => {
         expect(res.statusCode).toBe(409);
     });
 
+    // required user approved by default
     it('logs in the user', async () => {
         await request(app).post('/api/auth/register').send({
             name: 'login',
