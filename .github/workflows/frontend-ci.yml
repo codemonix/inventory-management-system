@@ -3,7 +3,7 @@ name: Frontend CI
 on:
     push:
         paths:
-            - 'clienr/**'
+            - 'client/**'
     pull_request:
         paths:
             - 'client/**'

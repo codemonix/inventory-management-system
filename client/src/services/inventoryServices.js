@@ -1,5 +1,5 @@
 import api from "../api/api.js";
-import { logError, logInfo } from "../utils/logger.js";
+import { logDebug, logError, logInfo } from "../utils/logger.js";
 
 export const fetchInventory = async ({ page = 1, limit = 10, sort = 'name', search = null }) => {
     logInfo("page, limit, sort, search:", page, limit, sort, search);
@@ -16,8 +16,9 @@ export const fetchInventory = async ({ page = 1, limit = 10, sort = 'name', sear
 export const fetchFullInventory = async () => {
     try {
         const res = await api.get(`/inventory/full`);
-        logInfo("InventoryServices -> fetchFullInventory:", res.data);
-        return res.data;
+        console.log("it is not print here")
+        console.log("InventoryServices -> fetchFullInventory:", res.data);
+        return res.data; // [ ...items ]
     } catch (error) {
         logError("Fail to fetch full inventory:", error.message);
         throw error;
