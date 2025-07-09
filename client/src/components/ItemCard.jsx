@@ -15,7 +15,10 @@ import { useState } from "react";
 import api from "../api/api";
 import { logInfo } from "../utils/logger";
 
+
+
 const defaultImage = "/uploads/items/default.jpg"; // Placeholder image URL
+const backendUrl = `${import.meta.env.VITE_BACKEND_URL}:${import.meta.env.VITE_BACKEND_PORT}`;
 
 const ItemCard = ({ item, onIn, onOut, onDelete, onEdit, onImageUpload, totalStock }) => {
     // eslint-disable-next-line no-unused-vars
@@ -129,7 +132,7 @@ const ItemCard = ({ item, onIn, onOut, onDelete, onEdit, onImageUpload, totalSto
             </Box>
             
             { item.imageUrl && (
-                <ImageWithCameraOver imageUrl={item.imageUrl} onChange={handleImageChange} />
+                <ImageWithCameraOver imageUrl={`${backendUrl}${item.imageUrl}`} onChange={handleImageChange} />
             )}
             {loading && ( <div>Loading...</div>)}
         </Card>

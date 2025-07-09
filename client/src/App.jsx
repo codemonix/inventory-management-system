@@ -16,6 +16,7 @@ import SettingsPage from './pages/admin/SettingsPage.jsx';
 import UserManagementPage from './pages/admin/UserManagementPage.jsx';
 import RegisterPage from './pages/RegisterPage.jsx';
 import SetupPage from './pages/admin/SetupPage.jsx';
+import NotFound from './pages/NotFound.jsx';
 
 
 function RequireAdmin({ children }) {
@@ -55,6 +56,7 @@ function App() {
               <Route path='settings' element={<SettingsPage />} />
             </Route>
           </Route>
+          <Route path='*' element={<NotFound />} />
         </Routes>
       </Router>
     </AuthProvider>

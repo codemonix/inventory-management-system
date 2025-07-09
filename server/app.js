@@ -3,6 +3,7 @@
 import express from 'express';
 import dotenv from 'dotenv';
 import cors from 'cors';
+import path from 'path';
 
 import inventoryRoutes from './routes/inventory.routes.js';
 import helmet from 'helmet';
@@ -27,7 +28,7 @@ app.use(morgan('dev'));
 app.use('/api/auth', authRouts);
 app.use('/api/inventory', inventoryRoutes);
 app.use('/api/transfers', transferRoutes);
-app.use('/uploads', express.static('uploads'));
+app.use('/uploads', cors(), express.static(path.join(process.cwd(), '/uploads')));
 app.use('/api/items', itemRoutes);
 app.use('/api/locations', locationRoutes);
 app.use('/api/users', userRoutes);

@@ -2,7 +2,7 @@
 import express from 'express';
 import { upload } from '../utils/upload.js';
 import auth, { isAdmin }  from '../middleware/auth.middleware.js';
-import { createItem, getItems, getAllItems, deleteItem, updateItemImage, updateItem } from '../controllers/item.controller.js';
+import { createItem, getItems, getAllItems, deleteItem, updateItemImage, updateItem, getItemImage } from '../controllers/item.controller.js';
 import { fetchItemCode } from '../middleware/fetchItemCode.middleware.js';
 
 const router = express.Router();
@@ -25,5 +25,6 @@ router.post('/upload', auth,  upload.single('image'), (req, res) => {
 });
 
 router.post('/:itemId/update-image', auth, fetchItemCode, upload.single('image'), updateItemImage);
+router.get('/image/:filename', getItemImage)
 
 export default router;

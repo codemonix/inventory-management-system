@@ -43,13 +43,9 @@ export const updateImageItem = async (itemId, imageUrl) => {
     }
 };
 
+export const fetshItemImage = async ( filename ) =>{
+    const res = await api.get(`/items/image/${filename}`, { responseType: 'blob'});
+    return URL.createObjectURL(res.data)
+}
 
-// export async function createItem(item) {
-//     try {
-//         const response = await api.post("/items", item);
-//         return response.data;
-//     } catch (error) {
-//         console.error("Error creating item:", error);
-//         throw error;
-//     }
-// }
+

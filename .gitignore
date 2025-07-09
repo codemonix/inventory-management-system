@@ -1,3 +1,13 @@
 .env
 node_modules/
 .DS_Store
+
+node_modules
+dist
+.git
+.vscode
+*.log
+Dockerfile
+nginx.conf
+
+uploads/

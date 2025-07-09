@@ -3,6 +3,8 @@ import Item from "../models/item.model.js";
 import Inventory from "../models/inventory.model.js";
 import { nanoid } from "nanoid";
 import { debugLog } from "../utils/logger.js";
+import path from 'path';
+import fs from 'fs';
 
 export async function createItem(req, res) {
     debugLog('item controller -> createItem:', req.body);
@@ -173,5 +175,16 @@ export async function updateItem(req, res) {
         log(error.message);
         res.status(500).json({ error: 'Failed to update item' });
     }
+}
+
+export async function getItemImage(req, res) {
+    const { filename } = req.params;
+    const imagePath = path.join( process.cwd(), 'uploads', 'items', filename );
+
+    if (!fs.existsSync(imagePath)) {
+        return res.status(404).json({ message: 'Image not found!' });
+    }
+
+        res.sendFile(imagePath);
 }
     
