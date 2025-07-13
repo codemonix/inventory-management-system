@@ -9,10 +9,28 @@ import StockDetails from "./StockDetail";
 import InputTwoToneIcon from '@mui/icons-material/InputTwoTone';
 import OutputTwoToneIcon from '@mui/icons-material/OutputTwoTone';
 import SwapHorizonIcon from '@mui/icons-material/SwapHoriz';
-import { logDebug } from "../utils/logger";
+import { logError, logInfo } from "../utils/logger";
+import { useState , useEffect} from "react";
+import { fetshItemImage } from "../services/itemsService";
 
 const ItemCardDashboard = ({ item, onIn, onOut, locationColors, onAddToTransfer }) => {
-    logDebug("ItemCardDashboard -> item", item);
+
+    const [imageUrl, setImageUrl ] = useState(null)
+
+    useEffect(() => {
+        let objectUrl;
+        const getItemImage = async () => {
+            try {
+                objectUrl = await fetshItemImage(item.image);
+                setImageUrl(objectUrl);
+            } catch (error) {
+                logError("Image loag failed:", error.message);
+            }
+        };
+        getItemImage();
+    }, [item.image])
+
+    logInfo("ItemCardDashboard -> item", item);
     return (
         <Card sx={{ display: "flex",
                     justifyContent: "space-between",
@@ -45,7 +63,7 @@ const ItemCardDashboard = ({ item, onIn, onOut, locationColors, onAddToTransfer 
             { item.image && (
                 <Box 
                 component="img"
-                src={item.image}
+                src={imageUrl}
                 alt={item.name}
                 sx={{ width: 100, height: "100%", objectFit: "cover", borderRadius: 1, ml: 1 }}/>
             )}

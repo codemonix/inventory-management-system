@@ -17,15 +17,15 @@ export default defineConfig(({ mode }) => {
   return {
 
     // this is for accessing image for items from backend whithout cors problem
-    server: {
-      host: true,
-      proxy: {
-        '/uploads': {
-          target: backendUrl,
-          changeOrigin: true,
-        }
-      }
-    },
+    // server: {
+    //   host: true,
+    //   proxy: {
+    //     '/uploads': {
+    //       target: backendUrl,
+    //       changeOrigin: true,
+    //     }
+    //   }
+    // },
     plugins: [
       react(),
       tailwindcss()],

@@ -11,9 +11,11 @@ import InputTwoToneIcon from '@mui/icons-material/InputTwoTone'
 import OutputTwoTone from '@mui/icons-material/OutputTwoTone'
 import imageCompressor from "browser-image-compression";
 import ImageWithCameraOver from "./ImageWithCameraOver";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import api from "../api/api";
-import { logInfo } from "../utils/logger";
+import { logDebug, logError, logInfo } from "../utils/logger";
+import { fetshItemImage } from "../services/itemsService";
+
 
 
 
@@ -22,14 +24,32 @@ const backendUrl = `${import.meta.env.VITE_BACKEND_URL}:${import.meta.env.VITE_B
 
 const ItemCard = ({ item, onIn, onOut, onDelete, onEdit, onImageUpload, totalStock }) => {
     // eslint-disable-next-line no-unused-vars
-    const [image, setImage] = useState(item.imageUrl || defaultImage);
+    const [imageUrl, setImageUrl] = useState(null);
     const [loading, setLoading] = useState(false);
 
     logInfo("item", item);
     logInfo("totalStock", totalStock( item._id))
+    useEffect(() => {
+        let objectUrl;
+        const getItemImage = async () => {
+            try {
+                objectUrl = await fetshItemImage(item.imageUrl);
+                setImageUrl(objectUrl);
+            } catch (error) {
+                logError("Image load failed:", error.message);
+            }
+        }
+        getItemImage();
+
+        return () => {
+            if (objectUrl) {
+                URL.revokeObjectURL(objectUrl);
+            }
+        };
+        
+    }, [item.imageUrl]);
 
     const handleImageChange = () => {
-        logInfo("ItemCard -> handleImageChange -> item", item.code);
         const input = document.createElement("input");
         input.type = "file";
         input.accept = "image/*";
@@ -43,9 +63,7 @@ const ItemCard = ({ item, onIn, onOut, onDelete, onEdit, onImageUpload, totalSto
                         const formData = new FormData();
                         formData.append("image", compressedFile);
                         formData.append("itemCode", item.code);
-                        console.log("ItemCard -> handleImageChange -> formData", Object.fromEntries(formData.entries()));
                         const response = await api.post(`/items/${item._id}/update-image`, formData);
-                        console.log("ItemCard -> handleImageChange -> response", response.data);
                         const newImageUrl = `/uploads/${response.data.filename}`;
 
                         setImage(newImageUrl);
@@ -54,7 +72,7 @@ const ItemCard = ({ item, onIn, onOut, onDelete, onEdit, onImageUpload, totalSto
                             onImageUpload(item._id, newImageUrl);
                         }
                     } catch (error) {
-                        console.error("Error uploading image:", error.message);
+                        logError("Error uploading image:", error.message);
                     } finally {
                         setLoading(false);
                     }
@@ -132,7 +150,7 @@ const ItemCard = ({ item, onIn, onOut, onDelete, onEdit, onImageUpload, totalSto
             </Box>
             
             { item.imageUrl && (
-                <ImageWithCameraOver imageUrl={`${backendUrl}${item.imageUrl}`} onChange={handleImageChange} />
+                <ImageWithCameraOver imageUrl={imageUrl} onChange={handleImageChange} />
             )}
             {loading && ( <div>Loading...</div>)}
         </Card>

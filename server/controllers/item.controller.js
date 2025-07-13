@@ -180,11 +180,11 @@ export async function updateItem(req, res) {
 export async function getItemImage(req, res) {
     const { filename } = req.params;
     const imagePath = path.join( process.cwd(), 'uploads', 'items', filename );
-
+    debugLog("imagePath:", imagePath);
     if (!fs.existsSync(imagePath)) {
         return res.status(404).json({ message: 'Image not found!' });
     }
 
-        res.sendFile(imagePath);
+    return res.sendFile(imagePath);
 }
     

@@ -1,4 +1,4 @@
-// Middleware to fetch item code from the database using item ID from request parameters
+// Middleware to fetch item code from DB using item _id from request parameters
 import  Item  from "../models/item.model.js";
 
 

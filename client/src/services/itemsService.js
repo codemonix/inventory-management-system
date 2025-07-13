@@ -1,5 +1,5 @@
 import api from "../api/api.js";
-import { logError, logInfo } from "../utils/logger.js";
+import { logDebug, logError, logInfo } from "../utils/logger.js";
 // import axios from "axios";
 
 /*
@@ -44,8 +44,18 @@ export const updateImageItem = async (itemId, imageUrl) => {
 };
 
 export const fetshItemImage = async ( filename ) =>{
-    const res = await api.get(`/items/image/${filename}`, { responseType: 'blob'});
-    return URL.createObjectURL(res.data)
+    console.log("fetchItemImage filename:", filename);
+    const splitedFilename = filename.split('/');
+    console.log("fetchItemImage split:", splitedFilename);
+    const newFilename = splitedFilename[splitedFilename.length - 1];
+    console.log("newfilename:", newFilename)
+    try {
+        const res = await api.get(`/items/image/${newFilename}`, { responseType: 'blob'});
+        logDebug("URL", URL.createObjectURL(res.data));
+        return URL.createObjectURL(res.data);
+    } catch (error) {
+        logError("fetchItemImage failed:", error.message)
+    }
 }
 
 
