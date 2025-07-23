@@ -7,7 +7,6 @@ dist
 .git
 .vscode
 *.log
-Dockerfile
 nginx.conf
 
 uploads/
