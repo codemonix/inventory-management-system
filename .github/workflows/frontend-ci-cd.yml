@@ -61,7 +61,7 @@ jobs:
             - name: Restart frontend via SSH
               run: |
                 ssh -o StrictHostKeyChecking=no ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} << 'EOF'
-                  cd /home/ubuntu/IMS
+                  cd /home/ubuntu/app/IMS
                   docker pull ghcr.io/${{ secrets.GHCR_USERNAME }}/ims_frontend:latest
                   docker compose up -d
                 EOF
