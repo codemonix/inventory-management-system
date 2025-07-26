@@ -16,7 +16,7 @@ services:
       dockerfile: Dockerfile
     container_name: ims_backend
     volumes:
-      - /IMS/uploads:/app/uploads:rw 
+      - /app/IMS/uploads:/app/uploads:rw 
     restart: always
     ports:
       - "5000:5000"
