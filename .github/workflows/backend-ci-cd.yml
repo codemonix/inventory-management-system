@@ -7,7 +7,7 @@ on:
       paths:
           - 'server/**'
           - 'mongo/**'
-          - '.github/workflows/backend-ci.yml'
+          - '.github/workflows/backend-ci-cd.yml'
     pull_request:
         paths:
             - 'server/**'
@@ -57,11 +57,11 @@ jobs:
               with:
                 ssh-private-key: ${{ secrets.VPS_SSH_KEY }}
 
-            - name: Restart backend via SSH
-              run: |
-                ssh -o StrictHostKeyChecking=no ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} << 'EOF'
-                  cd /home/ubuntu/app/IMS
-                  docker pull ghcr.io/${{ secrets.GHCR_USERNAME }}/ims_backend:latest
-                  docker compose up -d
-                EOF
+            # - name: Restart backend via SSH
+            #   run: |
+            #     ssh -o StrictHostKeyChecking=no ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} << 'EOF'
+            #       cd /home/ubuntu/app/IMS
+            #       docker pull ghcr.io/${{ secrets.GHCR_USERNAME }}/ims_backend:latest
+            #       docker compose up -d
+            #     EOF
                 

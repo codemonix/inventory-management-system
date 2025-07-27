@@ -17,6 +17,8 @@ RUN npm ci --only=production
 
 COPY . .
 
+RUN echo " Copy default file"
+
 ENTRYPOINT [ "docker-entrypoint.sh" ]
 
 EXPOSE 5000

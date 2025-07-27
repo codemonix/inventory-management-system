@@ -23,8 +23,9 @@ const ItemCardDashboard = ({ item, onIn, onOut, locationColors, onAddToTransfer 
             try {
                 objectUrl = await fetshItemImage(item.image);
                 setImageUrl(objectUrl);
+                logInfo("blob:", objectUrl)
             } catch (error) {
-                logError("Image loag failed:", error.message);
+                logError("Image load failed:", error.message);
             }
         };
         getItemImage();
