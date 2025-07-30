@@ -5,10 +5,9 @@ FROM node:22-alpine AS builder
 WORKDIR /app
 COPY package*.json ./
 COPY .env.production .
+ENV NODE_ENV=production
 RUN npm ci
 COPY . . 
-
-ENV NODE_ENV=production
 
 RUN npm run build
 
@@ -19,6 +18,11 @@ FROM nginx:stable-alpine AS runner
 # COPY nginx.conf /etc/nginx/conf.d/default.conf
 
 COPY --from=builder /app/dist /usr/share/nginx/html
+COPY nginx.conf /etc/nginx/nginx.conf
+
+COPY entrupoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+ENTRYPOINT [ "/entrypoint.sh" ]
 
 
 # HTTP port
