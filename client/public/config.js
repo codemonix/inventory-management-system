@@ -1,4 +1,4 @@
 
-window.RUNTIME_CONFIG = {
-    VITE_BACKEND_URL: "http://localhost:5000"
+window.__IMS_CONFIG__ = {
+    API_URL: "http://192.168.56.102/ims/api"
 };

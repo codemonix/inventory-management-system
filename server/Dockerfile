@@ -3,7 +3,7 @@
 # base image
 FROM node:22-alpine
 
-RUN mkdir -p /app/uploads
+# RUN mkdir -p /app/uploads
 
 COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh
@@ -17,7 +17,7 @@ RUN npm ci --only=production
 
 COPY . .
 
-RUN echo " Copy default file"
+RUN echo " Create item uploads folder"
 
 ENTRYPOINT [ "docker-entrypoint.sh" ]
 

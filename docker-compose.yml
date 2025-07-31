@@ -20,12 +20,6 @@ services:
     restart: always
     ports:
       - "5000:5000"
-    environment:
-      - DB_URI=mongodb://mongo:27017/production
-      - NODE_ENV=production
-      - PORT=5000
-      - JWT_SECRET="production81234567"
-      - DEFAULT_USER_APPROVED=true
     depends_on:
       - mongo
 
@@ -36,7 +30,7 @@ services:
     container_name: ims_frontend
     restart: always
     ports:
-      - "80:80"
+      - "8080:80"
     depends_on:
       - backend
     volumes:
