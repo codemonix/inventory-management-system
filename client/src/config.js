@@ -1,5 +1,6 @@
 import api from "./api/api";
 import App from "./App";
+import { logInfo } from "./utils/logger";
 
 
 let API_URL, API_PORT;
@@ -17,5 +18,6 @@ if (!API_URL) {
 }
 
 const fullApiUrl = API_PORT ? `${API_URL}:${API_PORT}/api` : `${API_URL}/api`;
+logInfo("fullApiUrl:", fullApiUrl)
 
 export default { API_URL: fullApiUrl, };

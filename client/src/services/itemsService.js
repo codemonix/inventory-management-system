@@ -44,11 +44,11 @@ export const updateImageItem = async (itemId, imageUrl) => {
 };
 
 export const fetshItemImage = async ( filename ) =>{
-    console.log("fetchItemImage filename:", filename);
+    logInfo("fetchItemImage filename:", filename);
     const splitedFilename = filename.split('/');
-    console.log("fetchItemImage split:", splitedFilename);
+    logInfo("fetchItemImage split:", splitedFilename);
     const newFilename = splitedFilename[splitedFilename.length - 1];
-    console.log("newfilename:", newFilename)
+    logInfo("newfilename:", newFilename)
     try {
         const res = await api.get(`/items/image/${newFilename}`, { responseType: 'blob'});
         logDebug("URL", URL.createObjectURL(res.data));

@@ -20,7 +20,7 @@ import { fetshItemImage } from "../services/itemsService";
 
 
 const defaultImage = "/uploads/items/default.jpg"; // Placeholder image URL
-const backendUrl = `${import.meta.env.VITE_BACKEND_URL}:${import.meta.env.VITE_BACKEND_PORT}`;
+// const backendUrl = `${import.meta.env.VITE_BACKEND_URL}:${import.meta.env.VITE_BACKEND_PORT}`;
 
 const ItemCard = ({ item, onIn, onOut, onDelete, onEdit, onImageUpload, totalStock }) => {
     // eslint-disable-next-line no-unused-vars

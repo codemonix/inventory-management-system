@@ -10,9 +10,9 @@ import tailwindcss from '@tailwindcss/vite'
 // console.log("Backend URL:", backendUrl); 
 // https://vite.dev/config/
 export default defineConfig(({ mode }) => {
-  const env = loadEnv(mode, process.cwd(), '');
-  const backendUrl = `${env.VITE_BACKEND_URL}:${env.VITE_BACKEND_PORT}`;
-  console.log("Backend URL:", backendUrl)
+  // const env = loadEnv(mode, process.cwd(), '');
+  // const backendUrl = `${env.VITE_BACKEND_URL}:${env.VITE_BACKEND_PORT}`;
+  // console.log("Backend URL:", backendUrl)
 
   return {
 
@@ -30,6 +30,12 @@ export default defineConfig(({ mode }) => {
       react(),
       tailwindcss()],
     test: {
+      server: {
+        deps: {
+          inline: ["@mui/x-data-grid"],
+        },
+      },
+      // css: false,
       globals: true,
       environment: 'jsdom',
       setupFiles: './src/setupTests.js',
