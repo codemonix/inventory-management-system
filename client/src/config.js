@@ -4,8 +4,8 @@ import { logInfo } from "./utils/logger";
 
 
 let API_URL, API_PORT;
-
-if (import.meta.env.DEV) {
+logInfo("import meta dev", import.meta.env.DEV)
+if (import.meta.env.DEV ) {
     API_URL = import.meta.env.VITE_API_BASE_URL;
     API_PORT = import.meta.env.VITE_API_PORT;
 } else {
