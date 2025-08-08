@@ -12,6 +12,7 @@ const api = axios.create();
 
 api.interceptors.request.use((config) => {
     const baseUrl = getApiBaseUrl();
+    logDebug("base URL:", baseUrl)
     config.baseURL = baseUrl;
     const token = getToken();
     if (token) {

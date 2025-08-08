@@ -1,5 +1,4 @@
 
-
 services:
   mongo:
     image: mongo:8
@@ -12,48 +11,30 @@ services:
     networks:
       - ims_net
 
-
-
   frontend:
-    build: ./client
-    image: ims_frontend:latest
-    container_name: ims_frontend
+    image: ghcr.io/codemonix/ims_frontend:latest
     restart: unless-stopped
     networks:
       - ims_net
     environment:
-      - API_BASE=/api     # default inside container; overwritten by host env (see below)
-      - BASE_PATH=  
-    # no ports mapped; host-nginx will access it by service name
-    # If you want to test directly, map a port during dev:
-    # ports:
-    #   - "8080:80"
+      - API_BASE=/api     # recommended to set to /ims/api on host
+      - BASE_PATH=
 
   backend:
-    build: ./server
-    image: ims_backend:latest
-    container_name: ims_backend
+    image: ghcr.io/codemonix/ims_backend:latest
     restart: unless-stopped
-    depends_on:
-      - mongo
     networks:
       - ims_net
     environment:
       - NODE_ENV=production
-    expose:
-      - 3000
 
   host-nginx:
     image: nginx:1.25-alpine
-    container_name: ims_host_nginx
     restart: unless-stopped
     volumes:
       - ./host-nginx/nginx.conf:/etc/nginx/nginx.conf:ro
     ports:
       - "80:80"
-    depends_on:
-      - frontend
-      - backend
     networks:
       - ims_net
 

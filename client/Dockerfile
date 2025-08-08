@@ -1,30 +1,25 @@
 
 # base image -> copy -> Build
-FROM node:22-alpine AS builder
+FROM node:20-alpine AS builder
 
 WORKDIR /app
 COPY package*.json ./
-ENV NODE_ENV=production
 RUN npm ci
 COPY . . 
-
 RUN npm run build
 
 # Production stage
-FROM nginx:stable-alpine AS runner
-
-# RUN rm /etc/nginx/conf.d/default.conf
-# COPY nginx.conf /etc/nginx/conf.d/default.conf
-
+FROM nginx:1.25-alpine
 COPY --from=builder /app/dist /usr/share/nginx/html
-COPY ./nginx.conf /etc/nginx/conf.d/default.conf
-COPY ./public/config.js /usr/share/nginx/html/config.js
+COPY nginx.conf /etc/nginx/conf.d/default.conf
 
-# COPY entrupoint.sh /entrypoint.sh
-# RUN chmod +x /entrypoint.sh
-# ENTRYPOINT [ "/entrypoint.sh" ]
+# runtime config template and script
+COPY runtime-config.js.tpl /usr/share/nginx/html/runtime-config.js.tpl
+COPY docker-entrypoint.sh /docker-entrypoint.sh
+RUN chmod +x /docker-entrypoint.sh
 
 
 # HTTP port
 EXPOSE 80
+ENTRYPOINT [ "/docker-entrypoint.sh" ]
 CMD [ "nginx", "-g", "daemon off;"]

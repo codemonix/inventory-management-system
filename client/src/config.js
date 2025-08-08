@@ -2,7 +2,7 @@ import { logInfo } from "./utils/logger";
 
 export function getApiBaseUrl() {
     if (import.meta.env.DEV) {
-        return `${import.meta.env.VITE_API_BASE_URL}:${import.meta.env.VITE_API_PORT}`;
+        return `${import.meta.env.VITE_API_BASE_URL}:${import.meta.env.VITE_API_PORT}/api/`;
     }
 
     // For production/test
@@ -13,7 +13,7 @@ export function getApiBaseUrl() {
         throw new Error("Missing API_URL configuration!");
     }
 
-    return port ? `${url}:${port}` : url;
+    return port ? `${url}:${port}` : `${url}`;
 }
 
 

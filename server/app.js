@@ -1,7 +1,8 @@
 
+import dotenv from 'dotenv';
+dotenv.config();
 
 import express from 'express';
-import dotenv from 'dotenv';
 import cors from 'cors';
 import path from 'path';
 
@@ -16,7 +17,6 @@ import userRoutes from './routes/user.routes.js';
 import setupRoutes from './routes/setup.routes.js';
 import transactionRoutes from './routes/transaction.routes.js';
 
-dotenv.config();
 
 
 const app = express();
@@ -25,6 +25,7 @@ app.use(express.json());
 app.use(helmet());
 app.use(morgan('dev'));
 
+app.get('/', (req, res) => res.send("backen ok"));
 app.use('/api/auth', authRouts);
 app.use('/api/inventory', inventoryRoutes);
 app.use('/api/transfers', transferRoutes);
