@@ -1,0 +1,42 @@
+services:
+  mongo:
+    image: mongo:8
+    container_name: ims_mongo
+    restart: always
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+    networks:
+      - ims_net
+
+
+  backend:
+    image: ghcr.io/codemonix/ims_backend:latest
+    container_name: ims_backend
+    restart: unless-stopped
+    env_file: .env.backend
+    ports:
+      - "5000:5000"
+    depends_on:
+      - mongo
+    networks:
+      - ims_net
+
+  frontend:
+    image: ghcr.io/codemonix/ims_frontend:latest
+    container_name: ims_frontend
+    restart: unless-stopped
+    networks:
+      - ims_net
+    environment:
+      - API_BASE=/api
+      - BASE_PATH=
+    ports:
+      - "3000:80"
+
+networks:
+  ims_net:
+    driver: bridge
+volumes:
+  mongo_data:
