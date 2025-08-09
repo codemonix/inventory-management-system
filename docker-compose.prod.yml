@@ -13,6 +13,7 @@ services:
 
   frontend:
     image: ghcr.io/codemonix/ims_frontend:latest
+    container_name: ims_frontend
     restart: unless-stopped
     networks:
       - ims_net
@@ -22,19 +23,29 @@ services:
 
   backend:
     image: ghcr.io/codemonix/ims_backend:latest
+    container_name: ims_backend
     restart: unless-stopped
+    depends_on:
+      - mongo
     networks:
       - ims_net
     environment:
       - NODE_ENV=production
+      - DB_URI='mongodb://ims_mongo:27017'
+    expose:
+      - 3000
 
   host-nginx:
     image: nginx:1.25-alpine
+    container_name: ims_host_nginx
     restart: unless-stopped
     volumes:
       - ./host-nginx/nginx.conf:/etc/nginx/nginx.conf:ro
     ports:
       - "80:80"
+    depends_on:
+      - frontend
+      - backend
     networks:
       - ims_net
 
