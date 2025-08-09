@@ -7,15 +7,15 @@ export function getApiBaseUrl() {
     }
 
     // For production/test
-    // const url = typeof window !== "undefined" ? window.__IMS_CONFIG__?.API_URL : null;
-    // const port = typeof window !== "undefined" ? window.__IMS_CONFIG__?.API_PORT : null;
-    // logInfo("getApiBaseUrl: url, port", url, port)
-    // if (!url) {
-    //     throw new Error("Missing API_URL configuration!");
-    // }
+    const url = typeof window !== "undefined" ? window.__IMS_CONFIG__?.API_URL : null;
+    const port = typeof window !== "undefined" ? window.__IMS_CONFIG__?.API_PORT : null;
+    logInfo("getApiBaseUrl: url, port", url, port)
+    if (!url) {
+        throw new Error("Missing API_URL configuration!");
+    }
 
-    // return port ? `${url}:${port}` : `${url}`;
-    return "http://ims_backend:5000/api"
+    return port ? `${url}:${port}` : `${url}`;
+    // return "http://ims_backend:5000/api"
 }
 
 
