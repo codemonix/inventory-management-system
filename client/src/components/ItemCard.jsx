@@ -15,6 +15,7 @@ import { useState, useEffect } from "react";
 import api from "../api/api";
 import { logDebug, logError, logInfo } from "../utils/logger";
 import { fetshItemImage } from "../services/itemsService";
+import { useObjectImage } from "../hooks/useObjectImage.js";
 
 
 
@@ -24,30 +25,31 @@ const defaultImage = "/uploads/items/default.jpg"; // Placeholder image URL
 
 const ItemCard = ({ item, onIn, onOut, onDelete, onEdit, onImageUpload, totalStock }) => {
     // eslint-disable-next-line no-unused-vars
-    const [imageUrl, setImageUrl] = useState(null);
+    // const [imageUrl, setImageUrl] = useState(null);
     const [loading, setLoading] = useState(false);
 
     logInfo("item", item);
     logInfo("totalStock", totalStock( item._id))
-    useEffect(() => {
-        let objectUrl;
-        const getItemImage = async () => {
-            try {
-                objectUrl = await fetshItemImage(item.imageUrl);
-                setImageUrl(objectUrl);
-            } catch (error) {
-                logError("Image load failed:", error.message);
-            }
-        }
-        getItemImage();
+    const imageUrl = useObjectImage(item.imageUrl, fetshItemImage);
+    // useEffect(() => {
+    //     let objectUrl;
+    //     const getItemImage = async () => {
+    //         try {
+    //             objectUrl = await fetshItemImage(item.imageUrl);
+    //             setImageUrl(objectUrl);
+    //         } catch (error) {
+    //             logError("Image load failed:", error.message);
+    //         }
+    //     }
+    //     getItemImage();
 
-        return () => {
-            if (objectUrl) {
-                URL.revokeObjectURL(objectUrl);
-            }
-        };
+    //     return () => {
+    //         if (objectUrl) {
+    //             URL.revokeObjectURL(objectUrl);
+    //         }
+    //     };
         
-    }, [item.imageUrl]);
+    // }, [item.imageUrl]);
 
     const handleImageChange = () => {
         const input = document.createElement("input");
@@ -107,6 +109,7 @@ const ItemCard = ({ item, onIn, onOut, onDelete, onEdit, onImageUpload, totalSto
                     justifyContent: "space-between",
                     alignItems: "stretch",
                     height: 100,
+                    maxWidth: 450,
                     m: 1,
                      }} >
             <Box sx={{ display: "flex", flexDirection: "column", flexGrow: 1 }}>

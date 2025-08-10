@@ -62,7 +62,7 @@ const ItemList = ({ items, onDelete, onEdit, onImageUpload }) => {
     }
     
     return (
-        <div className=" p-2">
+        <div className="flex flex-wrap">
             { items.map((item) => (
                 <ItemCard key={item._id} 
                     item={item} 

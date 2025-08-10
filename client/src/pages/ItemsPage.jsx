@@ -163,7 +163,7 @@ const ItemsPage = () => {
             {showItemForm && (
                 <ItemForm onItemCreated={ () => setTriggerUpdate((prev) => prev + 1) } item={itemToEdit} />
             )}
-            <div className="flex justify-center items-center pt-2">
+            <div className="flex justify-center items-center pt-1">
                 <button
                     className="bg-blue-500 text-white px-4 py-2 rounded"
                     onClick={toggleItemForm}

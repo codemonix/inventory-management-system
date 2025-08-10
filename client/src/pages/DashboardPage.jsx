@@ -163,7 +163,7 @@ const DashboardPage = () => {
 
 
     return (
-        <div className="bg-gray-400 p-2">
+        <div className="bg-gray-400 ">
             {localError && <p className="text-red-500">{localError}</p>}
             <StatusHandler status={loading ? 'loading' : ""} error={error}>
                 <SearchFilterBar 
@@ -184,7 +184,7 @@ const DashboardPage = () => {
                         updateSearchParams({ sort: newSort, page: 1 });
                     }}
                 />
-                <div className="p-2">
+                <div >
                     {items.map((item) => (
                         <ItemCardDashboard 
                             key={item.itemId} 
