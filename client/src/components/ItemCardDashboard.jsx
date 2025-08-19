@@ -36,8 +36,10 @@ const ItemCardDashboard = ({ item, onIn, onOut, locationColors, onAddToTransfer 
         <Card sx={{ display: "flex",
                     justifyContent: "space-between",
                     alignItems: "stretch",
-                    height: 100,
-                    m: 1,
+                    minHeight: 100,
+                    maxWidth: 450,
+                    minWidth: 350,
+                    m: 0.75,
                      }} >
             <Box sx={{ display: "flex", flexDirection: "row", flexGrow: 1 }}>
                 <CardContent sx={{ flex: "1", p: 1 }}>

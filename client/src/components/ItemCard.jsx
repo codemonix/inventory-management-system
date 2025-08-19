@@ -108,9 +108,10 @@ const ItemCard = ({ item, onIn, onOut, onDelete, onEdit, onImageUpload, totalSto
         <Card sx={{ display: "flex",
                     justifyContent: "space-between",
                     alignItems: "stretch",
-                    height: 100,
+                    minHeight: 100,
                     maxWidth: 450,
-                    m: 1,
+                    minWidth: 350,
+                    m: 0.75,
                      }} >
             <Box sx={{ display: "flex", flexDirection: "column", flexGrow: 1 }}>
                 <CardContent sx={{ flex: "1 0 auto", p: 1 , pb: 0}}>
@@ -118,7 +119,7 @@ const ItemCard = ({ item, onIn, onOut, onDelete, onEdit, onImageUpload, totalSto
                     <Box sx={{ display: "flex", flexDirection: "row", gap: 1 }}>
                         <Box sx={{ minWidth: "125px" }}>
                             <Typography variant="body2" color="text.secondary" >
-                                { item.code? `Code: ${item.code}` : "" }
+                                { item.code? `#: ${item.code}` : "" }
                             </Typography>
                         </Box>
                         {item.price && (
