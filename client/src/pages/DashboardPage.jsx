@@ -184,7 +184,7 @@ const DashboardPage = () => {
                         updateSearchParams({ sort: newSort, page: 1 });
                     }}
                 />
-                <div >
+                <div className="flex flex-wrap justify-center">
                     {items.map((item) => (
                         <ItemCardDashboard 
                             key={item.itemId} 
