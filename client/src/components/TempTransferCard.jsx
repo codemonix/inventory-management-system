@@ -10,8 +10,8 @@ const TempTransferCard = ({ populatedTempTransfer, onFinalize }) => {
     return (
         <div className="p-4 border border-yellow-400 rounded shadow-md bg-yellow-50">
             <div className="mb-3" >
-                <p ><strong>From:</strong>{populatedTempTransfer.fromLocation.name || 'N/A'} </p>
-                <p><strong>To:</strong>{populatedTempTransfer.toLocation.name || 'N/A'}</p>
+                <p ><strong>From:</strong>{populatedTempTransfer.fromLocation?.name || 'N/A'} </p>
+                <p><strong>To:</strong>{populatedTempTransfer.toLocation?.name || 'N/A'}</p>
             </div>
             <ul className="mb-3">
                 {populatedTempTransfer.items.map((item) => (

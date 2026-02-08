@@ -1,6 +1,5 @@
 import { Card, Box, Typography } from "@mui/material";
 import { logDebug } from "../utils/logger";
-import { useEffect, useState } from "react";
 import { fetshItemImage } from "../services/itemsService.js";
 import { useObjectImage } from "../hooks/useObjectImage.js";
 

@@ -25,7 +25,7 @@ app.use(express.json());
 app.use(helmet());
 app.use(morgan('dev'));
 
-app.get('/', (req, res) => res.send("backen ok"));
+app.get('/', (req, res) => res.send("backend ok"));
 app.use('/api/auth', authRouts);
 app.use('/api/inventory', inventoryRoutes);
 app.use('/api/transfers', transferRoutes);

@@ -30,6 +30,16 @@ export const addItemToTempTransfer = async (req, res) => {
     if (temp.fromLocation.toString() !== sourceLocationId) {
         return res.status(400).json({ message: "Item is from a different location than the transfer source"})
     }
+
+    const stock = await Inventory.findOne({ itemId, locationId: sourceLocationId });
+    if (!stock || stock.quantity < quantity) {
+        return res.status(400).json({ message: 'Insufficient stock' });
+    }
+
+    stock.quantity -= quantity;
+    await stock.save();
+
+
     const exist = temp.items.find(item => item.itemId.toString() === itemId)
     if (exist) {
         exist.quantity += quantity;

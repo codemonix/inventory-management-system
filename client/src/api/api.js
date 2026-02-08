@@ -1,6 +1,6 @@
 import axios from "axios";
 import { getToken } from "../utils/auth.js";
-import { logDebug, logInfo } from "../utils/logger.js";
+import { logDebug } from "../utils/logger.js";
 import { getApiBaseUrl } from "../config.js";
 // import config from "../config.js";
 

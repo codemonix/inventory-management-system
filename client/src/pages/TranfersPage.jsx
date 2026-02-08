@@ -15,7 +15,7 @@ const TransfersPage = () => {
     }, [dispatch]);
     logDebug("status:", status)
     return (
-        <div className="p-6">
+        <div className="p-2 bg-gray-300">
             <h1 className="text-2xl font-bold mb-4">Transfers</h1>
             <p className="mb-4">Manage your transfers between locations.</p>
             <StatusHandler status={status} error={error} >

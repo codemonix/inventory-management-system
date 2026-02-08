@@ -9,12 +9,13 @@ const selectAllItems = (state) => state.items.fullList;
 export const selectTempTransferDetailed = createSelector(
     [selectTempTransfer, selectAllLocations, selectAllItems],
     (tempTransfer, allLocations, allItems) => {
-        console.log("transferSelector -> allItems ->", allItems)
+        console.log("transferSelector -> allItems ->", allItems);
         if (!tempTransfer) {
+            console.log("transferSelector.js -> No tempTransfer");
             return null;
         }
-        logInfo("Selector tempTransfer: ", tempTransfer);
-        logInfo("allLocations: ", allLocations);
+        logInfo("transferSelector.js -> Selector tempTransfer: ", tempTransfer);
+        logInfo("transferSelector.js -> selectAlllLocations: ", allLocations);
         const fromLocationDetails = allLocations.find((location) => location._id === tempTransfer.fromLocation);
         const toLocationDetails = allLocations.find((location) => location._id === tempTransfer.toLocation);
 

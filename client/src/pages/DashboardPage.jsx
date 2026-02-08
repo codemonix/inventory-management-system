@@ -23,8 +23,8 @@ import SearchFilterBar from "../components/SearchFilterBar.jsx";
 
 const locationColors = {
     "Istanbul": "#BC1063",
-    "Mashhad": "#10BC5A",
-    "Kargo": "blue"
+    "RTM": "#10BC5A",
+    "Dubai": "blue"
 }
 
 
@@ -66,7 +66,7 @@ const DashboardPage = () => {
         }}
     , [isLoggedIn]);
 
-     useEffect(() => {
+    useEffect(() => {
         dispatch(getDashboardData({ page, limit, sort, search }))
     },[ page, limit, sort, dispatch, search, triggerUpdate ]);
 
@@ -140,8 +140,7 @@ const DashboardPage = () => {
             } else {
                 // locationId is source location id to check in the backend
                 handleAddItemToTempTransfer(currentItemId, quantity, locationId);
-                logInfo("itemId:", currentItemId)
-                await stockOut (currentItemId, locationId, quantity );
+                logInfo("itemId:", currentItemId);
             }
             
             setTriggerUpdate((prev) => prev + 1 );

@@ -11,7 +11,7 @@ export const loadTransfers = createAsyncThunk(
     'transfer/loadTransfers',
     async () => {
         const response = await getTransfers();
-        logInfo("loadTransfers response: ", response);
+        logInfo("transferSlice.js -> loadTransfers response: ", response);
         return response;
     }
         
@@ -23,7 +23,7 @@ export const loadTempTransfer = createAsyncThunk(
     'transfer/loadTempTransfer',
     async () => {
         const response = await getTempTransfer();
-        logInfo("loadTempTransfer response: ", response);
+        logInfo("transferSlice.js -> loadTempTransfer response: ", response);
         return response;
     }
 );
@@ -33,7 +33,7 @@ export const createTransfer = createAsyncThunk(
     'transfer/createTempTransfer',
     async ( { fromLocation, toLocation } ) => {
         const response = await createTempTransfer( { fromLocation, toLocation } );
-        logInfo("createTempTransfer response: ", response);
+        logInfo("transferSlice.js -> createTempTransfer response: ", response);
         return response;
     }
 );
@@ -42,7 +42,7 @@ export const addItem = createAsyncThunk(
     'transfer/addItemToTempTransfer',
     async ( { itemId, quantity, sourceLocationId } ) => {
         const response = await addItemToTempTransfer( { itemId, quantity, sourceLocationId } );
-        logInfo("addItemToTempTransfer response: ", response);
+        logInfo("transferSlice.js -> addItemToTempTransfer response: ", response);
         return response;
     }
 );
@@ -162,7 +162,7 @@ const transferSlice = createSlice({
             .addCase(addItem.fulfilled, ( state, action ) => {
                 state.tempTransferStatus = 'succeeded';
                 if (state.tempTransfer && state.tempTransfer.items) {
-                    state.tempTransfer.items = action.payload.items;
+                    state.tempTransfer = action.payload;
                 }
                 logInfo("addItem to tempTransfer:", action.payload.items)
             })
@@ -199,7 +199,8 @@ const transferSlice = createSlice({
             .addCase(removeItem.fulfilled, ( state, action ) => {
                 state.tempTransferStatus = 'succeeded';
                 if (state.tempTransfer && state.tempTransfer.items) {
-                    state.tempTransfer.items = state.tempTransfer.items.filter(item => item.id !== action.payload.itemId);
+                    state.tempTransfer = action.payload;
+                    logInfo("transferSlice.js -> removeItem from tempTransfer:", action.payload.items);
                 }
                 logInfo("remove item from tempTransfer:", action.payload.items)
             })

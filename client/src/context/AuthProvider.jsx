@@ -44,11 +44,11 @@ export const AuthProvider = ({ children }) => {
     }, []); 
 
 
-
+    //TODO: check if token is still valid befor sending to backend
     const login = async (email, password) => {
         try {
             const res = await loginApi(email, password);
-            logInfo("loing res.user:", res.user)
+            logInfo("login res.user:", res.user)
             if (res && res.token) {
                 localStorage.setItem("token", res.token); 
                 const userData = res.user;      // Fetch user data using the token
@@ -69,6 +69,9 @@ export const AuthProvider = ({ children }) => {
         localStorage.removeItem("token");
         setIsLoggedIn(false);
         setUser(null);
+        setIsAdmin(false);
+        setIsManager(false);
+        logInfo("User logged out");
     };
 
     const register = async ({name, email, password} ) => {

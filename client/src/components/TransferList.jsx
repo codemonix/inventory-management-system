@@ -98,7 +98,7 @@ const TransferList = () => {
     logDebug("TransferList status:", transferStatus)
 
     return (
-        <div className="p-4">
+        <div className="p-1">
             <section className="mb-6">
                 <h2 className="text-xl font-bold mb-2">Temporary Transfer (In progress)</h2>
             { tempTransferStatus === 'loading' ? (
@@ -114,7 +114,7 @@ const TransferList = () => {
                     </button>
                 </>
             ) : (
-                   <TempTransferCard populatedTempTransfer={populatedTempTransfer} 
+                    <TempTransferCard populatedTempTransfer={populatedTempTransfer} 
                         onFinalize={handleFinalize} />
             )}
             </section>
@@ -124,7 +124,7 @@ const TransferList = () => {
                 {transfers.length === 0 ? (
                     <p className="text-gray-500 italic">No finalized transfers available.</p>
                 ) : (
-                 transfers.map((transfer) => (
+                transfers.map((transfer) => (
                     <FinalizedTransferCard key={ transfer._id } transfer={ transfer } onViewItems={ () => handleOpenItems(transfer) }
                         onConfirm={ () => handleTransferConfirmDialog(transfer)}
                     />
