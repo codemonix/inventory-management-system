@@ -12,6 +12,12 @@ on:
         paths:
             - 'server/**'
 
+permissions:
+    contents: read
+    packages: write
+
+
+
 jobs:
     backend-tests-and-push:
         runs-on: ubuntu-latest

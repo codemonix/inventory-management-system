@@ -10,6 +10,11 @@ on:
         paths:
             - 'client/**'
 
+permissions:
+    contents: read
+    packages: write
+
+
 jobs:
     frontend-tests-and-push:
         runs-on: ubuntu-latest
