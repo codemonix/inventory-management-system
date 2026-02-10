@@ -3,12 +3,19 @@ services:
     image: mongo:8
     container_name: ims_mongo
     restart: always
+    command: ["--replSet", "rs0", "--bind_ip_all", "--port", "27017"]
     ports:
       - "27017:27017"
     volumes:
       - mongo_data:/data/db
     networks:
       - ims_net
+    healthcheck:
+      test: echo "try { rs.status() } catch (err) { rs.initiate() }" | mogoosh --port 27017 --quiet
+      interval: 10s
+      timeout: 30s
+      retries: 5
+      start_period: 5s
 
 
   backend:
@@ -16,6 +23,9 @@ services:
     container_name: ims_backend
     restart: unless-stopped
     env_file: .env.backend
+    environment:
+      - DB_URI=mongodb://ims_mongo:27017/ims?replicaSet=rs0
+      - PORT=5000
     ports:
       - "5000:5000"
     depends_on:

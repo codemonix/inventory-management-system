@@ -10,7 +10,7 @@ const ManageSideDrawer = ({ open, onClose, toggleSidebar }) => {
 
     const navItems = [
         { to: '/manage/users', label: 'User Management' },
-        { to: '/manage/settings', label: 'Settings' },
+        { to: '/manage/system', label: 'System' },
         { to: '/manage/logs', label: 'Log Monitoring' },
     ];
 
@@ -22,7 +22,7 @@ const ManageSideDrawer = ({ open, onClose, toggleSidebar }) => {
     });
 
     const drawerContent = (
-        <Box sx={{ width: drawerWidth , p: 2 }} >
+        <Box sx={{ width: drawerWidth  }} >
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }} >
                 <Typography variant="h6" component="div">
                     Admin Dashboard
@@ -44,25 +44,8 @@ const ManageSideDrawer = ({ open, onClose, toggleSidebar }) => {
             <Box sx={{ mt: 'auto'}} >
                 <Divider />
                 <List >
-                    <ListItem disablePadding>
-                        <NavLink to="/logout" style={{ textDecoration: 'none', width: '100%' }} >
-                            <ListItemButton 
-                                sx={{ 
-                                    backgroundColor: '#f87171',
-                                    color: '#fff',
-                                    borderRadius: 1,
-                                    m: 1,
-                                    px: 2,
-                                    '&:hover': {
-                                        backgroundColor: '#ef4444',
-                                    },
-                                }}>
-                                <ListItemText primary="Logout" sx={{ textAlign: 'center'}}/>
-                            </ListItemButton>
-                        </NavLink>
-                    </ListItem>
                     <ListItem  disablePadding>
-                         <NavLink to="/dashboard" style={{ textDecoration: 'none', width: '100%' }} >
+                        <NavLink to="/dashboard" style={{ textDecoration: 'none', width: '100%' }} >
                             <ListItemButton 
                                 sx={{ 
                                     backgroundColor: '#3b82f6',
@@ -79,6 +62,29 @@ const ManageSideDrawer = ({ open, onClose, toggleSidebar }) => {
                         </NavLink>
                     </ListItem>
                 </List>
+                    <Box sx={{ mt: 'auto' }}>
+                        <Divider />
+                        <List>
+                            <ListItem disablePadding>
+                                <NavLink to="/logout" style={{ textDecoration: 'none', width: '100%' }} >
+                                    <ListItemButton 
+                                        sx={{ 
+                                            backgroundColor: '#f87171',
+                                            color: '#fff',
+                                            borderRadius: 1,
+                                            m: 1,
+                                            px: 2,
+                                            '&:hover': {
+                                                backgroundColor: '#ef4444',
+                                            },
+                                        }}>
+                                        <ListItemText primary="Logout" sx={{ textAlign: 'center'}}/>
+                                    </ListItemButton>
+                                </NavLink>
+                            </ListItem>
+                        </List>
+                    </Box>
+                    
             </Box>
         
         </Box>

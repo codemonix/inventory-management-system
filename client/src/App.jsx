@@ -12,7 +12,8 @@ import LocationsPage from './pages/LocationsPage.jsx';
 import TransfersPage from './pages/TranfersPage.jsx';
 import ManageLayout from './components/admin/ManageLayout.jsx';
 import LogsPage from './pages/admin/LogsPage.jsx';
-import SettingsPage from './pages/admin/SettingsPage.jsx';
+// import SettingsPage from './pages/admin/SettingsPage.jsx';
+import SystemPage from './pages/admin/SystemPage.jsx';
 import UserManagementPage from './pages/admin/UserManagementPage.jsx';
 import RegisterPage from './pages/RegisterPage.jsx';
 import SetupPage from './pages/admin/SetupPage.jsx';
@@ -53,7 +54,7 @@ function App() {
               <Route index element={<Navigate to="users" replace />} />
               <Route path='users' element={<UserManagementPage />} />
               <Route path='logs' element={<LogsPage />} />
-              <Route path='settings' element={<SettingsPage />} />
+              <Route path='system' element={<SystemPage />} />
             </Route>
           </Route>
           <Route path='*' element={<NotFound />} />

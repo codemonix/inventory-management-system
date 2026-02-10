@@ -12,6 +12,10 @@ function LoginForm () {
     // const navigate = useNavigate(); 
     const [error, setError] = useState(null); 
 
+    const isDemo = window.env?.IS_DEMO || import.meta.env.VITE_IS_DEMO === 'true';
+
+    console.log("LoginForm.jsx -> isDemo:", isDemo)
+
     const handleLogin = async (e) => {
         e.preventDefault();
 
@@ -34,7 +38,7 @@ function LoginForm () {
 
     return (
         <form onSubmit={handleLogin} className="max-w-md mx-auto space-y-4">
-            {import.meta.env.VITE_IS_DEMO === 'true' && (
+            {isDemo && (
                 <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg" >
                     <button
                         type="button"

@@ -16,6 +16,7 @@ import locationRoutes from './routes/location.routes.js';
 import userRoutes from './routes/user.routes.js';
 import setupRoutes from './routes/setup.routes.js';
 import transactionRoutes from './routes/transaction.routes.js';
+import systemRoutes from './routes/system.routes.js'
 
 
 
@@ -35,6 +36,7 @@ app.use('/api/locations', locationRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/setup', setupRoutes);
 app.use('/api/transactions', transactionRoutes);
+app.use('/api/system', systemRoutes )
 
 
 export default app;
