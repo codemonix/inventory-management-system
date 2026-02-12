@@ -143,11 +143,14 @@ export const restoreBackup = async (req, res) => {
                 try {
                     // We take ONLY the filename (e.g., "chair.jpg") and ignore the folder "uploads/items/"
                     const fileName = path.basename(entry.entryName);
+                    console.log("system.controller.js -> restoreBackup -> filename:", fileName);
                     
                     // Skip empty filenames (directories sometimes match)
                     if (!fileName) return;
 
                     const targetPath = path.join(targetItemsDir, fileName);
+
+                    console.log("system.controller.js -> restoreBackup -> targetPath:", targetPath);
                     
                     // Write the file
                     fs.writeFileSync(targetPath, entry.getData());
