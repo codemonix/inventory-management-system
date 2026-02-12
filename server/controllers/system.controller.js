@@ -59,7 +59,7 @@ export const restoreBackup = async (req, res) => {
 
     const zipPath = req.file.path;
 
-    console.log("zipFile path:", zipPath)
+    console.log("system.controller.js -> restoreBackup -> zipFile path:", zipPath)
 
 
     // Start Transaction
@@ -169,7 +169,7 @@ export const restoreBackup = async (req, res) => {
         res.json({ message: "System restored successfully." });
 
     } catch (error) {
-        // await session.abortTransaction();
+        await session.abortTransaction();
         if (req.file && fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
         log('Restore failed:', error.message);
         res.status(500).json({ error: 'Restore failed: ' + error.message });
