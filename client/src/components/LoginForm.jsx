@@ -1,5 +1,4 @@
 import { useState, useContext } from "react";
-// import { useNavigate } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext.jsx";
 import { logError } from "../utils/logger.js";
 
@@ -9,7 +8,6 @@ function LoginForm () {
     const { login } = useContext(AuthContext); 
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
-    // const navigate = useNavigate(); 
     const [error, setError] = useState(null); 
 
     const isDemo = window.env?.IS_DEMO || import.meta.env.VITE_IS_DEMO === 'true';
