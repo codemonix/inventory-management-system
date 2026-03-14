@@ -42,11 +42,13 @@ jobs:
         with:
           node-version: '22'
 
-      - name: Install & Test
+      - name: Install dependencies
         working-directory: ./server
-        run: |
-          npm install
-          npm test
+        run: npm ci
+
+      - name: Run Backend test
+        working-directory: ./server
+        run: npm run test
 
       - name: Bump Version
         if: ${{ needs.detect-changes.outputs.is_release == 'true' }}
@@ -56,7 +58,10 @@ jobs:
         run: |
           git config --global user.name 'github-actions[bot]'
           git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+
+          git reset --hard HEAD
           git pull origin master --rebase
+
           BUMP_TYPE="patch"
           if [[ "$COMMIT_MSG" == *"[release:minor]"* ]]; then BUMP_TYPE="minor"; fi
           if [[ "$COMMIT_MSG" == *"[release:major]"* ]]; then BUMP_TYPE="major"; fi
@@ -104,11 +109,14 @@ jobs:
         with:
           node-version: '22'
 
-      - name: Install & Test
+      - name: Install frontend
         working-directory: ./client
-        run: |
-          npm install
-          npm run test
+        run: npm ci
+
+      - name: Test frontend
+        working-directory: ./client
+        run: npm run test
+          
 
       - name: Bump Version
         if: ${{ needs.detect-changes.outputs.is_release == 'true' }}
@@ -118,7 +126,10 @@ jobs:
         run: |
           git config --global user.name 'github-actions[bot]'
           git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+
+          git reset --hard HEAD
           git pull origin master --rebase
+          
           BUMP_TYPE="patch"
           if [[ "$COMMIT_MSG" == *"[release:minor]"* ]]; then BUMP_TYPE="minor"; fi
           if [[ "$COMMIT_MSG" == *"[release:major]"* ]]; then BUMP_TYPE="major"; fi
