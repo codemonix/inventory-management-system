@@ -1,0 +1,157 @@
+name: IMS Deploy Pipeline
+
+on:
+  push:
+    branches: 
+      - master
+  pull_request:
+    branches: 
+      - master
+
+permissions:
+  contents: write 
+  packages: write
+
+jobs:
+  detect-changes:
+    runs-on: ubuntu-latest
+    outputs:
+      backend: ${{ steps.filter.outputs.backend }}
+      frontend: ${{ steps.filter.outputs.frontend }}
+      is_release: ${{ contains(github.event.head_commit.message, '[release') }}
+    steps:
+      - uses: actions/checkout@v3
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            backend:
+              - 'server/**'
+            frontend:
+              - 'client/**'
+
+  backend:
+    needs: detect-changes
+    if: ${{ needs.detect-changes.outputs.backend == 'true' || needs.detect-changes.outputs.is_release == 'true' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0 
+      - uses: actions/setup-node@v3
+        with:
+          node-version: '22'
+
+      - name: Install & Test
+        working-directory: ./server
+        run: |
+          npm install
+          npm test
+
+      - name: Bump Version
+        if: ${{ needs.detect-changes.outputs.is_release == 'true' }}
+        working-directory: ./server
+        env:
+          COMMIT_MSG: ${{ github.event.head_commit.message }}
+        run: |
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+          git pull origin master --rebase
+          BUMP_TYPE="patch"
+          if [[ "$COMMIT_MSG" == *"[release:minor]"* ]]; then BUMP_TYPE="minor"; fi
+          if [[ "$COMMIT_MSG" == *"[release:major]"* ]]; then BUMP_TYPE="major"; fi
+          npm version $BUMP_TYPE -m "chore(backend): bump version to %s [skip ci]"
+          git push origin master --follow-tags
+
+      - name: Extract Version
+        if: ${{ needs.detect-changes.outputs.is_release == 'true' }}
+        working-directory: ./server
+        run: echo "APP_VERSION=$(node -p "require('./package.json').version")" >> $GITHUB_ENV
+
+      - name: Setup & Build Docker
+        if: ${{ needs.detect-changes.outputs.is_release == 'true' }}
+        uses: docker/setup-buildx-action@v3
+        
+      - uses: docker/login-action@v3
+        if: ${{ needs.detect-changes.outputs.is_release == 'true' }}
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Push Image
+        if: ${{ needs.detect-changes.outputs.is_release == 'true' }}
+        uses: docker/build-push-action@v5
+        with:
+          context: ./server
+          push: true
+          tags: |
+            ghcr.io/${{ secrets.GHCR_USERNAME }}/ims_backend:latest
+            ghcr.io/${{ secrets.GHCR_USERNAME }}/ims_backend:${{ env.APP_VERSION }}
+
+  frontend:
+    needs: [detect-changes, backend] 
+    if: |
+      always() && 
+      (needs.detect-changes.outputs.frontend == 'true' || needs.detect-changes.outputs.is_release == 'true') &&
+      (needs.backend.result == 'success' || needs.backend.result == 'skipped')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0 
+      - uses: actions/setup-node@v3
+        with:
+          node-version: '22'
+
+      - name: Install & Test
+        working-directory: ./client
+        run: |
+          npm install
+          npm run test
+
+      - name: Bump Version
+        if: ${{ needs.detect-changes.outputs.is_release == 'true' }}
+        working-directory: ./client
+        env:
+          COMMIT_MSG: ${{ github.event.head_commit.message }}
+        run: |
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+          git pull origin master --rebase
+          BUMP_TYPE="patch"
+          if [[ "$COMMIT_MSG" == *"[release:minor]"* ]]; then BUMP_TYPE="minor"; fi
+          if [[ "$COMMIT_MSG" == *"[release:major]"* ]]; then BUMP_TYPE="major"; fi
+          npm version $BUMP_TYPE -m "chore(frontend): bump version to %s [skip ci]"
+          git push origin master --follow-tags
+
+      - name: Extract Version
+        if: ${{ needs.detect-changes.outputs.is_release == 'true' }}
+        working-directory: ./client
+        run: echo "APP_VERSION=$(node -p "require('./package.json').version")" >> $GITHUB_ENV
+
+      - name: Build React
+        if: ${{ needs.detect-changes.outputs.is_release == 'true' }}
+        working-directory: ./client
+        run: npm run build
+
+      - name: Setup & Build Docker
+        if: ${{ needs.detect-changes.outputs.is_release == 'true' }}
+        uses: docker/setup-buildx-action@v3
+        
+      - uses: docker/login-action@v3
+        if: ${{ needs.detect-changes.outputs.is_release == 'true' }}
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Push Image
+        if: ${{ needs.detect-changes.outputs.is_release == 'true' }}
+        uses: docker/build-push-action@v5
+        with:
+          context: ./client
+          push: true
+          tags: |
+            ghcr.io/${{ secrets.GHCR_USERNAME }}/ims_frontend:latest
+            ghcr.io/${{ secrets.GHCR_USERNAME }}/ims_frontend:${{ env.APP_VERSION }}
