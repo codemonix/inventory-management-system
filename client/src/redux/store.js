@@ -5,6 +5,7 @@ import itemsReducer from './slices/itemsSlice.js';
 import dashboardReducer from './slices/dashboardSlice.js'
 import usersReducer from './slices/usersSlice.js';
 import transactionReducer from './slices/transactionLogSlice.js'
+import systemReducer from './slices/systemSlice.js'
 
 const store = configureStore({
     reducer: {
@@ -14,6 +15,7 @@ const store = configureStore({
         dashboard: dashboardReducer,
         users: usersReducer,
         transactions: transactionReducer,
+        system: systemReducer,
     },
 });
 

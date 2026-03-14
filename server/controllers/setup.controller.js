@@ -1,14 +1,14 @@
 import User from '../models/users.model.js';
 import bcrypt from 'bcryptjs';
-import debugLog from '../utils/logger.js';
+import logger from '../utils/logger.js';
 
 async function isInitialSetupNeeded() {
     try {
         const userExists = await User.exists({});
-        debugLog(userExists)
+        logger.debug("setup.controller -> isInitialSetupNeeded -> userExists:", userExists)
         return !userExists;
     } catch (error) {
-        debugLog("Cannot check if user exist:", error.message);
+        logger.error("setup.controller -> isInitialSetupNeeded -> error:", error.message);
     }
 }
 
@@ -37,7 +37,7 @@ export async function createFirstAdmin(req, res) {
         await adminUser.save();
         return res.status(201).json({ message: 'Admin user created.' });
     } catch (error) {
-        debugLog("Cannot create first user:", error.message);
+        logger.error("setup.controller -> createFirstAdmin -> error:", error.message);
         return res.status(500).json({ message: 'Cannot create first user'})
     }
 }

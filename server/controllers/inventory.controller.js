@@ -4,7 +4,7 @@ import Inventory from "../models/inventory.model.js";
 import Item from "../models/item.model.js";
 import Location from "../models/location.model.js";
 import { logTransaction } from "../services/transactionService.js";
-import log from '../utils/logger.js';
+import logger from '../utils/logger.js';
 
 
 
@@ -35,21 +35,21 @@ export async function createInventory(req, res) {
         res.status(201).json(newInventory);
 
     } catch (error) {
-        log(error.message);
+        logger.error("inventory.controller -> createInventory -> error:", error.message);
         res.status(500).json({ error: 'Failed to create inventory item.' });
     }
 }
 
 
 export const getInventory = async (req, res) => {
-    log("req.query:", req.query);
+    logger.debug("inventory.controller -> getInventory -> req.query:", req.query);
     try {
 
         const page = Math.max(parseInt(req.query.page) || 1);
         const limit = Math.max(parseInt(req.query.limit) || 10);
 
-        console.log("page:", page, "limit:", limit);
-        console.log("search:", req.query.search);
+        logger.debug("page:", page, "limit:", limit);
+        logger.debug("search:", req.query.search);
 
         let sortStage = { "name" : 1 };
         if (req.query.sort) {
@@ -67,11 +67,11 @@ export const getInventory = async (req, res) => {
         ]);
 
         const totalCount = (countResult[0] && countResult[0].count) || 0;
-        log("inventory.controller -> getInventory, totalCount:", totalCount);
+        logger.debug("inventory.controller -> getInventory, totalCount:", totalCount);
 
      
         const totalPages = Math.ceil(totalCount / limit);
-        log("inventory.controller -> getInventory, totalPages:", totalPages);
+        logger.debug("inventory.controller -> getInventory, totalPages:", totalPages);
 
         const currentPage = page > totalPages && totalPages > 0 ? totalPages : page;
 
@@ -101,12 +101,6 @@ export const getInventory = async (req, res) => {
                     }
                 })
             }
-        // pipeline.push(
-        //     {
-        //         $match: {
-        //             "item.name": { $regex: req.query.search || '', $options: 'i' }
-        //         }
-        //     },);
 
 
         pipeline.push(
@@ -165,7 +159,7 @@ export const getInventory = async (req, res) => {
         );
 
         const pagedInventoryWithnStock = await Inventory.aggregate(pipeline);
-        log("inventory.cont. -> getInventory, pagedInventory:", pagedInventoryWithnStock)
+        logger.debug("inventory.cont. -> getInventory, pagedInventory:", pagedInventoryWithnStock)
 
 
         return res.json({
@@ -176,60 +170,14 @@ export const getInventory = async (req, res) => {
                 currentPage,
                 pageSize: limit
             }
-        })
-
-        // const pagedInventory = itemsWithStock.slice(skip, skip  + limit);
-
-        // return res.json({
-        //     items: pagedInventory,
-        //     pagination: {
-        //         totalCount,
-        //         totalPages,
-        //         currentPage: page,
-        //         pageSize: limit
-        //     }
-        // });
+        });
     } catch (error) {
-        log(error.message)
+        logger.error("inventory.controller -> getInventory -> error:", error.message)
         return res.status(500).json({message: "Error getting inventory"});
     };
 };
 
-
-   // const allItems = await Inventory.find()
-        //     .populate("itemId", "name imageUrl")
-        //     .populate("locationId", "name")
-        //     .lean()
-        // // console.log('allItems', allItems);
-        // const itemsMap = {};
-
-        // allItems.forEach(item => {
-        //     // console.log('inventoryCont -> item', item.itemId);
-        //     // if (!item.itemId) {
-        //     //     console.log('ItemiD not found', item);
-        //     //     return;
-        //     // }
-        //     const itemkey = item.itemId._id.toString();
-        //     if (!itemsMap[itemkey]) {
-        //         itemsMap[itemkey] = {
-        //             itemId: itemkey,
-        //             name: item.itemId.name,
-        //             image: item.itemId.imageUrl,
-        //             stock: []
-        //         };
-        //     }
-        //     itemsMap[itemkey].stock.push({
-        //         locationId: item.locationId._id.toString(),
-        //         locationName: item.locationId.name,
-        //         quantity: item.quantity,
-        //     });
-        // });
-
-        // const itemsWithStock = Object.values(itemsMap)
-        // log('allItems length', allItems.length);
-        // const totalCount = itemsWithStock.length;
 export const getFullInventory = async (req, res) => {
-    
     try {
         const pipeline = [ 
             {
@@ -285,11 +233,11 @@ export const getFullInventory = async (req, res) => {
         ];
 
         const fullInventory = await Inventory.aggregate(pipeline);
-        log("inventory.controller -> getFullInventory, inventory:", fullInventory);
+        logger.debug("inventory.controller -> getFullInventory, inventory:", fullInventory);
         
         res.json(fullInventory);
     } catch (error) {
-        log(error.message);
+        logger.error("inventory.controller -> getFullInventory  -> error:", error.message);
         res.status(500).json({ message: "Error getting full inventory" });
     }
 }
@@ -302,10 +250,8 @@ export const updateInventory = async (type, req, res) => {
     try {
         const { itemId } = req.params;
         const { locationId, quantity, note } = req.body;
-        log({locationId, type});
-        log("type of itemId, note:", itemId, note)
+        logger.debug("inventory.controller -> updateInventory",{locationId, type});
         const userId = req.user._id;
-        // log(req.body);
 
         if (!['IN', 'OUT', 'TRANSFER'].includes(type)) return res.status(400).json({ error: 'Invalid type!'});
         if (!itemId, !locationId, !quantity) return res.status(400).json({ error: 'Missin required files.'});
@@ -314,13 +260,13 @@ export const updateInventory = async (type, req, res) => {
         
         
 
-        log({ itemId, locationId, quantity})
+        logger.debug("inventory.controller -> updateInventory ->", { itemId, locationId, quantity})
         const updatedItem = await Inventory.findOneAndUpdate(
             { itemId, locationId },
             { $inc: { quantity: adjustment } },
             { upsert: true, new: true }
         );
-        log(updatedItem)
+        logger.debug("inventory.controller -> updateInventory -> updatedItem:",updatedItem)
         if (!updatedItem) return res.status(404).json({ message: "Inventory record not found for this item and location."});
         await logTransaction({
             itemId,
@@ -332,15 +278,14 @@ export const updateInventory = async (type, req, res) => {
             note, });
 
         res.json({ success: true, updatedInventory: updatedItem });
-        // return res.json(updatedItem);
     } catch (error) {
-        // console.error("Update inventory:", error)
+        logger.error("inventory.controller -> updateInventory -> Update inventory:", error.message);
         return res.status(500).json({ message: error.message });
     };
 };
 
 export async function addStock(req, res) {
-    log("req.body", req.body)
+    logger.debug("inventory.controller -> addStock -> req.body", req.body)
     return updateInventory('IN', req, res);
 }
 
@@ -354,6 +299,7 @@ export const deleteInventory = async (req, res) => {
         if (!deleteItem) return res.status(404).json({ message: "Item not found" });
         res.json({ message: "Item deleted"});
     } catch (error) {
+        logger.error("inventory.controller -> deleteInventory -> error:", error.message);
         res.status(500).json({ message: error.message });
     }
 };

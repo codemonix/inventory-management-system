@@ -38,7 +38,7 @@ const UserManagementPage = () => {
         totalCount,
         status ,
         error
-         } = useSelector((state) => state.users);
+        } = useSelector((state) => state.users);
     const { user: currentUser, isAdmin, isManager } = useAuth();
 
     const [ selectedUser, setSelectedUser ] = useState(null);
@@ -168,10 +168,7 @@ const UserManagementPage = () => {
     logInfo("users:", users)
 
     return (
-        <Box p={2} maxWidth="lg" mx="auto">
-            <Typography variant="h5" gutterBottom>
-                User Management
-            </Typography>
+        <Box p={1} maxWidth="lg" mx="auto">
             <Box mb={2} >
                 <SearchFilterBar 
                     search={search}

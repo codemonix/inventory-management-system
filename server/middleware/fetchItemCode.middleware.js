@@ -1,5 +1,7 @@
 // Middleware to fetch item code from DB using item _id from request parameters
 import  Item  from "../models/item.model.js";
+import logger from "../utils/logger.js";
+
 
 
 export async function fetchItemCode(req, res, next) {
@@ -12,7 +14,7 @@ export async function fetchItemCode(req, res, next) {
         req.itemCode = item.code;
         next();
     } catch (error) {
-        log("Error fetching item code:", error.message);
+        logger.error("fetchItemCode -> Error fetching item code:", error.message);
         res.status(500).json({ error: "Failed to fetch item code" });
     }
 }

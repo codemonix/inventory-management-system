@@ -1,9 +1,8 @@
 import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
-import debugLog from './logger.js';
+import logger from './logger.js';
 
-// import { nanoid } from 'nanoid';
 
 
 const storage = multer.diskStorage({
@@ -23,13 +22,13 @@ const storage = multer.diskStorage({
 
         if ( ext === '.zip') {
             const backupName = `backup-${Date.now()}${ext}`;
-            console.log('upload.js -> Generated Backup Name:', backupName);
+            logger.debug('upload.js -> Generated Backup Name:', backupName);
             return cb(null, backupName);
         }
 
         if (req.itemCode) {
             const itemFilename = `${req.itemCode}${ext}`;
-            console.log('upload.js -> itemFilename:', itemFilename);
+            logger.debug('upload.js -> itemFilename:', itemFilename);
             return cb(null, itemFilename);
         }
     }
@@ -40,11 +39,12 @@ export const upload = multer({
     limits: { fileSize: 1 * 1024 * 1024 },
     fileFilter: (req, file, cb ) => {
         const allowedExt = ['.png', '.jpg', '.jpeg', '.webp'];
-        console.log("upload.js -> upload: images");
-        debugLog( file, req.body );
+        logger.debug("upload.js -> upload: images");
+        logger.debug("upload.js -> upload file:",  file );
         const ext = path.extname(file.originalname).toLowerCase();
-        debugLog( ext );
+        logger.debug("upload.js -> upload ext:", ext );
         if (!allowedExt.includes(ext)) {
+            logger.warn("upload.js -> uplod -> Invalid file extension")
             return cb(new Error('Only image files are allowed'));
         }
         cb( null, true );
@@ -56,11 +56,12 @@ export const uploadBackup = multer({
     limits: { fileSize: 100 * 1024 * 1024 },
     fileFilter: ( req, file, cb ) => {
         const allowedExt = ['.zip'];
-        console.log("upload.js -> uploadBackep: zip");
+        logger.debug("upload.js -> uploadBackep: zip");
         const ext = path.extname(file.originalname).toLocaleLowerCase();
-        console.log("upload.js -> uploadBackup -> ext:", ext);
+        logger.debug("upload.js -> uploadBackup -> ext:", ext);
         if (!allowedExt.includes(ext)) {
-            return cb(new Error('Onlu zip file allowed!'));
+            logger.warn("upload.js -> uploadBackup -> Only ZIP files allowed")
+            return cb(new Error('Only zip file allowed!'));
         }
         cb(null, true);
 

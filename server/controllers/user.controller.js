@@ -1,12 +1,12 @@
 
-import { debugLog } from "../utils/logger.js";
+import logger from "../utils/logger.js";
 import User from "../models/users.model.js"
 import  getSortOptions  from "../utils/getSortOptions.js";
 
 
 // GET /api/users?page=&limit=&search=&sort=
 export const getUsers = async ( req, res ) => {
-    console.log("bdy:", req.body)
+    logger.debug("user.controller.js -> getUsers -> req.body ", req.body)
     try {
         const page = Math.max(parseInt(req.query.page) || 1);
         const limit = Math.max(parseInt(req.query.limit) || 10);
@@ -27,10 +27,10 @@ export const getUsers = async ( req, res ) => {
             .skip(( page - 1 ) * limit )
             .limit( limit );
 
-        debugLog("users:", users)
+        logger.debug("user.controller.js -> getUsers -> users:", users)
         return res.status(200).json({ users, totalCount });
     } catch ( error ) {
-        debugLog('Error fetching users:', error.message);
+        logger.debug('user.controller.js -> getUsers -> Error fetching users:', error.message);
         return res.status(500).json({ error: "Internal Server Error"});
     }
 };
@@ -49,7 +49,7 @@ export const toggleUserActive = async (req, res) => {
         if (!user) return res.status(404).json({ error: "User not found" });
         return res.status(200).json(user);
     } catch ( error ) {
-        debugLog("Error toggling user Active state: ", error.messsage);
+        logger.error("user.controller.js -> toggleUserActive -> Error toggling user Active state: ", error.messsage);
         return res.status(500).json({ error: "Internal Server Error" });
     }
 };
@@ -66,9 +66,10 @@ export const updateUser = async (req, res) => {
             { new: true }
         );
         if (!user) return res.status(404).json({ error: "User not found" });
+        logger.info("User Updated");
         return res.status(200).json(user);
     } catch (error) {
-        debugLog("Error updating user:", error.messsage );
+        logger.error("user.controller.js -> updateUser -> Error updating user:", error.messsage );
         return res.status(500).json({ error: "Internal Server Error"})
     }
 };
@@ -84,9 +85,10 @@ export const toggleUserApproved = async (req, res) => {
             { new: true }
         );
         if (!user) return res.status(404).json({ error: "User not found" });
+        logger.info("User approved status updated")
         return res.status(200).json(user);
     } catch ( error ) {
-        debugLog("Error toggling user approved state:", error.messsage);
+        logger.error("user.controller.js -> toggleUserApprover -> Error toggling user approved state:", error.messsage);
         return res.status(500).json({ error: "Internal Server Error"})
     }
 }

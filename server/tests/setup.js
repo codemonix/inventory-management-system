@@ -8,9 +8,6 @@ let mongo;
 
 beforeAll( async () => {
     let uri;
-
-    // const mongo = await startMongoMemoryServer();
-    // const uri = mongo.getUri();
     console.log(process.env.JWT_SECRET);
     console.log(process.env.MONGO_URI);
     if (process.env.MONGO_URI) {

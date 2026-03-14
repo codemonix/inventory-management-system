@@ -2,8 +2,7 @@
 import Transfer from '../models/transfer.model.js';
 import Inventory from '../models/inventory.model.js';
 import tempTransferModel from '../models/tempTransfer.model.js';
-import { debugLog } from '../utils/logger.js';
-import log from '../utils/logger.js'
+import logger from '../utils/logger.js'
 
 
 export const getTempTransfer = async (req, res) => {
@@ -86,16 +85,14 @@ export const finalizeTempTransfer = async (req, res) => {
         await temp.deleteOne();
         res.status(201).json(newTransfer);
     } catch (error) {
-        debugLog('temp transfer:', temp);
-        debugLog(newTransfer)
-        debugLog(error.message);
+        logger.error("inventory.controller -> finalizeTempTransfer -> error:", error.message);
         return res.status(500).json({ message: 'Failed to save transfer' });
     }
 }
 
 export const createTransfer = async ( req, res ) => {
     try {
-        log(req.body);
+        logger.debug("transfer.controller -> createTransfer -> req.body:", req.body);
         const { fromLocation, toLocation, items } = req.body;
         if ( fromLocation === toLocation ) {
             return res.status(400).json({ message: 'Source and destination must be different.' });
@@ -108,9 +105,9 @@ export const createTransfer = async ( req, res ) => {
         const updates = [];
 
         for ( const { item, quantity } of items ) {
-            log( item, quantity );
+            logger.debug("transfer.controller -> createTransfer -> item, quantity:", item, quantity );
             const sourceStock = await Inventory.findOne({ itemId: item, locationId: fromLocation});
-            log('sourceStock:', sourceStock);
+            logger.debug('sourceStock:', sourceStock);
             if (!sourceStock || sourceStock.quantity < quantity) {
                 return res.status(400).json({ message: `Insufficient stock for item ${item}`});
             }
@@ -133,7 +130,7 @@ export const createTransfer = async ( req, res ) => {
 
         res.status(201).json({ message: 'Transfer initiated successfully.', transfer });
     } catch (error) {
-        log(error.message);
+        logger.error("transfer.controller -> createTransfer -> error:", error.message);
         res.status(500).json({ message: 'Internal Server Error' });
     }
 };
@@ -142,24 +139,26 @@ export const createTransfer = async ( req, res ) => {
 export const confirmTransfer = async (req, res) => {
     try {
         const { id } = req.params;
-        log("transferId -> ", id)
+        logger.debug("transferId -> ", id)
         const transfer = await Transfer.findById(id);
-        log(transfer);
-        log(transfer.toLocation);
+        logger.debug("transfer -> ",transfer);
+        logger.debug("transfer.toLocation ->",transfer.toLocation);
         if (!transfer) {
+            logger.warn("transfer.controller -> confirmTransfer -> Transfer not found")
             res.status(400).json({ message: 'Transfer not found' });
         }
 
         if (transfer.status !== 'in_transit') {
+            logger.warn("transfer.controller -> confirmTransfer -> Transfer already completed or canceled")
             return res.status(400).json({ message: 'Transfer already completed or canceled'});
         }
 
         // add items to destination
         const updates =[];
         for (const { item, quantity } of transfer.items) {
-            log("item.id -> ", item )
+            logger.debug("transfer.controller -> confirmTransfer -> item.id -> ", item )
             const destStock = await Inventory.findOne({ itemId: item, locationId: transfer.toLocation });
-            log("destStock -> ", destStock)
+            logger.debug("transfer.controller -> confirmTransfer -> destStock -> ", destStock)
 
 
             if (destStock) {
@@ -178,10 +177,10 @@ export const confirmTransfer = async (req, res) => {
         // Update transfer status to received
         transfer.status = 'confirmed';
         await transfer.save();
-
+        logger.info("transfer.controller -> confirmTransfer -> Transfer confirmed");
         res.status(200).json({ message: 'Transfer received and stock updated', transfer });
     } catch (error) {
-        log(error.message);
+        logger.error("inentory.controller -> confirmTransfer -> error:", error.message);
         res.status(500).json({ message: 'Failed to confirm transfer' });
         
     }
@@ -196,9 +195,10 @@ export const getAllTransfers = async (req, res) => {
             .populate('toLocation')
             .populate('items.item')
             .populate('createdBy', 'email role');
+        logger.info("Tranfers fetched successfully")
         res.json(transfers);
     } catch (error) {
-        log(error.message);
+        logger.error("transfer.controller -> getAllTransfers -> error:", error.message);
         res.status(500).json({ message: 'Failed to fetch transfers'});
     }
 };

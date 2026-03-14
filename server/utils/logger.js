@@ -1,33 +1,104 @@
-import { config } from "../config/config.js";
-import path from "path";
+import { createLogger, format, transports } from "winston";
+import 'winston-mongodb';
 
-export function debugLog(...args) {
-    if(!config.enableDebugLog) return;
+// Define strict levels to match your SRM architecture
+const levels = {
+    error: 0,
+    warn: 1,
+    http: 2,
+    info: 3,
+    debug: 4,
+};
 
-    const error = new Error();
-    // const stackLines = error.stack?.split("\n")[2];
+// Global state for dynamic updates without restarting the server
+let currentConfig = {
+    level: process.env.NODE_ENV === 'production' ? 'info' : 'debug',
+    enableDbLogging: true,
+    dbUri: null
+};
 
-    // console.log('loder.js -> stackLines:', stackLines);
+// 1. Console Format (Your proven SRM logic)
+const consoleFormat = format.combine(
+    format.colorize(),
+    format.timestamp({ format: 'HH:mm:ss' }),
+    format.printf((info) => {
+        // Pluck out core fields so they don't print twice
+        const { timestamp, level, message, service, ...meta } = info; //eslint-disable-line
+        const cleanMeta = { ...meta };
+        
+        // Remove Winston's internal splat symbol
+        delete cleanMeta[Symbol.for('splat')];
+        
+        const metaString = Object.keys(cleanMeta).length
+            ? `\nDATA: ${JSON.stringify(cleanMeta, null, 2)}`
+            : '';
+            
+        return `[${timestamp}] ${level}: ${message}${metaString}`;
+    })
+);
 
-    const stackline = error.stack?.split("\n")[2] || ""; // Get the line where debugLog was called
-    const match = stackline.match(/at\s+(.*?)\s+\((.*):(\d+):(\d+)\)/);
-    // const funcNameMatch = stackline.match(/at\s+(.*?)\s+\((.*):(\d+):(\d+)\)/);
-    // const funcName = funcNameMatch?.[1] || "unknown function";
+// 2. Database Format (Cleanly extracts metadata for MongoDB)
+const dbFormat = format.combine(
+    format.timestamp(),
+    format.errors({ stack: true }),
+    format.metadata({ fillExcept: ['message', 'level', 'timestamp', 'service'] }) 
+);
 
-    if (match) {
-        const funcName = match[1] || "unknown function";
-        const fullPath = match[2];
-        const fileName = path.basename(fullPath);
-        const lineNumber = match[3];
-        // const columnNumber = match[4];
-        const timestamp = new Date().toString().split("GMT")[0].trim(); // Get the current timestamp without GMT
-        // const [, file, line, column ] = match;
+// 3. Create the master logger instance
+const logger = createLogger({
+    levels,
+    level: currentConfig.level,
+    defaultMeta: { service: 'ims-api' }, // Tagged for the IMS
+    transports: [
+        new transports.Console({ format: consoleFormat }),
+    ],
+});
 
+// 4. Attach stream for HTTP Middleware (Morgan or custom)
+logger.stream = {
+    write: (message) => {
+        const ansiRegex = /[\u001b\x1b]\[[0-9;]*m/g; //eslint-disable-line
+        
+        const cleanMessage = message.replace(ansiRegex, '').trim();
+        
+        logger.http(cleanMessage)
+    },
+};
 
-        console.log(`log -> [${timestamp}:${fileName} -> ${lineNumber}] (${funcName}):`, ...args);
-    } else {
-        console.log(`Debug Log (unknown location):`, ...args);
+// 5. Initialize MongoDB dynamically after the DB connects
+export const initializeDbLogger = (dbUri) => {
+    currentConfig.dbUri = dbUri;
+    const hasMongoTransport = logger.transports.some(t => t.name === 'mongodb');
+    
+    if (!hasMongoTransport && dbUri && currentConfig.enableDbLogging) {
+        logger.add(new transports.MongoDB({
+            level: currentConfig.level,
+            db: dbUri,
+            collection: 'systemlogs',
+            format: dbFormat,
+            metaKey: 'meta', // Stores all extra data neatly inside a 'meta' object
+            capped: false 
+        }));
+        logger.info("MongoDB logging transport initialized.");
     }
-}
+};
 
-export default debugLog
+// 6. Dynamically update settings from the frontend UI
+export const updateLoggerSettings = (newConfig) => {
+    logger.info("Updating logging configuration dynamically...", { newConfig });
+    
+    currentConfig = { ...currentConfig, ...newConfig };
+    
+    // Update the master logger level
+    logger.level = currentConfig.level;
+
+    // Dynamically update the MongoDB transport level if it exists
+    const mongoTransport = logger.transports.find(t => t.name === 'mongodb');
+    if (mongoTransport) {
+         mongoTransport.level = currentConfig.level;
+    }
+
+    logger.debug("Logging configuration successfully updated.");
+};
+
+export default logger;

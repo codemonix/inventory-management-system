@@ -1,24 +1,66 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useDispatch, useSelector } from 'react-redux';
 import { useAuth } from '../../context/AuthContext';
 import { 
     Box, Typography, Paper, Button, Divider, 
-    Grid, Alert, CircularProgress, Card, CardContent,
+    FormControl, Alert, CircularProgress, Card, CardContent,
     Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions, 
-    TextField, Stack 
+    TextField, Stack, MenuItem, Select, InputLabel, FormGroup, FormControlLabel, Switch, 
 } from '@mui/material';
+import DeleteIcon from '@mui/icons-material/Delete';
+import SaveIcon from '@mui/icons-material/Save';
 import CloudDownloadIcon from '@mui/icons-material/CloudDownload';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 import WarningAmberIcon from '@mui/icons-material/WarningAmber';
 
-import { downloadBackup, restoreSystem, clearSystemData, performFactoryReset } from '../../services/systemService';
+import { downloadBackup, restoreSystem, clearSystemData, performFactoryReset } from '../../services/systemService.js';
+import { fetchSystemSettings, updateSystemSettings, clearSystemLogs } from '../../redux/thunks/systemThunks.js';
 import ConfirmModal from '../../components/ConfirmModal';
 
 const SettingsPage = () => {
     const [loading, setLoading] = useState(false);
     const [message, setMessage] = useState(null);
     const [error, setError] = useState(null);
+    const dispatch = useDispatch();
+    const { settings, isLoading } = useSelector((state) => state.system);
+    const [localLogLevel, setLocalLogLevel] = useState('info');
+    const [localEnableDbLogging, setLocalEnableDbLogging] = useState(true)
+
+    useEffect(() => {
+        dispatch(fetchSystemSettings());
+    }, [dispatch]);
+
+    useEffect(() => {
+        if (settings.logLevel) {
+            setLocalLogLevel(settings.logLevel);
+        }
+        if (settings.enableDbLogging !== undefined) {
+            setLocalEnableDbLogging(settings.enableDbLogging);
+        }
+    }, [settings]);
+
+    const handleSaveSettings = () => {
+        dispatch(updateSystemSettings({ 
+            ...settings, 
+            logLevel: localLogLevel,
+            enableDbLogging: localEnableDbLogging
+        }));
+        setMessage("Logging settings updated successfully.");
+        setTimeout(() => setMessage(null), 2500);
+    };
+
+    const handleClearLogs = () => {
+        if (window.confirm('Are you sure you want to permamently delete all system logs?')) {
+            dispatch(clearSystemLogs());
+        }
+    };
+
+    const hasUnsavedChanges = 
+        localLogLevel !== settings?.logLevel ||
+        localEnableDbLogging !== settings?.enableDbLogging;
+    
     
     // Modals
     const [confirmOpen, setConfirmOpen] = useState(false);
@@ -101,8 +143,12 @@ const SettingsPage = () => {
     };
 
     return (
-        <Box maxWidth="lg" mx="auto" p={2}>
-            <Typography variant="h4" gutterBottom>System Administration</Typography>
+        <Box maxWidth="lg" mx="auto" p={1}>
+            <Box px={2} py={0.5} sx={{ bgcolor: 'grey.200', borderRadius: 2 }}>
+                <Typography variant="body2" color="text.secondary" fontWeight="medium">
+                    v{__APP_VERSION__}
+                </Typography>
+            </Box>
 
             {message && <Alert severity="success" sx={{ mb: 2 }}>{message}</Alert>}
             {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
@@ -144,6 +190,68 @@ const SettingsPage = () => {
                         >
                             Upload & Restore
                             <input type="file" hidden accept=".zip" onChange={handleFileChange} />
+                        </Button>
+                    </Box>
+                </Paper>
+
+                {/* System Settings */}
+                <Paper elevation={3} sx={{ p: 3, mb: 3 }}>
+                    <Typography variant="h6" gutterBottom>System Diagnostics & Logging</Typography>
+                    <Divider sx={{ mb: 3 }} />
+
+                    <FormGroup sx={{ mb: 3 }}>
+                        <FormControlLabel 
+                            control={
+                                <Switch 
+                                    checked={localEnableDbLogging} 
+                                    onChange={(e) => setLocalEnableDbLogging(e.target.checked)} 
+                                    color="primary" 
+                                />
+                            } 
+                            label="Enable Database Logging" 
+                        />
+                        <Typography variant="caption" color="textSecondary" sx={{ ml: 4, mt: -1, display: 'block' }}>
+                            Toggle off to stop writing logs to MongoDB. Terminal logs will remain active.
+                        </Typography>
+                    </FormGroup>
+                    
+                    <Box display="flex" alignItems="center" gap={3} mb={3}>
+                        <FormControl sx={{ minWidth: 200 }}>
+                            <InputLabel>Log Level</InputLabel>
+                            <Select
+                                value={localLogLevel}
+                                label="Database Log Level"
+                                onChange={(e) => setLocalLogLevel(e.target.value)}
+                            >
+                                <MenuItem value="error">Error Only</MenuItem>
+                                <MenuItem value="warn">Warnings & Errors</MenuItem>
+                                <MenuItem value="info">Info (Standard)</MenuItem>
+                                <MenuItem value="debug">Debug (Verbose)</MenuItem>
+                            </Select>
+                        </FormControl>
+
+                        <Button 
+                            variant="contained" 
+                            color="primary" 
+                            startIcon={<SaveIcon />}
+                            onClick={handleSaveSettings}
+                            disabled={isLoading || !hasUnsavedChanges}
+                        >
+                            Save Settings
+                        </Button>
+                    </Box>
+
+                    <Box mt={4}>
+                        <Typography variant="body2" color="textSecondary" gutterBottom>
+                            Clearing system logs will not affect your business inventory transactions.
+                        </Typography>
+                        <Button 
+                            variant="outlined" 
+                            color="error" 
+                            startIcon={<DeleteIcon />}
+                            onClick={handleClearLogs}
+                        >
+                            Clear System Logs
                         </Button>
                     </Box>
                 </Paper>

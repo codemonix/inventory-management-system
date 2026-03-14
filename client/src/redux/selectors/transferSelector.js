@@ -1,5 +1,5 @@
 import { createSelector } from "@reduxjs/toolkit";
-import { logInfo } from "../../utils/logger";
+import { logInfo, logDebug } from "../../utils/logger";
 
 export const selectTempTransfer = (state) => state.transfer.tempTransfer;
 const selectAllLocations = (state) => state.locations.locations;
@@ -9,9 +9,9 @@ const selectAllItems = (state) => state.items.fullList;
 export const selectTempTransferDetailed = createSelector(
     [selectTempTransfer, selectAllLocations, selectAllItems],
     (tempTransfer, allLocations, allItems) => {
-        console.log("transferSelector -> allItems ->", allItems);
+        logDebug("transferSelector -> allItems ->", {allItems});
         if (!tempTransfer) {
-            console.log("transferSelector.js -> No tempTransfer");
+            logInfo("transferSelector.js -> No tempTransfer");
             return null;
         }
         logInfo("transferSelector.js -> Selector tempTransfer: ", tempTransfer);

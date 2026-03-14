@@ -5,7 +5,7 @@ export const fetchInventory = async ({ page = 1, limit = 10, sort = 'name', sear
     logInfo("page, limit, sort, search:", page, limit, sort, search);
     try {
         const res = await api.get(`/inventory?page=${page}&limit=${limit}&sort=${sort}&search=${search}`);
-        logInfo("InventoryServices -> fetchInventory:", res.data);
+        logDebug("InventoryServices -> fetchInventory:", res.data);
         return res.data; // { items: [...] }
     } catch (error) {
         logError("Fail to fetch inventory:", error.message);

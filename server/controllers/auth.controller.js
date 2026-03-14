@@ -1,7 +1,7 @@
 import bcrypt from 'bcryptjs';
 import User from '../models/users.model.js';
 import generateToken from '../utils/generateToken.js';
-import log from '../utils/logger.js'
+import logger from '../utils/logger.js'
 
 
 
@@ -20,7 +20,7 @@ export async function  registerUser(req, res) {
         const existing = await User.findOne({ email });
         // log(existing);
         if (existing) {
-            log('Email already exist!')
+            logger.info('Email already exist!');
             return res.status(409).json({ error: 'Email already registered' });
         } 
 
@@ -45,7 +45,7 @@ export async function  registerUser(req, res) {
         });
 
     } catch (error) {
-        log('Register user:', error);
+        logger.error('Register user:', error);
         res.status(500).json({ error: 'Server error, please try again later.'});
     }
 }
@@ -53,16 +53,17 @@ export async function  registerUser(req, res) {
 export async function loginUser(req, res) {
     
     try {
-        log(req.body);
+        logger.info("auth.controller.js -> loginUser -> req.body:", req.body.email);
         // check if user exists
         const { email, password } = req.body;
         const user = await User.findOne({ email });
-        log(user)
         if (!user || !user.isActive) {
+            logger.warn("auth.controller.js -> loginUser -> Invalid credentials or inactive account", { email })
             return res.status(401).json({ message: 'Invalid credentials or inactive account' });
         }
 
         if (!user.isApproved) {
+            logger.warn("auth.controller.js -> loginUser -> Account not approved yet", { email })
             return res.status(403).json({ message: 'Account not approved yet' });
         }
 
@@ -87,7 +88,7 @@ export async function loginUser(req, res) {
             token,
         });
     } catch (error) {
-        log('Login error:', error.message);
+        logger.error('Login error:', error.message);
         res.status(500).json({ error: 'Something went wrong during login'});
     }
 
@@ -111,7 +112,7 @@ export async function getCurrentUser(req, res) {
             },
         });
     } catch (error) {
-        console.log('Get user error:', error);
+        logger.error('auth.controller.js -> getCurrentUser ->  Get user error:', error.message);
         res.status(500).json({ error: 'Server error, Please try again later.'})
     }
 }

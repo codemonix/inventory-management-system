@@ -12,7 +12,68 @@ import Inventory from '../models/inventory.model.js';
 import Transfer from '../models/transfer.model.js';
 import Transaction from '../models/transaction.model.js';
 import TempTransfer from '../models/tempTransfer.model.js';
-import log from '../utils/logger.js';
+import logger from '../utils/logger.js';
+import * as systemService from '../services/system.service.js';
+
+
+// Fetch system logs
+export const getSystemLogs = async (req, res) => {
+    try {
+        // Pagination
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 50;
+        const { level, type } = req.query;
+
+        const result = await systemService.getLogs({ page, limit, level, type });
+        res.status(200).json(result);
+
+    } catch (error) {
+        logger.error("system.controller.js -> getSystemLogs -> error:", error.message);
+        res.status(500).json({ message: "Failed to fetch system logs" })
+    }
+};
+
+// Clear system logs
+export const clearSystemLogs = async (req, res) => {
+    try {
+        await systemService.clearLogs();
+        logger.info("System logs manually cleared", { clearedBy: req.user?._id });
+        res.status(200).json({ message: "System logs cleared successfully" });
+    } catch (error) {
+        logger.error("system.controller.js -> clearSystemLogs -> error:", error.message);
+        res.status(500).json({ message: "Failed to clear system logs" });
+    }
+}
+
+export const getSystemSettings = async (req, res) => {
+    try {
+        const settings = await systemService.getSettings();
+        logger.info("system.controller.js -> getSystemSettings -> System settings fetched");
+        res.status(200).json(settings);
+    } catch (error) {
+        logger.error("system.controller.js -> getSystemSettings -> error:", {error: error.message});
+        res.status(500).json({ message: "Failed to fetch system settings" });
+    }
+};
+
+export const updateSystemSettings = async (req, res) => {
+    try {
+        const { logLevel, enableDbLogging } = req.body;
+        
+        const settings = await systemService.updateSettings(logLevel, enableDbLogging);
+
+        logger.info("system.controller.js -> updateSystemSettings -> System settings updated", { 
+            updatedBy: req.user?._id, 
+            newLevel: logLevel,
+            dbLogging: enableDbLogging
+        });
+
+        res.status(200).json(settings);
+    } catch (error) {
+        logger.error("system.controller.js -> updateSystemSettings -> error:", error.message);
+        res.status(500).json({ message: "Failed to update system settings" });
+    }
+};
 
 // --- BACKUP: Stream ZIP (DB JSON + Uploads Folder) ---
 export const createBackup = async (req, res) => {
@@ -48,7 +109,7 @@ export const createBackup = async (req, res) => {
         await archive.finalize();
 
     } catch (error) {
-        log('Backup failed:', error.message);
+        logger.error("system.controller.js -> createBackup -> error:", error.message);
         if (!res.headersSent) res.status(500).json({ error: 'Backup failed' });
     }
 };
@@ -59,7 +120,7 @@ export const restoreBackup = async (req, res) => {
 
     const zipPath = req.file.path;
 
-    console.log("system.controller.js -> restoreBackup -> zipFile path:", zipPath)
+    logger.debug("system.controller.js -> restoreBackup -> zipFile path:", zipPath)
 
 
     // Start Transaction
@@ -93,7 +154,7 @@ export const restoreBackup = async (req, res) => {
         if(dbData.transfers?.length) await Transfer.insertMany(dbData.transfers, { session });
         if(dbData.transactions?.length) await Transaction.insertMany(dbData.transactions, { session });
 
-        console.log("✅ Database data restored.");
+        logger.info("✅ Database data restored.");
 
         // const targetItemsDir
 
@@ -102,7 +163,7 @@ export const restoreBackup = async (req, res) => {
 
         // 2. Restore Images (Filesystem)
         const uploadsDir = path.join(process.cwd(), 'uploads');
-        console.log("system.controller.js -> restoreBackup -> uploadsDir:", uploadsDir);
+        logger.debug("system.controller.js -> restoreBackup -> uploadsDir:", uploadsDir);
         
         // Clean old images
         if (fs.existsSync(uploadsDir)) {
@@ -111,12 +172,12 @@ export const restoreBackup = async (req, res) => {
         fs.mkdirSync(uploadsDir, { recursive: true });
 
         // Extract 'uploads' folder from ZIP to server root
-        console.log("extracting Images")
+        logger.debug("extracting Images")
         
         // 3. RESTORE IMAGES (The Robust Way)
         const targetItemsDir = path.join(process.cwd(), 'uploads', 'items');
         
-        console.log("📂 Scanning ZIP for images...");
+        logger.info("📂 Scanning ZIP for images...");
 
         // Find ALL images, ignoring where they are inside the zip
         // We filter out __MACOSX which are junk metadata files from Macs
@@ -127,7 +188,7 @@ export const restoreBackup = async (req, res) => {
         });
 
         if (imageEntries.length > 0) {
-            console.log(`✅ Found ${imageEntries.length} images. Restoring to: ${targetItemsDir}`);
+            logger.info(`✅ Found ${imageEntries.length} images. Restoring to: ${targetItemsDir}`);
 
             // 1. Clean the target directory (Safety check: ensure we don't delete system root)
             if (targetItemsDir.length > 20) { // Simple sanity check on path length
@@ -143,28 +204,28 @@ export const restoreBackup = async (req, res) => {
                 try {
                     // We take ONLY the filename (e.g., "chair.jpg") and ignore the folder "uploads/items/"
                     const fileName = path.basename(entry.entryName);
-                    console.log("system.controller.js -> restoreBackup -> filename:", fileName);
+                    logger.debug("system.controller.js -> restoreBackup -> filename:", fileName);
                     
                     // Skip empty filenames (directories sometimes match)
                     if (!fileName) return;
 
                     const targetPath = path.join(targetItemsDir, fileName);
 
-                    console.log("system.controller.js -> restoreBackup -> targetPath:", targetPath);
+                    logger.debug("system.controller.js -> restoreBackup -> targetPath:", targetPath);
                     
                     // Write the file
                     fs.writeFileSync(targetPath, entry.getData());
                     successCount++;
                 } catch (err) {
-                    console.error(`❌ Failed to write ${entry.entryName}:`, err.message);
+                    logger.error("❌ Failed to write:", err.message);
                 }
             });
-            console.log(`🎉 Successfully restored ${successCount} images.`);
+            logger.info("🎉 Successfully restored images:", successCount);
             
         } else {
-            console.warn("⚠️ No images found anywhere in the ZIP file.");
-            // DEBUG: Print what WAS found so you can see why it failed
-            console.log("First 5 entries found in ZIP:", zipEntries.slice(0, 5).map(e => e.entryName));
+            logger.warn("⚠️ No images found anywhere in the ZIP file.");
+            // what was first 5 entries
+            logger.debug("First 5 entries found in ZIP:", zipEntries.slice(0, 5).map(e => e.entryName));
         }
 
         // ... Commit Transaction and End Session ...
@@ -174,7 +235,7 @@ export const restoreBackup = async (req, res) => {
     } catch (error) {
         await session.abortTransaction();
         if (req.file && fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
-        log('Restore failed:', error.message);
+        logger.error('system.controller.js -> restoreBackup -> Restore failed:', error.message);
         res.status(500).json({ error: 'Restore failed: ' + error.message });
     } finally {
         session.endSession();
@@ -216,7 +277,7 @@ export const factoryReset = async (req, res) => {
 
     } catch (error) {
         await session.abortTransaction();
-        log('Factory Reset failed:', error.message);
+        logger.error('system.controller.js -> factoryReset -> Factory Reset failed:', error.message);
         res.status(500).json({ error: error.message });
     } finally {
         session.endSession();
@@ -230,19 +291,24 @@ export const clearData = async (req, res) => {
         if (target === 'transfers') {
             await Transfer.deleteMany({});
             await TempTransfer.deleteMany({});
+            logger.info("All transfers history cleared.");
             res.json({ message: "All transfers history cleared." });
         } else if (target === 'items') {
              // Check for dependencies
              const hasInventory = await Inventory.exists({});
              if(hasInventory) {
+                logger.info("Cannot delete items while stock exists.");
                  return res.status(400).json({ error: "Cannot delete items while stock exists." });
              }
              await Item.deleteMany({});
+             logger.info("All items deleted.");
              res.json({ message: "All items deleted." });
         } else {
+            logger.warn("system.controller.js -> clearData -> Invalid target")
             res.status(400).json({ error: "Invalid target" });
         }
     } catch (error) {
+        logger.error("system.controller.js -> clearData -> error:", error.message);
         res.status(500).json({ error: error.message });
     }
 };

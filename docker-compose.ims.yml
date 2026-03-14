@@ -20,6 +20,19 @@ services:
       - PORT=5000
     ports:
       - "5000:5000"
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    deploy:
+      resources:
+        limits:
+          cpu: '0.50'
+          memory: 512M
+        reservations:
+          cpu: '0.250'
+          memory: 256M
     depends_on:
       - mongo
     networks:
@@ -36,6 +49,21 @@ services:
       - BASE_PATH=
     ports:
       - "3000:80"
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    deploy:
+      resources:
+        limits:
+          cpu: '0.25'
+          memory: '128m'
+
+        reservations:
+          cpus: '0.05'
+          memory: 64M
+
 
 networks:
   ims_net:

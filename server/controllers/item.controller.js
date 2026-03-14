@@ -2,12 +2,12 @@
 import Item from "../models/item.model.js";
 import Inventory from "../models/inventory.model.js";
 import { nanoid } from "nanoid";
-import { debugLog } from "../utils/logger.js";
+import logger from "../utils/logger.js";
 import path from 'path';
 import fs from 'fs';
 
 export async function createItem(req, res) {
-    debugLog('item controller -> createItem:', req.body);
+    logger.debug('item.controller -> createItem req.body:', req.body);
     try {
         const { name, category, price } = req.body;
 
@@ -28,33 +28,27 @@ export async function createItem(req, res) {
             imageUrl
         });
         const savedItem = await newItem.save();
-        debugLog({ savedItem });
+        logger.debug("item.controller -> createItem -> savedItem:", { savedItem });
         res.status(201).json({ message: 'Item created successfully', item: savedItem});
     } catch (error) {
         if (error.code === 11000 && error.keyPattern.nameLower) {
             return res.status(400).json({ message: "Item with this name already exist (case-insensitive)"});
         }
-        debugLog(error.message);
+        logger.error("item.controller -> createItem -> error:", error.message);
         res.status(500).json({ error: 'Failed to create item.' });
     }
 }
 
 export async function getItems(req, res) {
-    debugLog("req.query:", req.query)
+    logger.debug("item.controller -> getItems -> req.query:", req.query)
     try {
         const page = Math.max( 1, parseInt(req.query.page, 10) || 1);
         const limit = Math.max( 1, parseInt(req.query.limit, 10) || 20);
         const skip = ( page - 1 ) * limit;
-        // const totalCount = await Item.countDocuments();
-
 
         // search
         const search = req.query.search ? req.query.search.trim() : '';
 
-        //sort
-        // const ALLOWED_SORTS = [ 'name', 'careatedAt', 'price', 'stock' ];
-        // let sortField = req.query.sort || 'name';
-        // let sortOrder = req.query.order === 'desc' ? -1 : 1;
         const filter = {};
 
         if (search) {
@@ -81,11 +75,10 @@ export async function getItems(req, res) {
             .limit(limit)
             .lean();
 
-        // const items = await Item.find();
         const totalCount = await Item.countDocuments(filter);
         return res.status(200).json({ items, totalCount });
     } catch (error) {
-        debugLog(error.message);
+        logger.error("item.controller -> getItems -> error:", error.message);
         return res.status(500).json({ error: 'Fail to fetch items.'});
     }
 }
@@ -98,7 +91,7 @@ export async function getAllItems(req, res) {
         }
         res.status(200).json({ items });
     } catch (error) {
-        debugLog(error.message);
+        logger.error("item.controller -> getAllItems -> error:", error.message);
         res.status(500).json({ error: 'Failed to fetch items' });
     }
 }
@@ -117,7 +110,7 @@ export async function deleteItem(req, res) {
         }
         res.status(200).json({ message: 'Item deleted successfully' });
     } catch (error) {
-        log(error.message);
+        logger.error("item.controller -> deleteItem -> error:", error.message);
         res.status(500).json({ error: 'Failed to delete item' });
     }
 }
@@ -126,7 +119,7 @@ export async function updateItemImage(req, res) {
     try {
         const { itemId } = req.params;
         const filename = req.file.filename;
-        log(req.file.filename);
+        logger.debug("item.controller -> updateItemImage ->req.file.filename", req.file.filename);
 
         // Later delete old image if it is not default.jpg
 
@@ -135,14 +128,14 @@ export async function updateItemImage(req, res) {
             { imageUrl: `/uploads/items/${filename}` },
             { new: true }
         );
-        log(updateItem);
+        logger.debug("item.controller -> updateItemImage ->", updateItem);
         if (!updateItem) {
             return res.status(404).json({success: false, error: 'Item not found' });
         }
 
         res.status(200).json({ success: true, message: 'Item image updated successfully', item: updateItem });
     } catch (error) {
-        log(error.message);
+        logger.error("item.controller -> updateItemImage -> error:", error.message);
         res.status(500).json({ success: false, error: 'Failed to update item image' });
     }
 }
@@ -172,7 +165,7 @@ export async function updateItem(req, res) {
         if ( error.code === 11000 && error.keyPattern.nameLower) {
             return res.status(400).json( { message: "Another item already has this name (case-insensitive)"})
         }
-        log(error.message);
+        logger.error("item.controller -> updateItem -> error:", error.message);
         res.status(500).json({ error: 'Failed to update item' });
     }
 }
@@ -180,7 +173,7 @@ export async function updateItem(req, res) {
 export async function getItemImage(req, res) {
     const { filename } = req.params;
     const imagePath = path.join( process.cwd(), 'uploads', 'items', filename );
-    debugLog("imagePath:", imagePath);
+    logger.debug("imagePath:", imagePath);
     if (!fs.existsSync(imagePath)) {
         return res.status(404).json({ message: 'Image not found!' });
     }

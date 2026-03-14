@@ -1,6 +1,5 @@
 import mongoose from 'mongoose';
 
-
 const tempTransferSchema = new mongoose.Schema({
     fromLocation: { type: mongoose.Schema.Types.ObjectId, ref: 'Location', required: true },
     toLocation: { type: mongoose.Schema.Types.ObjectId, ref: 'Location', required: true },

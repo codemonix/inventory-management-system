@@ -16,15 +16,19 @@ import locationRoutes from './routes/location.routes.js';
 import userRoutes from './routes/user.routes.js';
 import setupRoutes from './routes/setup.routes.js';
 import transactionRoutes from './routes/transaction.routes.js';
-import systemRoutes from './routes/system.routes.js'
+import systemRoutes from './routes/system.routes.js';
+import errorHandler from './middleware/error.middleware.js';
+import logger from './utils/logger.js';
 
+
+const morganFormat = process.env.NODE_ENV === 'production' ? 'combined' : 'dev';
 
 
 const app = express();
 app.use(cors());
 app.use(express.json());
 app.use(helmet());
-app.use(morgan('dev'));
+app.use(morgan(morganFormat, { stream: logger.stream}));
 
 app.get('/', (req, res) => res.send("backend ok"));
 app.use('/api/auth', authRouts);
@@ -38,5 +42,6 @@ app.use('/api/setup', setupRoutes);
 app.use('/api/transactions', transactionRoutes);
 app.use('/api/system', systemRoutes )
 
+app.use(errorHandler);
 
 export default app;

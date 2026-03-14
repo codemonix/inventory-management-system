@@ -1,4 +1,5 @@
 import Location from "../models/location.model.js";
+import logger from "../utils/logger.js";
 
 export async function createLocation(req, res) {
     try {
@@ -6,7 +7,7 @@ export async function createLocation(req, res) {
         await location.save();
         res.status(201).json({mesage: "Location created successfully", location: location});
     } catch (error) {
-        log(error.message);
+        logger.error("location.controller -> createLocation -> error:", error.message);
         res.status(500).json({ error: 'Failed to create location' });
     }
 }
@@ -30,7 +31,7 @@ export async function deleteLocation(req, res) {
         }
         res.status(200).json({ message: 'Location deleted successfully' });
     } catch (error) {
-        log(error.message);
+        logger.error("location.controller -> deleteLocation -> error:", error.message);
         res.status(500).json({ error: 'Failed to delete location' });
     }
 }

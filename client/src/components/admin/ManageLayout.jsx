@@ -1,14 +1,20 @@
-import { Outlet, NavLink } from 'react-router-dom';
+import { Outlet, useLocation } from 'react-router-dom';
 import { AppBar, Toolbar, Typography, IconButton } from '@mui/material';
 import MenuIcon from '@mui/icons-material/Menu';
-import SupervisorAccountIcon from '@mui/icons-material/SupervisorAccount';
-import ListAltIcon from '@mui/icons-material/ListAlt';
 import ManageSideDrawer from './ManageSideDrawer';
 import { useState } from 'react';
 
 
 export default function AdminLayout() {
     const [ open, setOpen ] = useState(false);
+    const location = useLocation();
+
+    const pageTitles = {
+        '/manage/logs': 'System Audit Logs',
+        '/manage/system': 'System Administration',
+        '/manage/users': 'User Administration',
+        '/manage/dashboard': 'Overview'
+    };
 
     const toggleSidebar = () => {
         setOpen((prev) => !prev);
@@ -23,7 +29,7 @@ export default function AdminLayout() {
                         <MenuIcon fontSize="large" />
                     </IconButton>
                     <Typography variant='h7' noWrap component='div' sx={{ flexGrow: 1, alignItems: 'center', display: 'flex', justifyContent: 'center' }}>
-                        Manage Dashboard
+                        Manage Dashboard | {pageTitles[location.pathname]}
                     </Typography>
                 </Toolbar>
             </AppBar>
