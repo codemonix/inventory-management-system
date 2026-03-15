@@ -1,6 +1,7 @@
 
 import mongoose from "mongoose";
 import Item from "../models/item.model.js";
+import logger from "../utils/logger.js";
 
 import dotenv from 'dotenv'
 
@@ -9,11 +10,11 @@ dotenv.config();
 
 ( async () => {
     try {
-        console.log(process.env.DB_URI);
+        logger.info("connecting to db...")
         await mongoose.connect(process.env.DB_URI);
     } catch (error) {
-        console.log(error.message);
-        console.log("exiting...");
+        logger.error(error.message);
+        logger.info("error, exiting...");
         process.exit();
     }
 

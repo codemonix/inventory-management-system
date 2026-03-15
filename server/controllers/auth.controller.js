@@ -53,7 +53,7 @@ export async function  registerUser(req, res) {
 export async function loginUser(req, res) {
     
     try {
-        logger.info("auth.controller.js -> loginUser -> req.body:", req.body.email);
+        logger.info("auth.controller.js -> loginUser -> req.body:", {email: req.body.email});
         // check if user exists
         const { email, password } = req.body;
         const user = await User.findOne({ email });
