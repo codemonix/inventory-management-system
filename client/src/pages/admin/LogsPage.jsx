@@ -21,6 +21,7 @@ import {
 import { useSearchParams } from "react-router-dom";
 import { debounce } from "@mui/material";
 import { fetchSystemLogs } from "../../redux/thunks/systemThunks";
+import LogDetailsDialog from "../../components/admin/LogDetailsDialog";
 
 
 
@@ -41,6 +42,7 @@ export default function LogsPage() {
     logDebug("LogsPage -> items", {items})
     const [ searchParams, setSearchParams ] = useSearchParams();
     const [ searchText, setSearchText ] = useState('');
+    const [ selectedMetadata, setSelectedMetadata ] = useState(null);
 
     const search = searchParams.get( 'search' ) || '';
     const sortBy = searchParams.get( 'sortBy' ) || 'createdAt';
@@ -147,7 +149,7 @@ export default function LogsPage() {
                 </Tabs>
             </Box>
 
-            {/* TAB 0: Your existing transactions grid */}
+            {/* TAB 0: Existing transactions grid */}
             <CustomTabPanel value={tabValue} index={0}>
                 <div >
                     <Stack direction={"row"} spacing={2} alignItems={"center"} marginY={2} bgcolor={'rgba(255,255,255,0.7)'} p={1} borderRadius={1}>
@@ -217,33 +219,58 @@ export default function LogsPage() {
                                     <TableCell>Level</TableCell>
                                     <TableCell>Message</TableCell>
                                     <TableCell>Type</TableCell>
+                                    <TableCell align="center">Details</TableCell>
                                 </TableRow>
                             </TableHead>
                             <TableBody>
-                                {systemLogs.map((log) => (
-                                    <TableRow key={log._id}>
-                                        <TableCell sx={{ whiteSpace: 'nowrap' }}>
-                                            {new Date(log.timestamp).toLocaleString()}
-                                        </TableCell>
-                                        <TableCell>
-                                            <Chip 
-                                                label={log.level.toUpperCase()} 
-                                                size="small" 
-                                                color={getLevelColor(log.level)} 
-                                            />
-                                        </TableCell>
-                                        <TableCell sx={{ fontFamily: 'monospace' }}>
-                                            {log.message}
-                                        </TableCell>
-                                        <TableCell>
-                                            {log.meta?.type || 'system'}
-                                        </TableCell>
-                                    </TableRow>
-                                ))}
+                                {systemLogs.map((log) => {
+                                    
+                                    const { _id, timestamp, level, message, __v, ...extra } = log;
+                                    const hasExtra = Object.keys(extra).length > 0 && JSON.stringify(extra) !== '{"meta":{}}';
+
+
+                                    return (
+                                        <TableRow key={log._id}>
+                                            <TableCell sx={{ whiteSpace: 'nowrap' }}>
+                                                {new Date(log.timestamp).toLocaleString()}
+                                            </TableCell>
+                                            <TableCell>
+                                                <Chip 
+                                                    label={log.level.toUpperCase()} 
+                                                    size="small" 
+                                                    color={getLevelColor(log.level)} 
+                                                />
+                                            </TableCell>
+                                            <TableCell sx={{ fontFamily: 'monospace' }}>
+                                                {log.message}
+                                            </TableCell>
+                                            <TableCell>
+                                                {log.meta?.type || 'system'}
+                                            </TableCell>
+                                            <TableCell align="center" >
+                                                {hasExtra && (
+                                                    <Button 
+                                                        variant="outlined"
+                                                        size="small"
+                                                        sx={{ minWidth: 'auto', padding: '2px, 8px', fontSize: '0.75rem' }}
+                                                        onClick={() => setSelectedMetadata(extra)}
+                                                    >
+                                                        Details
+                                                    </Button>
+                                                )}
+                                            </TableCell>
+                                        </TableRow>
+                                    );
+                                })}
                             </TableBody>
                         
                         </Table>
                     </TableContainer>
+                    <LogDetailsDialog 
+                        open={Boolean(selectedMetadata)}
+                        onClose={() => setSelectedMetadata(null)}
+                        logData={selectedMetadata}
+                    />
                     <TablePagination
                         component="div"
                         count={totalLogs || 0}

@@ -4,13 +4,16 @@ import { Box, Drawer, Divider, List, ListItem, ListItemButton, ListItemIcon, Lis
 import MenuIcon from '@mui/icons-material/Menu';
 import { useAuth } from "../context/AuthContext.jsx";
 import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
+import { logDebug } from "../utils/logger.js";
+
+
 
 
 function SidebarDrawer() {
     const { isAdmin, isLoggedIn, isManager } = useAuth();
     const [isOpen, setIsOpen] = useState(false);
     const isManagerOrAdmin = isAdmin || isManager;
-    console.log("SidebarDrawer -> isAdminOrManager", isManagerOrAdmin);
+    logDebug("SidebarDrawer -> isAdminOrManager", isManagerOrAdmin);
 
     const toggleSidebar = () => {
         setIsOpen((prev) => !prev);

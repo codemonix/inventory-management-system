@@ -93,8 +93,7 @@ export const AuthProvider = ({ children }) => {
         }
     }
 
-    console.log("AuthProvider -> isadmin", isAdmin);
-    console.log("AuthProvider -> isAdmin", user?.role);
+    logDebug("AuthProvider -> isadmin", isAdmin);
 
     return (
         <AuthContext.Provider value={{ isLoggedIn, user, login, logout, register, isAdmin, isManager }}>

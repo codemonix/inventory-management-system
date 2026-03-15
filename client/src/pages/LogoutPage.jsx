@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import { logInfo } from "../utils/logger";
 
 
 const LogoutPage = () => {
@@ -12,7 +13,7 @@ const LogoutPage = () => {
         navigate("/login", { replace: true }); // Redirect to login page after logout
     }, [navigate, logout]);
 
-    console.log("Logged out successfully");
+    logInfo("Logged out successfully");
     return null;
 };
 

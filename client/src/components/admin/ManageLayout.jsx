@@ -3,6 +3,8 @@ import { AppBar, Toolbar, Typography, IconButton } from '@mui/material';
 import MenuIcon from '@mui/icons-material/Menu';
 import ManageSideDrawer from './ManageSideDrawer';
 import { useState } from 'react';
+import { logDebug } from '../../utils/logger';
+
 
 
 export default function AdminLayout() {
@@ -18,7 +20,7 @@ export default function AdminLayout() {
 
     const toggleSidebar = () => {
         setOpen((prev) => !prev);
-        console.log("AdminLayout -> toggleSidebar -> open", open);
+        logDebug("AdminLayout -> toggleSidebar -> open", open);
 }
 
     return (
@@ -34,7 +36,7 @@ export default function AdminLayout() {
                 </Toolbar>
             </AppBar>
             <ManageSideDrawer open={open} onClose={() => setOpen(false)} toggleSidebar={toggleSidebar} />
-            <main style={{ width: '100%', padding: '80px 24px 24px'}}>
+            <main style={{ width: '100%', padding: '70px 10px 10px'}}>
                 <Outlet />
             </main>
         </div>

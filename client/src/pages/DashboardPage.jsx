@@ -130,7 +130,7 @@ const DashboardPage = () => {
             setTriggerUpdate((prev) => prev + 1 );
         } else if (actionType === 'TRANSFER') {
             setDefaultLocation(tempTransfer.fromLocation)
-            console.log("handleAddToTransferClick: ", currentItemId);
+            logDebug("handleAddToTransferClick: ", currentItemId);
 
 
             

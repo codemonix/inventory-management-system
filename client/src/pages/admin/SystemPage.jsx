@@ -18,6 +18,7 @@ import WarningAmberIcon from '@mui/icons-material/WarningAmber';
 import { downloadBackup, restoreSystem, clearSystemData, performFactoryReset } from '../../services/systemService.js';
 import { fetchSystemSettings, updateSystemSettings, clearSystemLogs } from '../../redux/thunks/systemThunks.js';
 import ConfirmModal from '../../components/ConfirmModal';
+import { logError } from '../../utils/logger.js';
 
 const SettingsPage = () => {
     const [loading, setLoading] = useState(false);
@@ -82,7 +83,7 @@ const SettingsPage = () => {
             setMessage("Backup downloaded successfully.");
         } catch (err) {
             setError("Backup failed.");
-            console.log("Systempage.jsx -> handleBackup err:", err.message)
+            logError("Systempage.jsx -> handleBackup err:", err.message)
         } finally {
             setLoading(false);
         }
@@ -144,9 +145,9 @@ const SettingsPage = () => {
 
     return (
         <Box maxWidth="lg" mx="auto" p={1}>
-            <Box px={2} py={0.5} sx={{ bgcolor: 'grey.200', borderRadius: 2 }}>
+            <Box px={1} py={0.5} sx={{ bgcolor: 'grey.200', borderRadius: 2 }}>
                 <Typography variant="body2" color="text.secondary" fontWeight="medium">
-                    v{__APP_VERSION__}
+                    v{__APP_VERSION__} 
                 </Typography>
             </Box>
 
@@ -158,7 +159,7 @@ const SettingsPage = () => {
                 {/* 1. BACKUP SECTION */}
                 <Paper 
                     sx={{ 
-                        p: 3, 
+                        p: 2, 
                         width: '100%' // Force full width
                     }}
                 >
@@ -195,7 +196,7 @@ const SettingsPage = () => {
                 </Paper>
 
                 {/* System Settings */}
-                <Paper elevation={3} sx={{ p: 3, mb: 3 }}>
+                <Paper elevation={3} sx={{ p: 2, mb: 3 }}>
                     <Typography variant="h6" gutterBottom>System Diagnostics & Logging</Typography>
                     <Divider sx={{ mb: 3 }} />
 
@@ -216,7 +217,7 @@ const SettingsPage = () => {
                     </FormGroup>
                     
                     <Box display="flex" alignItems="center" gap={3} mb={3}>
-                        <FormControl sx={{ minWidth: 200 }}>
+                        <FormControl sx={{ minWidth: 150 }}>
                             <InputLabel>Log Level</InputLabel>
                             <Select
                                 value={localLogLevel}
@@ -237,7 +238,7 @@ const SettingsPage = () => {
                             onClick={handleSaveSettings}
                             disabled={isLoading || !hasUnsavedChanges}
                         >
-                            Save Settings
+                        Settings
                         </Button>
                     </Box>
 

@@ -12,12 +12,14 @@ import LocationsPage from './pages/LocationsPage.jsx';
 import TransfersPage from './pages/TranfersPage.jsx';
 import ManageLayout from './components/admin/ManageLayout.jsx';
 import LogsPage from './pages/admin/LogsPage.jsx';
-// import SettingsPage from './pages/admin/SettingsPage.jsx';
 import SystemPage from './pages/admin/SystemPage.jsx';
 import UserManagementPage from './pages/admin/UserManagementPage.jsx';
 import RegisterPage from './pages/RegisterPage.jsx';
 import SetupPage from './pages/admin/SetupPage.jsx';
 import NotFound from './pages/NotFound.jsx';
+import { logDebug } from './utils/logger.js';
+
+
 
 
 function RequireAdmin({ children }) {
@@ -66,7 +68,7 @@ function App() {
 
 function RedirectToCorrectPage() {
   const { isLoggedIn } = useAuth();
-  console.log("RedirectToCorrectPage -> isLoggedIn", isLoggedIn);
+  logDebug("RedirectToCorrectPage -> isLoggedIn", isLoggedIn);
   return isLoggedIn ? <Navigate to="/dashboard" /> : <Navigate to="/login" />;
 }
 

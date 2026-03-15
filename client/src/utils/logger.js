@@ -7,17 +7,11 @@ function getCallerInfo(errorArg) {
     if (!stack) return "";
 
     const match = stack.match(/at (.+?) \((.+?):(\d+):(\d+)\)/) || stack.match(/at (.+?):(\d+):(\d+)/);
-    // console.log('error:', error.stack)
-    // console.log('Stack Lines:', stackLines);
-    // console.log('stack:', stack);
-    // console.log('match:', match);
-    // console.log('match:', match)
 
     if (!match) return "";
     
     if (match.length === 5) {
         const [_, functionName, filePath, lineNumber, columnNumber] = match;
-        // console.log('filePath:', filePath)
         const file = filePath.split('/').pop().split('?')[0]; // Get the file name from the path
         return `${functionName} (${file}:${lineNumber}:${columnNumber})`;
     }
@@ -41,7 +35,6 @@ function logBase(level, ...args) {
 
     const timestamp = getTimestamp();
     const callerInfo = getCallerInfo(args[0]);
-    // const formattedArgs = args.map(arg => (typeof arg === 'object' ? JSON.stringify(arg, null, 2) : arg)).join(' ');
     console.log(`[${timestamp}] [${level}] ${callerInfo}`, ...args);
 }
 

@@ -28,10 +28,10 @@ services:
     deploy:
       resources:
         limits:
-          cpu: '0.50'
+          cpus: '0.50'
           memory: 512M
         reservations:
-          cpu: '0.250'
+          cpus: '0.250'
           memory: 256M
     depends_on:
       - mongo
@@ -57,7 +57,7 @@ services:
     deploy:
       resources:
         limits:
-          cpu: '0.25'
+          cpus: '0.25'
           memory: '128m'
 
         reservations:

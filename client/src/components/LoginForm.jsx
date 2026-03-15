@@ -1,6 +1,6 @@
 import { useState, useContext } from "react";
 import { AuthContext } from "../context/AuthContext.jsx";
-import { logError } from "../utils/logger.js";
+import { logError, logInfo } from "../utils/logger.js";
 
 
 
@@ -12,7 +12,7 @@ function LoginForm () {
 
     const isDemo = window.env?.IS_DEMO || import.meta.env.VITE_IS_DEMO === 'true';
 
-    console.log("LoginForm.jsx -> isDemo:", isDemo)
+    logInfo("LoginForm.jsx -> isDemo:", isDemo)
 
     const handleLogin = async (e) => {
         e.preventDefault();

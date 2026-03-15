@@ -1,10 +1,11 @@
 import { createAsyncThunk } from "@reduxjs/toolkit";
 import { getLogs } from "../../services/transactionServices";
+import { logDebug } from "../../utils/logger";
 
 export const fetchLogs = createAsyncThunk(
     'logs/fetchLogs',
     async ( params, thunkAPI ) => {
-        console.log("fetchLogs Thunk params: -> ", params)
+        logDebug("transactionThunks.js -> fetchLogs Thunk params: -> ", params)
         try {
             const response = await getLogs(params);
             return response;

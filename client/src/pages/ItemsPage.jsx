@@ -155,7 +155,6 @@ const ItemsPage = () => {
 
     }
 
-    // console.log('Items from store:', items)
     logInfo("items length", items.length);
     logInfo("ItemsPage status:", status);
     return (

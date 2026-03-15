@@ -1,10 +1,11 @@
 
 import { Pagination } from "@mui/material";
 import Box from "@mui/material/Box";
+import { logDebug } from "../utils/logger";
 
 const PaginationControls = ({ page, totalCount, limit, onChange }) => {
     const pageCount = Math.ceil( totalCount / limit );
-    console.log("PaginationControls -> pageCount:", pageCount, "totalCount:", totalCount, "limit:", limit);
+    logDebug("PaginationControls -> pageCount:", pageCount, "totalCount:", totalCount, "limit:", limit);
 
     if ( pageCount <= 1 ) return null;
 

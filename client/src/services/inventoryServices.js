@@ -16,9 +16,8 @@ export const fetchInventory = async ({ page = 1, limit = 10, sort = 'name', sear
 export const fetchFullInventory = async () => {
     try {
         const res = await api.get(`/inventory/full`);
-        console.log("it is not print here")
-        console.log("InventoryServices -> fetchFullInventory:", res.data);
-        return res.data; // [ ...items ]
+        logDebug("InventoryServices -> fetchFullInventory:", res.data);
+        return res.data; 
     } catch (error) {
         logError("Fail to fetch full inventory:", error.message);
         throw error;
