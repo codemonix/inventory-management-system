@@ -1,7 +1,7 @@
 
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import { Provider } from "react-redux";
-import { MemoryRouter, useSearchParams } from "react-router-dom";
+import { MemoryRouter } from "react-router-dom";
 import ItemsPage from '../pages/ItemsPage.jsx';
 
 
@@ -31,7 +31,7 @@ vi.mock('../services/itemsService.js', () => ({
         { _id: '1' , name: 'Mocked Item One', totalQuantity: 10, imageUrl: 'mock1.jpg' },
         { _id: '2', name: 'Mocked Item Two', totalQuantity: 4, imageUrl: 'mock2.jpg'},
     ])),
-    fetshItemImage: vi.fn(() => Promise.resolve('data:image/jpeg;base64,MOCK_IMAGE')),
+    fetchItemImage: vi.fn(() => Promise.resolve('data:image/jpeg;base64,MOCK_IMAGE')),
     deleteItem: vi.fn().mockResolvedValue({}),
     updateItem: vi.fn().mockResolvedValue({}),
 }));

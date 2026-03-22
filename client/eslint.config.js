@@ -1,5 +1,5 @@
 import js from '@eslint/js'
-import globals from 'globals'
+import globals, { vitest } from 'globals'
 import reactHooks from 'eslint-plugin-react-hooks'
 import reactRefresh from 'eslint-plugin-react-refresh'
 
@@ -14,6 +14,7 @@ export default [
         logInfo: 'readonly',
         logError: 'readonly',
         logWarning: 'readonly',
+        ...vitest.environments.globals.globals,
       },
       parserOptions: {
         ecmaVersion: 'latest',
@@ -28,6 +29,7 @@ export default [
     rules: {
       ...js.configs.recommended.rules,
       ...reactHooks.configs.recommended.rules,
+      ...vitest.configs.recommended.rules,
       'no-unused-vars': ['error', { varsIgnorePattern: '^[A-Z_]' }],
       'react-refresh/only-export-components': [
         'warn',
