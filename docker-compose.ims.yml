@@ -37,6 +37,8 @@ services:
       - mongo
     networks:
       - ims_net
+    volumes:
+      - ./uploads:/app/uploads
 
   frontend:
     image: ghcr.io/codemonix/ims_frontend:latest

@@ -43,7 +43,7 @@ export const updateImageItem = async (itemId, imageUrl) => {
     }
 };
 
-export const fetshItemImage = async ( filename ) =>{
+export const fetchItemImage = async ( filename ) =>{
     logInfo("fetchItemImage filename:", filename);
     const splitedFilename = filename.split('/');
     logInfo("fetchItemImage split:", splitedFilename);

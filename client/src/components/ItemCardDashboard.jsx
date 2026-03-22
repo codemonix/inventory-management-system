@@ -11,7 +11,7 @@ import OutputTwoToneIcon from '@mui/icons-material/OutputTwoTone';
 import SwapHorizonIcon from '@mui/icons-material/SwapHoriz';
 import { logError, logInfo } from "../utils/logger";
 import { useState , useEffect} from "react";
-import { fetshItemImage } from "../services/itemsService";
+import { fetchItemImage } from "../services/itemsService";
 
 const ItemCardDashboard = ({ item, onIn, onOut, locationColors, onAddToTransfer }) => {
 
@@ -21,7 +21,7 @@ const ItemCardDashboard = ({ item, onIn, onOut, locationColors, onAddToTransfer 
         let objectUrl;
         const getItemImage = async () => {
             try {
-                objectUrl = await fetshItemImage(item.image);
+                objectUrl = await fetchItemImage(item.image);
                 setImageUrl(objectUrl);
                 logInfo("blob:", objectUrl)
             } catch (error) {
@@ -40,10 +40,10 @@ const ItemCardDashboard = ({ item, onIn, onOut, locationColors, onAddToTransfer 
                     maxWidth: 450,
                     minWidth: 350,
                     m: 0.75,
-                     }} >
+                    }} >
             <Box sx={{ display: "flex", flexDirection: "row", flexGrow: 1 }}>
                 <CardContent sx={{ flex: "1", p: 1 }}>
-                     <Box sx={{ display: "flex", flexDirection: "column", flexGrow: 1, height: '100%' }}>
+                    <Box sx={{ display: "flex", flexDirection: "column", flexGrow: 1, height: '100%' }}>
 
                     <Typography variant="h7">{ item.name }</Typography> 
                     <Box justifyContent="flex-end" alignSelf="flex-start" sx={{ display: "flex", mt: 'auto' }}>
@@ -57,7 +57,7 @@ const ItemCardDashboard = ({ item, onIn, onOut, locationColors, onAddToTransfer 
                             <SwapHorizonIcon />
                         </IconButton>
                     </Box> 
-                     </Box>
+                    </Box>
                 </CardContent>
                 <Box sx={{ display: "flex", gap: 1, px: 2, pb: 1 }}>
                     <StockDetails item={item} locationColors={locationColors} />

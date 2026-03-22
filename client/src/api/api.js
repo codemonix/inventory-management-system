@@ -2,11 +2,6 @@ import axios from "axios";
 import { getToken } from "../utils/auth.js";
 import { logDebug } from "../utils/logger.js";
 import { getApiBaseUrl } from "../config.js";
-// import config from "../config.js";
-
-// const backendUrl = import.meta.env.VITE_API_BASE_URL;
-// logInfo("backendUrl:", backendUrl);
-// const API = `${backendUrl}` || "http://localhost:5000/api";
 
 const api = axios.create();
 

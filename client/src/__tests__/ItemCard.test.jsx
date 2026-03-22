@@ -1,6 +1,6 @@
 import { render, screen, fireEvent } from "@testing-library/react";
 import ItemCard from '../components/ItemCard.jsx';
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi, beforeAll } from "vitest";
 
 const mockItem = {
     _id: 'item123',

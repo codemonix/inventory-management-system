@@ -232,17 +232,17 @@ export default function LogsPage() {
                                     return (
                                         <TableRow key={log._id}>
                                             <TableCell sx={{ whiteSpace: 'nowrap' }}>
-                                                {new Date(log.timestamp).toLocaleString()}
+                                                {new Date(timestamp).toLocaleString()}
                                             </TableCell>
                                             <TableCell>
                                                 <Chip 
-                                                    label={log.level.toUpperCase()} 
+                                                    label={level.toUpperCase()} 
                                                     size="small" 
                                                     color={getLevelColor(log.level)} 
                                                 />
                                             </TableCell>
                                             <TableCell sx={{ fontFamily: 'monospace' }}>
-                                                {log.message}
+                                                {message}
                                             </TableCell>
                                             <TableCell>
                                                 {log.meta?.type || 'system'}

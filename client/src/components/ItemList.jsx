@@ -24,6 +24,7 @@ const ItemList = ({ items, onDelete, onEdit, onImageUpload }) => {
 
     logInfo('locations', locations)
     logDebug('Items', items)
+    
     const handleInOutClick = (itemId, type) => {
         setActionType(type)
         setCurrentItemId(itemId)

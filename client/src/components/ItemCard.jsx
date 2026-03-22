@@ -4,6 +4,7 @@ import {
     Typography,
     IconButton,
     Box,
+    Skeleton
 } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
 import EditIcon from "@mui/icons-material/Edit";
@@ -11,45 +12,29 @@ import InputTwoToneIcon from '@mui/icons-material/InputTwoTone'
 import OutputTwoTone from '@mui/icons-material/OutputTwoTone'
 import imageCompressor from "browser-image-compression";
 import ImageWithCameraOver from "./ImageWithCameraOver";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import api from "../api/api";
 import { logDebug, logError, logInfo } from "../utils/logger";
-import { fetshItemImage } from "../services/itemsService";
-import { useObjectImage } from "../hooks/useObjectImage.js";
+import { fetchItemImage } from "../services/itemsService";
+import { useManagedImage } from "../hooks/useManagedObjectImage";
 
 
 
 
 const defaultImage = "/uploads/items/default.jpg"; // Placeholder image URL
-// const backendUrl = `${import.meta.env.VITE_BACKEND_URL}:${import.meta.env.VITE_BACKEND_PORT}`;
 
 const ItemCard = ({ item, onIn, onOut, onDelete, onEdit, onImageUpload, totalStock }) => {
-    // eslint-disable-next-line no-unused-vars
-    // const [imageUrl, setImageUrl] = useState(null);
-    const [loading, setLoading] = useState(false);
+    const [uploading, setUploading] = useState(false);
 
     logInfo("item", item);
     logInfo("totalStock", totalStock( item._id))
-    const imageUrl = useObjectImage(item.imageUrl, fetshItemImage);
-    // useEffect(() => {
-    //     let objectUrl;
-    //     const getItemImage = async () => {
-    //         try {
-    //             objectUrl = await fetshItemImage(item.imageUrl);
-    //             setImageUrl(objectUrl);
-    //         } catch (error) {
-    //             logError("Image load failed:", error.message);
-    //         }
-    //     }
-    //     getItemImage();
-
-    //     return () => {
-    //         if (objectUrl) {
-    //             URL.revokeObjectURL(objectUrl);
-    //         }
-    //     };
-        
-    // }, [item.imageUrl]);
+    
+    const { displayUrl, setLocalPreview, isImageLoading } = useManagedImage(
+        item.imageUrl,
+        fetchItemImage,
+        defaultImage
+    );
+    
 
     const handleImageChange = () => {
         const input = document.createElement("input");
@@ -57,28 +42,28 @@ const ItemCard = ({ item, onIn, onOut, onDelete, onEdit, onImageUpload, totalSto
         input.accept = "image/*";
         input.onchange = async (e) => {
             const file = e.target.files[0];
-            if (file) {
-                setLoading(true);
-                const compressedFile = await compressImage(file);
+            if (!file) return;
 
-                    try {
-                        const formData = new FormData();
-                        formData.append("image", compressedFile);
-                        formData.append("itemCode", item.code);
-                        const response = await api.post(`/items/${item._id}/update-image`, formData);
-                        const newImageUrl = `/uploads/${response.data.filename}`;
+            setUploading(true);
+            const compressedImage = await compressImage(file);
 
-                        setImage(newImageUrl);
+            setLocalPreview(compressedImage);
 
-                        if (onImageUpload) {
-                            onImageUpload(item._id, newImageUrl);
-                        }
-                    } catch (error) {
-                        logError("Error uploading image:", error.message);
-                    } finally {
-                        setLoading(false);
-                    }
+            try {
+                const formData = new FormData();
+                formData.append("image", compressedImage);
+                formData.append("itemCode", item.code);
+
+                const response = await api.post(`/items/${item._id}/update-image`, formData);
+                if (onImageUpload) {
+                    onImageUpload(item._id, `/uploads/${response.data.filename}`);
                 }
+            } catch (error) {
+                logError("Upload Failed", error.message);
+            } finally {
+                setUploading(false);
+            }
+
             };
             input.click();  
         };
@@ -98,11 +83,12 @@ const ItemCard = ({ item, onIn, onOut, onDelete, onEdit, onImageUpload, totalSto
                 });
                 return compressedFile
             } catch (error) {
-                console.error("Error compressing image:", error.message);
+                logError("Error compressing image:", error.message);
                 return file; // Return the original file if compression fails
             }
         };
 
+        logDebug("ItemCard.jsx -> displayUrl:", displayUrl)
     
     return (
         <Card sx={{ display: "flex",
@@ -112,7 +98,7 @@ const ItemCard = ({ item, onIn, onOut, onDelete, onEdit, onImageUpload, totalSto
                     maxWidth: 450,
                     minWidth: 350,
                     m: 0.75,
-                     }} >
+                    }} >
             <Box sx={{ display: "flex", flexDirection: "column", flexGrow: 1 }}>
                 <CardContent sx={{ flex: "1 0 auto", p: 1 , pb: 0}}>
                     <Typography variant="h7" >{ item.name }</Typography>
@@ -131,14 +117,14 @@ const ItemCard = ({ item, onIn, onOut, onDelete, onEdit, onImageUpload, totalSto
                         )}
                         <Box sx={{ minWidth: "50px" }} >
                             <Typography variant="body2" color="text.secondary" >
-                               <strong>Qty: </strong>{ totalStock(item._id) }
+                            <strong>Qty: </strong>{ totalStock(item._id) }
                             </Typography>
                         </Box>
                     </Box>
                 </CardContent>
 
                 <Box sx={{ display: "flex", gap: 1, px: 1, pb: 1 }}>
-                    <IconButton onClick={(e) => onEdit(item, e.currentTarget)} color="Primary" aria-label="edit">
+                    <IconButton onClick={(e) => onEdit(item, e.currentTarget)} color="primary" aria-label="edit">
                         <EditIcon />
                     </IconButton>
                     <IconButton onClick={() => onDelete(item)} color="error" aria-label="delete">
@@ -152,11 +138,44 @@ const ItemCard = ({ item, onIn, onOut, onDelete, onEdit, onImageUpload, totalSto
                     </IconButton>
                 </Box>
             </Box>
-            
-            { item.imageUrl && (
-                <ImageWithCameraOver imageUrl={imageUrl} onChange={handleImageChange} />
+            {/* Image and loading container */}
+            <Box sx={{
+                position: "relative", 
+                display: "flex", 
+                alignItems: "center", 
+                justifyContent: "center",
+                width: 100,
+                height: 100
+            }}
+            >
+                    { isImageLoading ? (
+                        <Skeleton 
+                            variant="rectangular"
+                            width={100}
+                            height="100%"
+                            animation="wave"
+                        />
+                    ) : (
+                        <ImageWithCameraOver 
+                            imageUrl={displayUrl}
+                            onChange={handleImageChange}
+                        />
+                    )}
+            </Box>
+            {uploading && (
+                <Box sx={{
+                    position: "absolute",
+                    top: 0, left: 0, right: 0, bottom: 0,
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    backgroundColor: "rgba(255,255,255, 0.7)",
+                    fontWeight: "bold",
+                    fontSize: "0.8rem",
+                    zIndex: 10
+                }}
+                >
+                    Uploading...
+                </Box>
             )}
-            {loading && ( <div>Loading...</div>)}
         </Card>
     );
 };
