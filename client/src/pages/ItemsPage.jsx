@@ -1,32 +1,39 @@
 import { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useSearchParams } from 'react-router-dom';
+
+// Redux
 import {
-    selectItemsList,
-    selectItemsStatus,
-    selectItemsError,
-    selectItemsPage,
-    selectItemsLimit,
-    selectItemsTotalCount,
-    selectItemsSort,
-    selectItemsSearch
+    selectItemsList, selectItemsStatus, selectItemsError, selectItemsPage, 
+    selectItemsLimit, selectItemsTotalCount, selectItemsSort, selectItemsSearch
 } from '../redux/selectors/itemsSelector.js';
 import { loadItems, setPage, setLimit, setSearch, setSort } from '../redux/slices/itemsSlice.js';
+
+// MUI materials
+import { Box, Container, Typography, Button, Collapse, Stack } from '@mui/material';
+import AddIcon from '@mui/icons-material/Add';
+import CloseIcon from '@mui/icons-material/Close';
+
+// Components
 import StatusHandler from '../components/StatusHandler.jsx';
 import PaginationControls from '../components/PaginationControls.jsx';
-import Box from '@mui/material/Box';
 import ItemList from '../components/ItemList.jsx';
-import ItemForm from '../components/ItemForm';
+// import ItemForm from '../components/ItemForm';
+import CreateForm from '../components/CreateForm.jsx';
 import ConfirmModal from '../components/ConfirmModal.jsx';
-import { deleteItem, updateItem } from '../services/itemsService.js';
 import EditItemDialog from '../components/ItemEditDialog.jsx';
-import { logDebug, logError, logInfo } from '../utils/logger.js';
 import SearchFilterBar from '../components/SearchFilterBar.jsx';
+
+// Services and Utils
+import { createItem, deleteItem, updateItem } from '../services/itemsService.js';
+import { logDebug, logError, logInfo } from '../utils/logger.js';
 
 const ItemsPage = () => {
 
     const dispatch = useDispatch()
     const [ searchParams, setSearchParams ] = useSearchParams();
+
+    // Redux State
     const items = useSelector(selectItemsList);
     const status = useSelector(selectItemsStatus);
     const error = useSelector(selectItemsError);
@@ -36,14 +43,15 @@ const ItemsPage = () => {
     const sort = useSelector(selectItemsSort);
     const search = useSelector(selectItemsSearch);
 
+    // Local State
     const [showConfirm, setShowConfirm] = useState(false);
     const [itemToDelete, setItemToDelete] = useState(null);
     const [itemToEdit, setItemToEdit] = useState(null);
     const [deleteError, setDeleteError] = useState("");
-    const [triggerUpdate, setTriggerUpdate] = useState(0);
     const [showEditForm, setShowEditForm] = useState(false);
     const [showItemForm, setShowItemForm] = useState(false);
 
+    // Sync URL Params to Redux
     useEffect(() => {
         const pageParam = parseInt(searchParams.get('page')) || 1;
         const limitParam = parseInt(searchParams.get('limit')) || 10;
@@ -56,11 +64,12 @@ const ItemsPage = () => {
         dispatch(setSort(sortParam));
     }, [ searchParams, dispatch])
 
+    // Fetch Items
     useEffect(() => {
         dispatch(loadItems({ page, limit, sort, search }));
-    }, [dispatch, page, limit, sort, search, triggerUpdate]);
+    }, [dispatch, page, limit, sort, search]);
 
-
+    // Handlers
     const handlePageChange = ( newPage ) => { 
         const params = Object.fromEntries(searchParams.entries())
         setSearchParams({
@@ -93,7 +102,7 @@ const ItemsPage = () => {
     };
 
     const handleDelete = (item) => {
-        logInfo("Item to delete:", item);
+        logInfo("ItemsPage.jsx -> handleDelete ->  Item to delete:", item);
         setItemToDelete(item);
         setShowConfirm(true);
     };
@@ -102,24 +111,23 @@ const ItemsPage = () => {
         if (itemToDelete) {
             try{
                 await deleteItem(itemToDelete._id);
-                const updatedItems = items.filter( (item) => item._id !== itemToDelete._id);
+                const updatedItems = items.filter((item) => item._id !== itemToDelete._id);
                 dispatch({ type: 'items/setItems', payload: updatedItems })
                 setShowConfirm(false);
                 setItemToDelete(null);
                 setDeleteError("");
             } catch (error) {
                 if (error.response && error.response.status === 400) {
-                    logError("Error deleting item:", error.response.data.error);
+                    logError("ItemsPage.jsx -> confirmDelete -> Error deleting item:", error.response.data.error);
                     setDeleteError(error.response.data.error || "Item is still in use");
                 } else {
-                    logError("Error deleting item:", error.message);
+                    logError("ItemsPage.jsx -> confirmDelete -> Error deleting item:", error.message);
                     alert("An error occurred while deleting the item. Please try again.");
                 }
             }
         } else {
             logInfo("No item to delete.");
         }
-        setTriggerUpdate(prev => prev + 1)
     };
 
     const cancelDelete = () => {
@@ -129,11 +137,9 @@ const ItemsPage = () => {
     };
 
     const handleEdit = (item) => {
-        logInfo("Item to edit:", item);
+        logDebug("ItemsPage.jsx -> handleEdit -> Item to edit:", item);
         setItemToEdit(item) ; 
         setShowEditForm(true); 
-        
-        logDebug("setItemToEdit:", itemToEdit);
     }
 
     const handleEditFormClose = () => {
@@ -143,35 +149,62 @@ const ItemsPage = () => {
     }
 
     const handleEditFormSave = async (savedItem) => {
-        logInfo("Saved item:", savedItem);
-        const updatedItems = items.map( (item) => 
+        logDebug("ItemsPage.jsx -> handleEditFormSave -> Saved item:", savedItem);
+        const updatedItems = items.map((item) => 
             item._id === savedItem._id ? savedItem : item
         );
         dispatch({ type: 'items/setItems', payload: updatedItems });
         updateItem(itemToEdit._id, savedItem)
         setShowEditForm(false); 
         setItemToEdit(null); 
-        setTriggerUpdate(prev => prev + 1); // Trigger re-render to show updated item
-
     }
 
-    logInfo("items length", items.length);
-    logInfo("ItemsPage status:", status);
+    const handleItemCreated = () => {
+        dispatch(setPage(1));
+        updateSearchParams({ page: 1 });
+        dispatch(loadItems({ page: 1, limit, sort, search }));
+        setShowItemForm(false);
+    }
+
+    logDebug("ItemsPage.jsx -> items length:", items.length);
+    logDebug("ItemsPage -> status:", status);
     return (
-        <div>
-            {showItemForm && (
-                <ItemForm onItemCreated={ () => setTriggerUpdate((prev) => prev + 1) } item={itemToEdit} />
-            )}
-            <div className="flex justify-center items-center pt-1">
-                <button
-                    className="bg-blue-500 text-white px-4 py-2 rounded"
+        <Container maxWidth="xl" sx={{ py: 4 }}>
+            {/* Header Section */}
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
+                <Typography variant="h4" component="h1" sx={{ fontWeight: 'bold', color: 'text.primary' }}>
+                    Inventory Items
+                </Typography>
+                
+                {/* Top Right Toggle Button */}
+                <Button
+                    variant={showItemForm ? "outlined" : "contained"}
+                    color={showItemForm ? "inherit" : "primary"}
+                    startIcon={showItemForm ? <CloseIcon /> : <AddIcon />}
                     onClick={toggleItemForm}
+                    disableElevation
+                    sx={{ textTransform: 'none', fontWeight: 600, borderRadius: 2 }}
                 >
-                    {showItemForm ? "Close Form" : "Add Item"}
-                </button>
-            </div>
-            <StatusHandler status={status} error={error} loadingMessage='Loading Items ...' >
-                <Box >
+                    {showItemForm ? "Cancel" : "Add Item"}
+                </Button>
+            </Box>
+
+            {/* Smooth Collapsible Create Form */}
+            <Collapse in={showItemForm} unmountOnExit>
+                <Box sx={{ display: 'flex', justifyContent: 'center', mb: 5 }}>
+                    <CreateForm 
+                        title="Add New Item"
+                        label="Item Name"
+                        placeholder="e.g., Server Rack, Network Switch"
+                        onCreate={createItem}
+                        onSuccess={handleItemCreated} 
+                    />
+                </Box>
+            </Collapse>
+
+            {/* Main Content Area */}
+            <StatusHandler status={status} error={error} loadingMessage='Loading Items ...'>
+                <Stack spacing={3}>
                     <SearchFilterBar 
                         search={search}
                         limit={limit}
@@ -189,40 +222,46 @@ const ItemsPage = () => {
                             updateSearchParams({ sort: newSort });
                         }}
                     />
-                    <ItemList items={items} onDelete={handleDelete} 
+                    
+                    <ItemList 
+                        items={items} 
+                        onDelete={handleDelete} 
                         onEdit={handleEdit} 
                         onImageUpload={handleImageUpload}
                     />
-                    <PaginationControls
-                        page={page}
-                        totalCount={totalCount}
-                        limit={limit}
-                        onChange={handlePageChange}
-                     />
-                </Box>
+                    
+                    <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
+                        <PaginationControls
+                            page={page}
+                            totalCount={totalCount}
+                            limit={limit}
+                            onChange={handlePageChange}
+                        />
+                    </Box>
+                </Stack>
             </StatusHandler>
-            {showConfirm && (
 
+            {/* Modals */}
+            {showConfirm && (
                 <ConfirmModal
                     open={showConfirm}
                     title="Delete Item"
-                    message={`This item will be deleted pemanently: ${itemToDelete.name}?`}
-                    onClose={() => cancelDelete()}
+                    message={`This item will be deleted permanently: ${itemToDelete?.name}?`}
+                    onClose={cancelDelete}
                     onConfirm={confirmDelete}
                     error={deleteError}
                 />
             )}
-            {showEditForm &&
-                (<EditItemDialog
+            
+            {showEditForm && (
+                <EditItemDialog
                     open={showEditForm}
                     onClose={handleEditFormClose}
                     item={itemToEdit}
                     onSave={handleEditFormSave}
-                />)
-            }
-            
-            
-        </div>
+                />
+            )}
+        </Container>
     );
 };
 

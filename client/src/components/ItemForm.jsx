@@ -19,7 +19,7 @@ export default function ItemForm({ onItemCreated }) {
             onItemCreated(createdItem);         // Call the callback function with the created item
             setName("");                        // Clear the input field after submission
         } catch (error) {
-            logError("ItemForm -> Error creating item:", error);
+            logError("ItemForm -> Error creating item:", error.message);
             if (error.response && error.response.data && error.response.data.message) {
                 setErrorMessage(error.response.data.message);
             }

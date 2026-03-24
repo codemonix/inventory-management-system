@@ -1,9 +1,12 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { addToTempTransfer, initialaizeTempTransfer } from "../redux/slices/transferSlice.js";
 import { Dialog, DialogTitle, 
         DialogContent, DialogActions, 
         TextField, Button, MenuItem } from "@mui/material";
+
+import { logDebug } from "../utils/logger.js";
+
 
 const AddToTransferDialog = ({ open, onClose, itemId, locations }) => {
     const [fromLocation, setFromLocation] = useState("");
@@ -17,11 +20,12 @@ const AddToTransferDialog = ({ open, onClose, itemId, locations }) => {
             dispatch(initialaizeTempTransfer(fromLocation, toLocation));
         } else {
             if (tempTransfer.fromLocation !== fromLocation || tempTransfer.toLocation !== toLocation) {
-                alert("Please make sure the from and to locations are the same.");
+                alert("Please make sure the from and to locations are same as the Temp Transfer.");
                 return;
             }
         }
         dispatch(addToTempTransfer(itemId, quantity));
+        logDebug("AddToTransferDialog.jsx -> AddToTransferDialog -> tempTransfer:", tempTransfer);
         onClose();
     };
 

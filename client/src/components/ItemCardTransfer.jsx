@@ -1,12 +1,11 @@
 import { Card, Box, Typography } from "@mui/material";
 import { logDebug } from "../utils/logger";
 import { fetchItemImage } from "../services/itemsService.js";
-// import { useObjectImage } from "../hooks/useObjectImage.js";
 import { useManagedImage } from "../hooks/useManagedObjectImage.js";
 
 
 export default function ItemCardTransfer ({item}) {
-    logDebug("imageUrl:", item.item.imageUrl)
+    logDebug("ItemCardTransfer.jsx -> imageUrl:", item.item.imageUrl)
     const imageObjUrl = useManagedImage( item.item.imageUrl, fetchItemImage );
 
     return (

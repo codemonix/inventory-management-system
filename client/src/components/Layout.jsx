@@ -8,7 +8,7 @@ import { logInfo } from "../utils/logger.js";
 
 const Layout = () => {
     const { user } = useContext(AuthContext);
-    logInfo("Layout -> user", user);
+    logInfo("Layout.jsx -> user", user);
     return (
         <div className="flex-row bg-gray-300">
             <h1 className="text-center p-3">Welcome <span >{user? user.name : ""}</span></h1>

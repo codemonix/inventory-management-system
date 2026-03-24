@@ -1,8 +1,8 @@
-import { logInfo } from "../utils/logger";
+import { logDebug } from "../utils/logger";
 
 
 const FinalizedTransferCard = ({ transfer, onViewItems, onConfirm }) => {
-    logInfo(transfer.items[0])
+    logDebug("FinalizedTransferCard.jsx -> transfer:", transfer);
 
     return (
         <div className="mb-2 p-2 border border-gray-300 rounded bg-white shadow-sm">

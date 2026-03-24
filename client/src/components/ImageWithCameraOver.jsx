@@ -3,7 +3,7 @@ import CameraAltIcon from '@mui/icons-material/CameraAlt';
 import BrokenImageIcon from '@mui/icons-material/BrokenImage';
 import { useEffect, useState } from 'react';
 
-function ImageWithCameraOver ({ imageUrl, onChange }) {
+function ImageWithCameraOver ({ imageUrl, onChange, readOnly = false }) {
     const [ hasError, setHasError ] = useState(false);
 
     useEffect(() => {
@@ -48,29 +48,30 @@ function ImageWithCameraOver ({ imageUrl, onChange }) {
                     }}
                 />
             )}
+            (!readOnly && (
+                <IconButton 
+                    size='small'
+                    sx={{
+                        position: 'absolute',
+                        bottom: 8,
+                        right: 8,
+                        backgroundColor: 'rgba(0,0,0,0.2)',
+                        color: 'rgba(255, 255, 255, 0.4)',
+                        "&:hover": {
+                            backgroundColor: 'rgba(0,0,0,0.7)',
+                            color: 'rgba(255,255,255, 0.7)'
+                        },
 
-            <IconButton 
-                size='small'
-                sx={{
-                    position: 'absolute',
-                    bottom: 8,
-                    right: 8,
-                    backgroundColor: 'rgba(0,0,0,0.2)',
-                    color: 'rgba(255, 255, 255, 0.4)',
-                    "&:hover": {
-                        backgroundColor: 'rgba(0,0,0,0.7)',
-                        color: 'rgba(255,255,255, 0.7)'
-                    },
+                    }}
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        onChange();
+                    }}
+                    >
+                    <CameraAltIcon fontSize='small'/>
 
-                }}
-                onClick={(e) => {
-                    e.stopPropagation();
-                    onChange();
-                }}
-                >
-                <CameraAltIcon fontSize='small'/>
-
-            </IconButton>
+                </IconButton>
+            ));
             
         </Box>
     )

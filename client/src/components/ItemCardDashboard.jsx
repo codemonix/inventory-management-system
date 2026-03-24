@@ -4,34 +4,30 @@ import {
     Typography,
     IconButton,
     Box,
+    Skeleton,
 } from "@mui/material";
 import StockDetails from "./StockDetail";
 import InputTwoToneIcon from '@mui/icons-material/InputTwoTone';
 import OutputTwoToneIcon from '@mui/icons-material/OutputTwoTone';
 import SwapHorizonIcon from '@mui/icons-material/SwapHoriz';
-import { logError, logInfo } from "../utils/logger";
-import { useState , useEffect} from "react";
-import { fetchItemImage } from "../services/itemsService";
+import { useManagedImage } from "../hooks/useManagedObjectImage.js";
+import ImageWithCameraOver from "./ImageWithCameraOver.jsx";
+import { logDebug } from "../utils/logger.js";
+import { fetchItemImage } from "../services/itemsService.js";
+
+const defaultImage = "/uploads/items/default.jpg"; // Placeholder image URL
 
 const ItemCardDashboard = ({ item, onIn, onOut, locationColors, onAddToTransfer }) => {
 
-    const [imageUrl, setImageUrl ] = useState(null)
+    const { displayUrl, isImageLoading } = useManagedImage(
+        item.image,
+        fetchItemImage,
+        defaultImage
+    );
 
-    useEffect(() => {
-        let objectUrl;
-        const getItemImage = async () => {
-            try {
-                objectUrl = await fetchItemImage(item.image);
-                setImageUrl(objectUrl);
-                logInfo("blob:", objectUrl)
-            } catch (error) {
-                logError("Image load failed:", error.message);
-            }
-        };
-        getItemImage();
-    }, [item.image])
+    logDebug("ItemCardDashboard.jsx -> displayUrl:", displayUrl);
+    logDebug("ItemCardDashboard.jsx -> item:", item);
 
-    logInfo("ItemCardDashboard -> item", item);
     return (
         <Card sx={{ display: "flex",
                     justifyContent: "space-between",
@@ -63,14 +59,21 @@ const ItemCardDashboard = ({ item, onIn, onOut, locationColors, onAddToTransfer 
                     <StockDetails item={item} locationColors={locationColors} />
                 </Box>
             </Box>
-            { item.image && (
-                <Box 
-                component="img"
-                src={imageUrl}
-                alt={item.name}
-                sx={{ width: 100, height: "100%", objectFit: "cover", borderRadius: 1, ml: 1 }}/>
+            {/* Image */}
+            { isImageLoading ? (
+                <Skeleton 
+                    variant="rectangular"
+                    width={100}
+                    height={100}
+                    animation="wave"
+                    sx={{ borderRadius: 1 }}
+                />
+            ) : (
+                <ImageWithCameraOver 
+                    imageUrl={displayUrl}
+                    readOnly={true}
+                />
             )}
-            
         </Card>
     );
 };
