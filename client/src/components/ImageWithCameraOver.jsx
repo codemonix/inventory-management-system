@@ -13,8 +13,8 @@ function ImageWithCameraOver ({ imageUrl, onChange, readOnly = false }) {
     return (
         <Box 
             position={'relative'}
-            width={100}
-            height={100}
+            width="100%"
+            height="100%"
             sx={{ cursor: 'pointer'}}
             onClick={(!imageUrl || hasError) ? onChange : undefined}
         >
@@ -48,7 +48,7 @@ function ImageWithCameraOver ({ imageUrl, onChange, readOnly = false }) {
                     }}
                 />
             )}
-            (!readOnly && (
+            {!readOnly && (
                 <IconButton 
                     size='small'
                     sx={{
@@ -71,7 +71,7 @@ function ImageWithCameraOver ({ imageUrl, onChange, readOnly = false }) {
                     <CameraAltIcon fontSize='small'/>
 
                 </IconButton>
-            ));
+            )}
             
         </Box>
     )

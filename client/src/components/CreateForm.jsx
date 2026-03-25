@@ -10,7 +10,7 @@ import {
     Fade
 } from '@mui/material';
 import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
-import { logInfo, logError, logDebug } from '../utils/logger';
+import { logInfo, logError } from '../utils/logger';
 
 
 export default function CreateForm ({ title, label, placeholder, onCreate, onSuccess }) {

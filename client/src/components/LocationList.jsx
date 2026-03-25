@@ -6,10 +6,10 @@ export default function LocationList({ locations, onDelete }) {
     return (
         <ul className="space-y-2" >
             {locations.map((location) => (
-                <li key={location._id} className="border p-2 flex justify-between items-center " >
+                <li key={location._id} className="border border-gray-700 rounded p-2 flex justify-between items-center " >
                     <span>{ location.name }</span>
                     <button onClick={ () => onDelete(location._id)}
-                        className={`px-2 py-1 rounded transition duration-200
+                        className={`px-1 py-1 rounded transition duration-200
     ${!isAdminOrManager ? 'bg-gray-400 cursor-not-allowed' : 'bg-red-500 hover:bg-red-600 text-white'}`}>
                         Delete
                     </button>

@@ -94,7 +94,10 @@ const ItemCard = ({ item, onIn, onOut, onDelete, onEdit, onImageUpload, totalSto
         <Card sx={{ display: "flex",
                     justifyContent: "space-between",
                     alignItems: "stretch",
-                    minHeight: 100,
+                    minHeight: {
+                        xs: 150,
+                        sm: 100
+                    },
                     maxWidth: 450,
                     minWidth: 350,
                     m: 0.75,
@@ -102,23 +105,23 @@ const ItemCard = ({ item, onIn, onOut, onDelete, onEdit, onImageUpload, totalSto
             <Box sx={{ display: "flex", flexDirection: "column", flexGrow: 1 }}>
                 <CardContent sx={{ flex: "1 0 auto", p: 1 , pb: 0}}>
                     <Typography variant="h7" >{ item.name }</Typography>
-                    <Box sx={{ display: "flex", flexDirection: "row", gap: 1 }}>
+                    <Box sx={{ display: "flex", flexDirection: { xs: "column", sm: "row" }, gap: 1 }}>
                         <Box sx={{ minWidth: "125px" }}>
                             <Typography variant="body2" color="text.secondary" >
                                 { item.code? `#: ${item.code}` : "" }
                             </Typography>
                         </Box>
-                        {item.price && (
+                        <Box sx={{ display: "flex", gap: 1 }}>
                             <Box sx={{ minWidth: "90px" }} >
                                 <Typography variant="body2" color="text.secondary" >
-                                    <strong>Price:</strong> {item.price} €
+                                    <strong>Price:</strong> {item.price || "--"} €
                                 </Typography>
                             </Box>
-                        )}
-                        <Box sx={{ minWidth: "50px" }} >
-                            <Typography variant="body2" color="text.secondary" >
-                            <strong>Qty: </strong>{ totalStock(item._id) }
-                            </Typography>
+                            <Box sx={{ minWidth: "50px" }} >
+                                <Typography variant="body2" color="text.secondary" >
+                                <strong>Qty: </strong>{ totalStock(item._id) }
+                                </Typography>
+                            </Box>
                         </Box>
                     </Box>
                 </CardContent>
@@ -141,17 +144,23 @@ const ItemCard = ({ item, onIn, onOut, onDelete, onEdit, onImageUpload, totalSto
             {/* Image and loading container */}
             <Box sx={{
                 position: "relative", 
-                display: "flex", 
+                display: "flex",
                 alignItems: "center", 
                 justifyContent: "center",
-                width: 100,
-                height: 100
+                width: {
+                    xs: 150,
+                    sm: 100
+                },
+                height: {
+                    xs: 150,
+                    sm: 100
+                }
             }}
             >
                     { isImageLoading ? (
                         <Skeleton 
                             variant="rectangular"
-                            width={100}
+                            width="100%"
                             height="100%"
                             animation="wave"
                         />

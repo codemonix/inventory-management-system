@@ -18,11 +18,11 @@ import CloseIcon from '@mui/icons-material/Close';
 import StatusHandler from '../components/StatusHandler.jsx';
 import PaginationControls from '../components/PaginationControls.jsx';
 import ItemList from '../components/ItemList.jsx';
-// import ItemForm from '../components/ItemForm';
 import CreateForm from '../components/CreateForm.jsx';
 import ConfirmModal from '../components/ConfirmModal.jsx';
 import EditItemDialog from '../components/ItemEditDialog.jsx';
 import SearchFilterBar from '../components/SearchFilterBar.jsx';
+import ActionToolbar from '../components/ActionToolbar.jsx';
 
 // Services and Utils
 import { createItem, deleteItem, updateItem } from '../services/itemsService.js';
@@ -50,6 +50,11 @@ const ItemsPage = () => {
     const [deleteError, setDeleteError] = useState("");
     const [showEditForm, setShowEditForm] = useState(false);
     const [showItemForm, setShowItemForm] = useState(false);
+
+    const [isAddOpen, setIsAddOpen] = useState(false);
+    const [isSearchOpen, setIsSearchOpen] = useState(false);
+
+    
 
     // Sync URL Params to Redux
     useEffect(() => {
@@ -89,13 +94,6 @@ const ItemsPage = () => {
         });
     };
 
-    const toggleItemForm = () => {
-        setShowItemForm((prev) => !prev);
-        if (showItemForm) {
-            setItemToEdit(null); // Clear the editing item
-        }
-    }
-
     const handleImageUpload = (itemId, newImageUrl) => {
         const updatedItems = items.map( item => item._id === itemId ? { ...item, imageUrl: newImageUrl } : item);
         dispatch( { type: 'items/setItems', payload: updatedItems});
@@ -107,12 +105,33 @@ const ItemsPage = () => {
         setShowConfirm(true);
     };
 
+    const handleToggleAdd = () => {
+        if (!isAddOpen) {
+            setIsSearchOpen(false);
+        }
+        setIsAddOpen((prev) => !prev);
+        setItemToEdit(null);
+    };
+
+    const handleToggleSearch = () => {
+        if (!isSearchOpen) {
+            setIsAddOpen(false);
+        }
+        setIsSearchOpen((prev) => !prev);
+    };
+
+    const handleCloseToolbar = () => {
+        setIsAddOpen(false);
+        setIsSearchOpen(false);
+    };
+    
+
     const confirmDelete = async () => {
         if (itemToDelete) {
             try{
                 await deleteItem(itemToDelete._id);
                 const updatedItems = items.filter((item) => item._id !== itemToDelete._id);
-                dispatch({ type: 'items/setItems', payload: updatedItems })
+                dispatch(loadItems({ page, limit, sort, search }))
                 setShowConfirm(false);
                 setItemToDelete(null);
                 setDeleteError("");
@@ -150,61 +169,36 @@ const ItemsPage = () => {
 
     const handleEditFormSave = async (savedItem) => {
         logDebug("ItemsPage.jsx -> handleEditFormSave -> Saved item:", savedItem);
-        const updatedItems = items.map((item) => 
-            item._id === savedItem._id ? savedItem : item
-        );
-        dispatch({ type: 'items/setItems', payload: updatedItems });
-        updateItem(itemToEdit._id, savedItem)
-        setShowEditForm(false); 
-        setItemToEdit(null); 
+        try {
+            await updateItem(itemToEdit._id, savedItem);
+            dispatch(loadItems({ page, limit, sort, search }));
+            setShowEditForm(false); 
+            setItemToEdit(null); 
+        } catch (error) {
+            logError("ItemsPage.jsx -> handleEditFormSave -> Error updating item:", error.message);
+            alert("An error occurred while updating the item. Please try again.");
+        }
     }
 
     const handleItemCreated = () => {
         dispatch(setPage(1));
         updateSearchParams({ page: 1 });
         dispatch(loadItems({ page: 1, limit, sort, search }));
-        setShowItemForm(false);
+        // handleCloseToolbar();
     }
 
     logDebug("ItemsPage.jsx -> items length:", items.length);
     logDebug("ItemsPage -> status:", status);
     return (
-        <Container maxWidth="xl" sx={{ py: 4 }}>
-            {/* Header Section */}
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
-                <Typography variant="h4" component="h1" sx={{ fontWeight: 'bold', color: 'text.primary' }}>
-                    Inventory Items
-                </Typography>
+        <Container maxWidth="xl" sx={{ py: 1, px: 1 }}>
+            <ActionToolbar 
+                isAddOpen={isAddOpen}
+                isSearchOpen={isSearchOpen}
+                onToggleAdd={handleToggleAdd}
+                onToggleSearch={handleToggleSearch}
+                onCloseAll={handleCloseToolbar}
                 
-                {/* Top Right Toggle Button */}
-                <Button
-                    variant={showItemForm ? "outlined" : "contained"}
-                    color={showItemForm ? "inherit" : "primary"}
-                    startIcon={showItemForm ? <CloseIcon /> : <AddIcon />}
-                    onClick={toggleItemForm}
-                    disableElevation
-                    sx={{ textTransform: 'none', fontWeight: 600, borderRadius: 2 }}
-                >
-                    {showItemForm ? "Cancel" : "Add Item"}
-                </Button>
-            </Box>
-
-            {/* Smooth Collapsible Create Form */}
-            <Collapse in={showItemForm} unmountOnExit>
-                <Box sx={{ display: 'flex', justifyContent: 'center', mb: 5 }}>
-                    <CreateForm 
-                        title="Add New Item"
-                        label="Item Name"
-                        placeholder="e.g., Server Rack, Network Switch"
-                        onCreate={createItem}
-                        onSuccess={handleItemCreated} 
-                    />
-                </Box>
-            </Collapse>
-
-            {/* Main Content Area */}
-            <StatusHandler status={status} error={error} loadingMessage='Loading Items ...'>
-                <Stack spacing={3}>
+                searchComponent={
                     <SearchFilterBar 
                         search={search}
                         limit={limit}
@@ -222,7 +216,21 @@ const ItemsPage = () => {
                             updateSearchParams({ sort: newSort });
                         }}
                     />
-                    
+                }
+                addComponent={
+                    <CreateForm 
+                        title="Add New Item"
+                        label="Item Name"
+                        placeholder="e.g., Server Rack, Network Switch"
+                        onCreate={createItem}
+                        onSuccess={handleItemCreated} 
+                    />
+                }
+            />
+
+            {/* Main Content Area */}
+            <StatusHandler status={status} error={error} loadingMessage='Loading Items ...'>
+                <Stack spacing={3}>
                     <ItemList 
                         items={items} 
                         onDelete={handleDelete} 
@@ -230,7 +238,7 @@ const ItemsPage = () => {
                         onImageUpload={handleImageUpload}
                     />
                     
-                    <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
+                    <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2 }}>
                         <PaginationControls
                             page={page}
                             totalCount={totalCount}

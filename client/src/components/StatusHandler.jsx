@@ -19,7 +19,7 @@ function StatusHandler ( { status, error, children, loadingMessage = 'Loading ..
         return (
             <Box display="flex" flexDirection="column" alignItems="center" mt={4} >
                 <Typography variant="body1" color="error" >
-                     { error || "someting went wrong."}
+                    { error || "someting went wrong."}
                 </Typography>
             </Box>
         );

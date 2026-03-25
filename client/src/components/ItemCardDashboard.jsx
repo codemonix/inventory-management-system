@@ -60,20 +60,33 @@ const ItemCardDashboard = ({ item, onIn, onOut, locationColors, onAddToTransfer 
                 </Box>
             </Box>
             {/* Image */}
-            { isImageLoading ? (
-                <Skeleton 
-                    variant="rectangular"
-                    width={100}
-                    height={100}
-                    animation="wave"
-                    sx={{ borderRadius: 1 }}
-                />
-            ) : (
-                <ImageWithCameraOver 
-                    imageUrl={displayUrl}
-                    readOnly={true}
-                />
-            )}
+            <Box sx={{
+                position: "relative",
+                display: "flex", 
+                flexBasis: "30%",
+                minWidth: "100px", 
+                maxWidth: "150px", 
+                alignItems: "stretch",
+                justifyContent: "center",
+                overflow: "hidden"
+            }}>
+
+                { isImageLoading ? (
+                    <Skeleton 
+                        variant="rectangular"
+                        width="100%"
+                        height="100%"
+                        animation="wave"
+                        sx={{ borderRadius: 1, position: "absolute", top: 0, left: 0, right: 0, bottom: 0 }}
+                    />
+                ) : (
+                    <ImageWithCameraOver 
+                        imageUrl={displayUrl}
+                        readOnly={true}
+                        sx={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                    />
+                )}
+            </Box>
         </Card>
     );
 };

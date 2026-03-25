@@ -18,11 +18,12 @@ const ItemList = ({ items, onDelete, onEdit, onImageUpload }) => {
     const dispatch = useDispatch()
     const locations = useSelector((state) => state.locations.locations)
     useEffect (() => {
+        logInfo("ItemList.jsx loaded.")
         fetchFullInventory().then(setInventory).catch((error) => logError(error.message))
         dispatch(fetchLocations())
     },[dispatch, triggerUpdate])
 
-    logInfo('locations', locations)
+    logDebug('ItemList.jsx ->  locations', locations)
     logDebug('Items', items)
     
     const handleInOutClick = (itemId, type) => {
@@ -32,7 +33,7 @@ const ItemList = ({ items, onDelete, onEdit, onImageUpload }) => {
     }
 
     const handleSubmit = async ({ locationId, quantity}) => {
-        logInfo("itemId, locationId:", currentItemId, locationId);
+        logDebug("ItemList.jsx -> handleSubmit -> locationId ", currentItemId);
         try {
             if (actionType === 'IN') {
                 await stockIn (currentItemId, locationId, quantity);
@@ -40,7 +41,7 @@ const ItemList = ({ items, onDelete, onEdit, onImageUpload }) => {
                 await stockOut (currentItemId, locationId, quantity)
             }
         } catch (error) {
-            logError(error.message);
+            logError("ItemList.jsx -> handleSubmit -> error:", error.message);
         } finally {
             handleClose();
             setTriggerUpdate((prev) => prev + 1)
@@ -63,7 +64,7 @@ const ItemList = ({ items, onDelete, onEdit, onImageUpload }) => {
     }
     
     return (
-        <div className="flex flex-wrap">
+        <div className="flex flex-wrap justify-center">
             { items.map((item) => (
                 <ItemCard key={item._id} 
                     item={item} 
@@ -73,7 +74,7 @@ const ItemList = ({ items, onDelete, onEdit, onImageUpload }) => {
                     onOut={() => handleInOutClick(item._id, 'OUT')}
                     onImageUpload={onImageUpload}
                     totalStock = {() => getTotalStock(item._id)}
-                    sx={{ mb: 2, p: 2 }} />
+                    sx={{ mb: 2 }} />
             ))}
             {(items.length === 0) && (
                 <div className="text-center text-gray-500 mt-4">
