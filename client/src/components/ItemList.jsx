@@ -1,94 +1,127 @@
-import ItemCard from "./ItemCard.jsx";
-import { useEffect, useState } from "react";
-import StockActionDialog from "./stockActionDialog.jsx";
-import { stockIn, stockOut } from "../services/inventoryServices.js";
+import { useEffect, useState, useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { logDebug, logError, logInfo } from "../utils/logger.js";
+import ItemCard from "./ItemCard.jsx";
+import StockActionDialog from "./StockActionDialog.jsx";
+import { stockIn, stockOut, fetchFullInventory } from "../services/inventoryServices.js";
 import { fetchLocations } from "../redux/slices/locationsSlice.js";
-import { fetchFullInventory } from "../services/inventoryServices.js";
+import { logDebug, logError, logInfo } from "../utils/logger.js";
+import { Box, Typography } from "@mui/material";
 
 const ItemList = ({ items, onDelete, onEdit, onImageUpload }) => {
-    const [actionType, setActionType] = useState('IN')
-    const [openInOutDialog, setOpenInOutDialog] = useState(false)
-    const [currentItemId, setCurrentItemId] = useState(null)
-    const [inventory, setInventory] = useState([])
-    const [triggerUpdate, setTriggerUpdate] = useState(0)
-    
+    const dispatch = useDispatch();
+    const locations = useSelector((state) => state.locations.locations);
 
-    const dispatch = useDispatch()
-    const locations = useSelector((state) => state.locations.locations)
+    
+    const [inventory, setInventory] = useState([]);
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [dialogState, setDialogState] = useState({ 
+        open: false, type: 'IN', itemId: null, error: '' });
+    
+    // load initial data
     useEffect (() => {
-        logInfo("ItemList.jsx loaded.")
-        fetchFullInventory().then(setInventory).catch((error) => logError(error.message))
-        dispatch(fetchLocations())
-    },[dispatch, triggerUpdate])
+        logInfo("Loading Item List ...");
+
+        const loadInitialData = async () => {
+            try {
+                const data = await fetchFullInventory();
+                setInventory(data);
+                dispatch(fetchLocations());
+                logInfo("ItemList successfully loaded inventory and locations.");
+            } catch (error) {
+                logError("ItemList.jsx -> loadData -> error:", error.message);
+            }
+        }
+        loadInitialData();
+    }, [dispatch])
+
+    // Optimization: MAP for inventory look up
+    const stockLookup = useMemo(() => {
+        return inventory.reduce((acc, entry) => {
+            const total = entry.stock?.reduce((sum, s) => sum + s.quantity, 0) || 0;
+            acc[entry.itemId] = total;
+            return acc;
+        },{});
+    }, [inventory]);
 
     logDebug('ItemList.jsx ->  locations', locations)
     logDebug('Items', items)
     
-    const handleInOutClick = (itemId, type) => {
-        setActionType(type)
-        setCurrentItemId(itemId)
-        setOpenInOutDialog(true)
-    }
-
-    const handleSubmit = async ({ locationId, quantity}) => {
-        logDebug("ItemList.jsx -> handleSubmit -> locationId ", currentItemId);
-        try {
-            if (actionType === 'IN') {
-                await stockIn (currentItemId, locationId, quantity);
-            } else if (actionType === 'OUT') {
-                await stockOut (currentItemId, locationId, quantity)
-            }
-        } catch (error) {
-            logError("ItemList.jsx -> handleSubmit -> error:", error.message);
-        } finally {
-            handleClose();
-            setTriggerUpdate((prev) => prev + 1)
-        }
-
-    }
-
-    const getTotalStock = (itemId) => {
-        const match = inventory.filter(
-            (entry) => entry.itemId === itemId
-        );
-        
-        if (match.length === 0) return 0;
-        const total = match[0].stock.reduce((sum, entry) => sum + entry.quantity, 0)
-        return total
-    }
+    // handlers
+    const handleActionOpen = (itemId, type) => {
+        setDialogState({ open: true, type, itemId });
+    };
 
     const handleClose = () => {
-        setOpenInOutDialog(false)
-    }
+        setDialogState((prev) => ({ ...prev, open: false }));
+    };
+
+    const handleTransaction = async (locationId, quantity) => {
+        const { itemId, type } = dialogState;
+        logDebug("ItemList.jsx -> handleTransaction -> locationId:", locationId);
+
+        setIsSubmitting(true);
+        try {
+            const action = type === 'IN' ? stockIn : stockOut;
+            await action(itemId, locationId, quantity);
+            const updatedInventory = await fetchFullInventory();
+            setInventory(updatedInventory);
+            logInfo(`Successfully processed stock ${type} for item ${itemId}`);
+            handleClose();
+        }  catch (error) {
+            logError(`Transaction failed for stock ${type}:`, error.message);
+            const displayMessage = error.userMessage 
+                || error.response?.data?.message 
+                || "Failed to process transaction. Please try again.";
+            setDialogState((prev) => ({ ...prev, error: displayMessage }));
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
     
     return (
-        <div className="flex flex-wrap justify-center">
-            { items.map((item) => (
-                <ItemCard key={item._id} 
-                    item={item} 
-                    onDelete={onDelete} 
-                    onEdit={onEdit}
-                    onIn={() => handleInOutClick(item._id, 'IN')}
-                    onOut={() => handleInOutClick(item._id, 'OUT')}
-                    onImageUpload={onImageUpload}
-                    totalStock = {() => getTotalStock(item._id)}
-                    sx={{ mb: 2 }} />
-            ))}
-            {(items.length === 0) && (
-                <div className="text-center text-gray-500 mt-4">
+        <Box 
+            sx={{ 
+                display: 'flex', 
+                flexWrap: 'wrap', 
+                justifyContent: 'center', 
+                gap: 0, 
+                p: 0
+            }}
+        >
+            {items && items.length > 0 ? (
+                items.map((item) => (
+                    <ItemCard 
+                        key={item._id} 
+                        item={item} 
+                        onDelete={onDelete} 
+                        onEdit={onEdit}
+                        onIn={() => handleActionOpen(item._id, 'IN')}
+                        onOut={() => handleActionOpen(item._id, 'OUT')}
+                        onImageUpload={onImageUpload}
+                        totalStock={stockLookup[item._id] || 0} 
+                    />
+                ))
+            ) : (
+                <Typography 
+                    variant="body1" 
+                    color="text.secondary" 
+                    align="center" 
+                    sx={{ mt: 2, width: '100%' }}
+                >
                     No items found.
-                </div>
+                </Typography>
             )}
+
             <StockActionDialog
-                open={openInOutDialog}
+                open={dialogState.open}
                 onClose={handleClose}
-                onSubmit={handleSubmit}
+                onSubmit={handleTransaction}
                 locations={locations}
-                type={actionType}
-                />
-        </div>
+                type={dialogState.type}
+                isSubmitting={isSubmitting}
+                externalError={dialogState.error}
+            />
+        </Box>
     );
 
 };

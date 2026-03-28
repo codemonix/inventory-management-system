@@ -1,25 +1,21 @@
 import { useEffect, useState } from "react";
-import { useSearchParams } from "react-router-dom";
-import {
-    setPage,
-    setLimit,
-    setSort,
-    setSearch
-} from '../redux/slices/dashboardSlice.js';
-import { selectDashboardPage, selectDashboardLimit } from "../redux/selectors/dashboardSelectors.js";
-import { getDashboardData } from "../redux/thunks/dashboardThunks.js";
-import StatusHandler from "../components/StatusHandler.jsx";
-import PaginationControls from "../components/PaginationControls.jsx";
-import { stockIn, stockOut } from "../services/inventoryServices.js";
-import ItemCardDashboard from "../components/ItemCardDashboard.jsx";
+
+// Context and Services
 import { useAuth } from "../context/AuthContext.jsx";
 import { getLocations } from "../services/locationsService.js"
-import StockActionDialog from "../components/stockActionDialog.jsx";
-import  { useDispatch, useSelector }  from "react-redux";
-import { addItem, loadTempTransfer, loadTransfers } from "../redux/slices/transferSlice.js";
-import { logDebug, logInfo } from "../utils/logger.js";
-import SearchFilterBar from "../components/SearchFilterBar.jsx";
 
+// Custom Hooks
+import { useDashboardData } from "../hooks/useDashboardData.js";
+import { useStockAction } from "../hooks/useStockAction.js";
+
+// Components
+import StatusHandler from "../components/StatusHandler.jsx";
+import PaginationControls from "../components/PaginationControls.jsx";
+import ItemCardDashboard from "../components/ItemCardDashboard.jsx";
+import SearchFilterBar from "../components/SearchFilterBar.jsx";
+import StockActionDialog from "../components/StockActionDialog.jsx";
+
+import { logDebug, logError, logInfo } from "../utils/logger.js";
 
 const locationColors = {
     "Istanbul": "#BC1063",
@@ -27,192 +23,103 @@ const locationColors = {
     "Dubai": "blue"
 }
 
-
 const DashboardPage = () => {
+    logInfo("loading Dashboard Page ...")
     const { isLoggedIn } = useAuth();
-    const [ localError, setLocalError ] = useState("");
     const [ locations , setLocations ] = useState([]);
-    const [ dialogOpen, setDialogOpen ] = useState(false);
-    const [ currentItemId, setCurrentItemId ] = useState(null);
-    const [ actionType, setActionType ] = useState('IN');
-    const [ triggerUpdate, setTriggerUpdate ] = useState(0);
-    const [ defaultLocation, setDefaultLocation] = useState(null);
-    const tempTransfer = useSelector((state) => state.transfer.tempTransfer);
-    const transferStatus = useSelector((state) => state.transfer.status);
-
-    const dispatch = useDispatch();
-    const { items, totalItems, sort, loading, error, search } = useSelector(( state ) => state.dashboard);
-    const page = useSelector(selectDashboardPage);
-    const limit = useSelector(selectDashboardLimit);
-
-    const [ searchParams, setSearchParams ] = useSearchParams();
-    useEffect(() => {
-        const pageParam = parseInt(searchParams.get('page')) || 1;
-        const limitParam = parseInt(searchParams.get('limit')) || 10;
-        const searchParam = searchParams.get('search') || '';
-        const sortParam = searchParams.get('sort') || 'name_asc';
-
-        dispatch(setPage(pageParam));
-        dispatch(setLimit(limitParam));
-        dispatch(setSearch(searchParam));
-        dispatch(setSort(sortParam));
-    }, [searchParams, dispatch]);
+    
+    const { 
+        items, totalItems, sort, loading, error, search, page, limit, 
+        updateSearchParams, refreshData, dispatch 
+    } = useDashboardData();
+    
+    const {
+        dialogOpen, currentItemId, actionType, defaultLocation, localError: stockError,
+        openDialog, closeDialog, submitAction
+    } = useStockAction({ onSuccess: refreshData });
 
     useEffect(() => {
         if (isLoggedIn) {
-            getLocations().then(setLocations).catch((error) => {
-                console.error("Error getting locations:", error.message);
-            })
-        }}
-    , [isLoggedIn]);
-
-    useEffect(() => {
-        dispatch(getDashboardData({ page, limit, sort, search }))
-    },[ page, limit, sort, dispatch, search, triggerUpdate ]);
-
-    useEffect(() => {
-        if (!searchParams.get('page') || !searchParams.get('limit')) {
-            setSearchParams({ page: 1, limit: 10 });
+            getLocations()
+                .then(setLocations)
+                .catch((error) => logError("DashboardPage -> getLocations -> error:", error.message))
         }
-    })
+    },[isLoggedIn]);
 
-    useEffect(() => {
-        if (transferStatus === 'idle') {
-            dispatch(loadTempTransfer());
-            dispatch(loadTransfers())
-        }
-    }, [dispatch, transferStatus]);
-
-    logInfo("state tempTransfer:", tempTransfer);
-
-    logDebug("inventory", items);
+    logDebug("DashboardPage -> inventory", items);
     
     if (!isLoggedIn) {
         return <p className="text-red-500">Please log in to view the dashboard.</p>;
     }
 
-    const updateSearchParams = (newParams) => {
-        setSearchParams({
-            page,
-            limit,
-            search,
-            sort,
-            ...newParams
-        });
-    };
-
-
-    const handleClick = ( item, type ) => {
-        logInfo("handleClick -> item:", item)
-        setCurrentItemId(item.itemId);
-        setActionType(type);
-        setDialogOpen(true);
-        logInfo("tempT:", tempTransfer)
-        if (type === 'TRANSFER') setDefaultLocation(tempTransfer.fromLocation)
-    };
-
     const handlePageChange = ( newPage ) => {
-        const params = Object.fromEntries(searchParams.entries());
-        setSearchParams({
-            ...params,
-            page: newPage
-        });
+        dispatch({ type: 'dashboard/setPage', payload: newPage });
+        updateSearchParams({ page: newPage });
     };
-
-    const handleSubmitDashbord = async ({ locationId, quantity }) => {
-        logDebug("DashbordPage -> handleSubDash:", currentItemId, locationId, quantity)
-        logDebug("tempTransfer: ", tempTransfer)
-        if (actionType === 'IN') {
-            await stockIn (currentItemId, locationId, quantity );
-            setTriggerUpdate((prev) => prev + 1 );
-        } else if (actionType === 'OUT') {
-            await stockOut (currentItemId, locationId, quantity );
-            setTriggerUpdate((prev) => prev + 1 );
-        } else if (actionType === 'TRANSFER') {
-            setDefaultLocation(tempTransfer.fromLocation)
-            logDebug("handleAddToTransferClick: ", currentItemId);
-
-
-            
-            if (tempTransfer.fromLocation !== locationId) {
-                setLocalError("Location mismatch!")
-                return;
-            } else {
-                // locationId is source location id to check in the backend
-                handleAddItemToTempTransfer(currentItemId, quantity, locationId);
-                logInfo("itemId:", currentItemId);
-            }
-            
-            setTriggerUpdate((prev) => prev + 1 );
-        }
-    };
-
-    const handleClose = () => {
-        setDialogOpen(false);
-        setLocalError("");
-        setCurrentItemId(null);
-
-    };
-
-    const handleAddItemToTempTransfer = (itemId, quantity, sourceLocationId) => {
-        logDebug("DashboardPage -> handleAddItemToTempTransfer:", itemId, quantity);
-        dispatch(addItem({ itemId, quantity, sourceLocationId }));
-    }
-
 
 
     return (
-        <div className="bg-gray-400 ">
-            {localError && <p className="text-red-500">{localError}</p>}
-            <StatusHandler status={loading ? 'loading' : ""} error={error}>
+        <div className="bg-gray-400 min-h-screen p-1">
+            {stockError && (
+                <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4 max-w-4xl mx-auto">
+                    {stockError}
+                </div>
+            )}
+            
                 <SearchFilterBar 
                     search={search}
                     limit={limit}
                     page={page}
                     sort={sort}
                     onSearchChange={(newSearch) => {
-                        dispatch(setSearch(newSearch));
+                        dispatch({ type: 'dashboard/setSearch', payload: newSearch });
                         updateSearchParams({ search: newSearch, page: 1 });
                     }}
                     onLimitChange={(newLimit) => {
-                        dispatch(setLimit(newLimit));
+                        dispatch({ type: 'dashboard/setLimit', payload: newLimit });
                         updateSearchParams({ limit: newLimit, page: 1 });
                     }}
                     onSortChange={(newSort) => {
-                        dispatch(setSort(newSort));
+                        dispatch({ type: 'dashboard/setSort', payload: newSort });
                         updateSearchParams({ sort: newSort, page: 1 });
                     }}
                 />
-                <div className="flex flex-wrap justify-center">
-                    {items.map((item) => (
-                        <ItemCardDashboard 
-                            key={item.itemId} 
-                            item={item} 
-                            locationColors={locationColors} 
-                            locations={locations}
-                            onIn={() => handleClick(item, 'IN')}
-                            onOut={() => handleClick(item, 'OUT')}
-                            onAddToTransfer={() => handleClick(item, 'TRANSFER')}
+                
+                <StatusHandler status={loading ? 'loading' : ""} error={error}>
+                    <div className="flex flex-wrap justify-center gap-0 mt-3">
+                        {items.map((item) => (
+                            <ItemCardDashboard 
+                                key={item.itemId} 
+                                item={item} 
+                                locationColors={locationColors} 
+                                locations={locations}
+                                onIn={() => openDialog(item, 'IN')}
+                                onOut={() => openDialog(item, 'OUT')}
+                                onAddToTransfer={() => openDialog(item, 'TRANSFER')}
                             />
-                    ))}
-                    <StockActionDialog
-                        open={dialogOpen}
-                        onClose={handleClose}
-                        onSubmit={handleSubmitDashbord}
-                        itemId={currentItemId}
-                        locations={locations}
-                        type={actionType}
-                        errorMessage={error}
-                        defaultLocation={defaultLocation}
+                        ))}
+                    </div>
+                </StatusHandler>
+
+                <StockActionDialog
+                    open={dialogOpen}
+                    onClose={closeDialog}
+                    onSubmit={submitAction}
+                    itemId={currentItemId}
+                    locations={locations}
+                    type={actionType}
+                    errorMessage={error}
+                    defaultLocation={defaultLocation}
+                />
+                
+                <div className="mt-8">
+                    <PaginationControls 
+                        page={page}
+                        totalCount={totalItems}
+                        limit={limit}
+                        onChange={handlePageChange}
                     />
                 </div>
-                <PaginationControls 
-                    page={page}
-                    totalCount={totalItems}
-                    limit={limit}
-                    onChange={handlePageChange}
-                />
-            </StatusHandler>
         </div>
     );
 };

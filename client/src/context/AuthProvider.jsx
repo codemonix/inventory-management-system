@@ -10,7 +10,6 @@ export const AuthProvider = ({ children }) => {
         return !!token;                      // Check if token exists to set initial logged-in state
     });
     const [ user, setUser ] = useState(null);
-    // eslint-disable-next-line no-unused-vars
     const [ loading, setLoading ] = useState(true);
     const [ isAdmin, setIsAdmin ] = useState(false);
     const [ isManager, setIsManager ] = useState(false);
@@ -96,7 +95,7 @@ export const AuthProvider = ({ children }) => {
     logDebug("AuthProvider -> isadmin", isAdmin);
 
     return (
-        <AuthContext.Provider value={{ isLoggedIn, user, login, logout, register, isAdmin, isManager }}>
+        <AuthContext.Provider value={{ isLoggedIn, user, login, logout, register, isAdmin, isManager, loading }}>
             {children}
         </AuthContext.Provider>
     );

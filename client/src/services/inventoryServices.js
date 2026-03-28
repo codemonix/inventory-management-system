@@ -25,14 +25,14 @@ export const fetchFullInventory = async () => {
 };
 
 export const stockIn = async (itemId, locationId, quantity ) => {
-   try {
-    const res = await api.post( `/inventory/${itemId}/in`, { locationId, quantity });
-    logInfo("InventoryServices -> stockIn:", res.data);
-    return res.data;
-   } catch (error) {
-    logError("Fail to add stock:", error.message);
-    throw error;
-   };
+    try {
+        const res = await api.post( `/inventory/${itemId}/in`, { locationId, quantity } );
+        logInfo("InventoryServices -> stockIn:", res.data);
+        return res.data;
+    } catch (error) {
+        logError("Fail to add stock:", error.message);
+        throw error;
+    };
 }
 
 export const stockOut = async ( itemId, locationId, quantity ) => {

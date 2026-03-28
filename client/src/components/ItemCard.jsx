@@ -27,7 +27,7 @@ const ItemCard = ({ item, onIn, onOut, onDelete, onEdit, onImageUpload, totalSto
     const [uploading, setUploading] = useState(false);
 
     logInfo("item", item);
-    logInfo("totalStock", totalStock( item._id))
+    logInfo("totalStock", totalStock)
     
     const { displayUrl, setLocalPreview, isImageLoading } = useManagedImage(
         item.imageUrl,
@@ -119,7 +119,7 @@ const ItemCard = ({ item, onIn, onOut, onDelete, onEdit, onImageUpload, totalSto
                             </Box>
                             <Box sx={{ minWidth: "50px" }} >
                                 <Typography variant="body2" color="text.secondary" >
-                                <strong>Qty: </strong>{ totalStock(item._id) }
+                                <strong>Qty: </strong>{ totalStock }
                                 </Typography>
                             </Box>
                         </Box>

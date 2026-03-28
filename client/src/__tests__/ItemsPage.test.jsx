@@ -34,6 +34,7 @@ vi.mock('../services/itemsService.js', () => ({
     fetchItemImage: vi.fn(() => Promise.resolve('data:image/jpeg;base64,MOCK_IMAGE')),
     deleteItem: vi.fn().mockResolvedValue({}),
     updateItem: vi.fn().mockResolvedValue({}),
+    createItem: vi.fn().mockResolvedValue({}),
 }));
 
 vi.mock('../services/locationsService.js', () => ({

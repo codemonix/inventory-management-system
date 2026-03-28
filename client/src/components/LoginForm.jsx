@@ -12,18 +12,17 @@ function LoginForm () {
 
     const isDemo = window.env?.IS_DEMO || import.meta.env.VITE_IS_DEMO === 'true';
 
-    logInfo("LoginForm.jsx -> isDemo:", isDemo)
+    logInfo("Demo mode active:", isDemo)
 
     const handleLogin = async (e) => {
         e.preventDefault();
 
         try {
-            await login(email, password); 
-            // navigate("/dashboard"); // Redirect to dashboard after successful login
+            await login(email, password);
+            logInfo("Login successful,", email);
         } catch (error) {
             logError("Login error:", error.message);
             const errorMessage = error.response?.data?.message || error.message;
-
             setError(errorMessage)
 
         }

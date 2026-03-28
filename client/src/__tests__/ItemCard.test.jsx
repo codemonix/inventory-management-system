@@ -16,7 +16,7 @@ const mockItem = {
 
 
 // External function simulation
-const totalStockMock = vi.fn().mockReturnValue(12);
+const totalStockMock = 12;
 vi.mock('../services/itemsService.js', () => ({
     fetchItems: vi.fn(() => Promise.resolve([
         { _id: '1' , name: 'Mocked Item One', totalQuantity: 10, imageUrl: 'mock1.jpg' },
