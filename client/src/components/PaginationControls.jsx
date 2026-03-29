@@ -1,25 +1,24 @@
 
-import { Pagination } from "@mui/material";
-import Box from "@mui/material/Box";
+import { Box, Pagination } from "@mui/material";
 import { logDebug } from "../utils/logger";
 
-const PaginationControls = ({ page, totalCount, limit, onChange }) => {
-    const pageCount = Math.ceil( totalCount / limit );
+const PaginationControls = ({ page= 1, totalCount = 0, limit = 10, onChange }) => {
+    const safeLimit = limit > 0 ? limit : 10;
+    const pageCount = Math.max(0, Math.ceil( totalCount / safeLimit ));
     logDebug("PaginationControls -> pageCount:", pageCount, "totalCount:", totalCount, "limit:", limit);
 
     if ( pageCount <= 1 ) return null;
 
     return (
-        <Box display="flex" justifyContent="center" mt={4} mb={4} >
+        <Box sx={{ display: "flex", justifyContent: "center", my: 4 }} >
             <Pagination 
                 count={pageCount}
                 page={page}
-                onChange={ ( _ , Value ) => onChange(Value)}
+                onChange={ ( _ , value ) => onChange(value)}
                 color="primary"
                 showFirstButton
                 showLastButton
             />
-
         </Box>
     );
 };

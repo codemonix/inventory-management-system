@@ -1,82 +1,47 @@
-import { useEffect, useState, useMemo } from "react";
-import { useDispatch, useSelector } from "react-redux";
-import ItemCard from "./ItemCard.jsx";
-import StockActionDialog from "./StockActionDialog.jsx";
-import { stockIn, stockOut, fetchFullInventory } from "../services/inventoryServices.js";
-import { fetchLocations } from "../redux/slices/locationsSlice.js";
-import { logDebug, logError, logInfo } from "../utils/logger.js";
+import { useSelector } from "react-redux";
 import { Box, Typography } from "@mui/material";
 
-const ItemList = ({ items, onDelete, onEdit, onImageUpload }) => {
-    const dispatch = useDispatch();
+// Components
+import ItemCard from "./ItemCard.jsx";
+import StockActionDialog from "./StockActionDialog.jsx";
+
+// Hooks
+import { useStockAction } from "../hooks/useStockAction.js";
+
+
+import { logDebug, logError, logInfo } from "../utils/logger.js";
+
+
+const ItemList = ({ items, onDelete, onEdit, onImageUpload, refreshInventory, stockLookup }) => {
+
+    logInfo("Loading ItemList ...")
+    
     const locations = useSelector((state) => state.locations.locations);
 
+    const {
+        dialogOpen,
+        currentItemId,
+        actionType,
+        defaultLocation,
+        localError: stockError,
+        openDialog,
+        closeDialog,
+        submitAction
+    } = useStockAction({ onSuccess: refreshInventory });
     
-    const [inventory, setInventory] = useState([]);
-    const [isSubmitting, setIsSubmitting] = useState(false);
-    const [dialogState, setDialogState] = useState({ 
-        open: false, type: 'IN', itemId: null, error: '' });
-    
-    // load initial data
-    useEffect (() => {
-        logInfo("Loading Item List ...");
 
-        const loadInitialData = async () => {
-            try {
-                const data = await fetchFullInventory();
-                setInventory(data);
-                dispatch(fetchLocations());
-                logInfo("ItemList successfully loaded inventory and locations.");
-            } catch (error) {
-                logError("ItemList.jsx -> loadData -> error:", error.message);
-            }
-        }
-        loadInitialData();
-    }, [dispatch])
-
-    // Optimization: MAP for inventory look up
-    const stockLookup = useMemo(() => {
-        return inventory.reduce((acc, entry) => {
-            const total = entry.stock?.reduce((sum, s) => sum + s.quantity, 0) || 0;
-            acc[entry.itemId] = total;
-            return acc;
-        },{});
-    }, [inventory]);
+    // // Optimization: MAP for inventory look up
+    // const stockLookup = useMemo(() => {
+    //     return inventory.reduce((acc, entry) => {
+    //         const total = entry.stock?.reduce((sum, s) => sum + s.quantity, 0) || 0;
+    //         const id = entry.itemId || entry._id;
+    //         acc[id] = total;
+    //         return acc;
+    //     },{});
+    // }, [inventory]);
 
     logDebug('ItemList.jsx ->  locations', locations)
     logDebug('Items', items)
-    
-    // handlers
-    const handleActionOpen = (itemId, type) => {
-        setDialogState({ open: true, type, itemId });
-    };
-
-    const handleClose = () => {
-        setDialogState((prev) => ({ ...prev, open: false }));
-    };
-
-    const handleTransaction = async (locationId, quantity) => {
-        const { itemId, type } = dialogState;
-        logDebug("ItemList.jsx -> handleTransaction -> locationId:", locationId);
-
-        setIsSubmitting(true);
-        try {
-            const action = type === 'IN' ? stockIn : stockOut;
-            await action(itemId, locationId, quantity);
-            const updatedInventory = await fetchFullInventory();
-            setInventory(updatedInventory);
-            logInfo(`Successfully processed stock ${type} for item ${itemId}`);
-            handleClose();
-        }  catch (error) {
-            logError(`Transaction failed for stock ${type}:`, error.message);
-            const displayMessage = error.userMessage 
-                || error.response?.data?.message 
-                || "Failed to process transaction. Please try again.";
-            setDialogState((prev) => ({ ...prev, error: displayMessage }));
-        } finally {
-            setIsSubmitting(false);
-        }
-    };
     
     return (
         <Box 
@@ -95,10 +60,10 @@ const ItemList = ({ items, onDelete, onEdit, onImageUpload }) => {
                         item={item} 
                         onDelete={onDelete} 
                         onEdit={onEdit}
-                        onIn={() => handleActionOpen(item._id, 'IN')}
-                        onOut={() => handleActionOpen(item._id, 'OUT')}
+                        onIn={() => openDialog({ itemId: item._id }, 'IN')}
+                        onOut={() => openDialog({ itemId: item._id}, 'OUT')}
                         onImageUpload={onImageUpload}
-                        totalStock={stockLookup[item._id] || 0} 
+                        totalStock={stockLookup ? stockLookup[item._id] || 0 : 0} 
                     />
                 ))
             ) : (
@@ -113,13 +78,14 @@ const ItemList = ({ items, onDelete, onEdit, onImageUpload }) => {
             )}
 
             <StockActionDialog
-                open={dialogState.open}
-                onClose={handleClose}
-                onSubmit={handleTransaction}
+                open={dialogOpen}
+                onClose={closeDialog}
+                onSubmit={submitAction}
+                itemId={currentItemId}
                 locations={locations}
-                type={dialogState.type}
-                isSubmitting={isSubmitting}
-                externalError={dialogState.error}
+                type={actionType}
+                errorMessage={stockError}
+                defaultLocation={defaultLocation}
             />
         </Box>
     );

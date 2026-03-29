@@ -52,7 +52,7 @@ vi.mock('../services/authServices.js', () => ({
   fetchUserData: vi.fn(() => ({ role: 'admin' })),
 }));
 
-vi.mock('react-roter-dom', async () => {
+vi.mock('react-router-dom', async () => {
     const actual = await vi.importActual('react-router-dom');
     return {
         ...actual,
@@ -84,11 +84,12 @@ beforeAll(() => {
 
 
 describe('ItemsPage', () => {
-    it('renders item from store', () => {
+    it('renders item from store', async () => {
         const mockStore = configureStore({
             reducer: {
                 items: itemsReducer,
                 locations: locationReducer,
+                transfer: (state = { tempTransfer: null }) => state,
             },
             preloadedState: {
                 items: {
@@ -120,6 +121,9 @@ describe('ItemsPage', () => {
                             name: 'Mashhad',
                         },
                     ],
+                },
+                transfer: {
+                    tempTransfer: null
                 }
             },
         });     
@@ -132,8 +136,8 @@ describe('ItemsPage', () => {
                 </MemoryRouter>
             </Provider>
         );
-        expect(screen.getByText('Mocked Item One')).toBeInTheDocument();
-        expect(screen.getByText('Mocked Item Two')).toBeInTheDocument();
+        expect(await screen.findByText('Mocked Item One')).toBeInTheDocument();
+        expect(await screen.findByText('Mocked Item Two')).toBeInTheDocument();
     });
 
 

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useSearchParams } from 'react-router-dom';
 
@@ -7,12 +7,11 @@ import {
     selectItemsList, selectItemsStatus, selectItemsError, selectItemsPage, 
     selectItemsLimit, selectItemsTotalCount, selectItemsSort, selectItemsSearch
 } from '../redux/selectors/itemsSelector.js';
-import { loadItems, setPage, setLimit, setSearch, setSort } from '../redux/slices/itemsSlice.js';
+import { loadItems, setPage, setLimit, setSearch, setSort, updateItemImageLocal } from '../redux/slices/itemsSlice.js';
+import { fetchLocations } from '../redux/slices/locationsSlice.js';
 
 // MUI materials
-import { Box, Container, Typography, Button, Collapse, Stack } from '@mui/material';
-import AddIcon from '@mui/icons-material/Add';
-import CloseIcon from '@mui/icons-material/Close';
+import { Box, Container, Stack } from '@mui/material';
 
 // Components
 import StatusHandler from '../components/StatusHandler.jsx';
@@ -26,6 +25,7 @@ import ActionToolbar from '../components/ActionToolbar.jsx';
 
 // Services and Utils
 import { createItem, deleteItem, updateItem } from '../services/itemsService.js';
+import { fetchFullInventory } from '../services/inventoryServices.js';
 import { logDebug, logError, logInfo } from '../utils/logger.js';
 
 const ItemsPage = () => {
@@ -49,8 +49,7 @@ const ItemsPage = () => {
     const [itemToEdit, setItemToEdit] = useState(null);
     const [deleteError, setDeleteError] = useState("");
     const [showEditForm, setShowEditForm] = useState(false);
-    const [showItemForm, setShowItemForm] = useState(false);
-
+    const [inventory, setInventory] = useState([]);
     const [isAddOpen, setIsAddOpen] = useState(false);
     const [isSearchOpen, setIsSearchOpen] = useState(false);
 
@@ -74,6 +73,38 @@ const ItemsPage = () => {
         dispatch(loadItems({ page, limit, sort, search }));
     }, [dispatch, page, limit, sort, search]);
 
+    useEffect(() => {
+        refreshInventory();
+        dispatch(fetchLocations());
+    },[dispatch]);
+
+    // Hepers for ItemList
+    const refreshInventory = async () => {
+        try {
+            const updatedInventory = await fetchFullInventory();
+            setInventory(updatedInventory);
+        } catch (error) {
+            logError("ItemsPage.jsx -> refreshInventory -> Error fetching inventory:", error.message);
+        }
+    };
+
+    const stockLookup = useMemo(() => {
+        return inventory.reduce((acc, entry) => {
+            const total = entry.stock?.reduce((sum, s) => sum + s.quantity, 0) || 0;
+            const id = entry.itemId || entry._id; 
+            acc[id] = total;
+            return acc;
+        }, {});
+    }, [inventory]);
+
+    const handleImageUpload = (itemId, newImageUrl) => {
+        const updatedItems = items.map(item => 
+            item._id === itemId ? { ...item, imageUrl: newImageUrl } : item
+        );
+        logDebug("ItemsPage.jsx -> handleImageUpload -> updatedItems:", updatedItems);
+        dispatch(updateItemImageLocal({itemId: itemId, imageUrl: newImageUrl}));
+    };
+
     // Handlers
     const handlePageChange = ( newPage ) => { 
         const params = Object.fromEntries(searchParams.entries())
@@ -92,11 +123,6 @@ const ItemsPage = () => {
             sort,
             ...newParams
         });
-    };
-
-    const handleImageUpload = (itemId, newImageUrl) => {
-        const updatedItems = items.map( item => item._id === itemId ? { ...item, imageUrl: newImageUrl } : item);
-        dispatch( { type: 'items/setItems', payload: updatedItems});
     };
 
     const handleDelete = (item) => {
@@ -149,22 +175,10 @@ const ItemsPage = () => {
         }
     };
 
-    const cancelDelete = () => {
-        setShowConfirm(false);
-        setItemToDelete(null);
-        setDeleteError("");
-    };
-
     const handleEdit = (item) => {
         logDebug("ItemsPage.jsx -> handleEdit -> Item to edit:", item);
         setItemToEdit(item) ; 
         setShowEditForm(true); 
-    }
-
-    const handleEditFormClose = () => {
-        setItemToEdit(null); 
-        setShowEditForm(false); 
-        
     }
 
     const handleEditFormSave = async (savedItem) => {
@@ -184,7 +198,6 @@ const ItemsPage = () => {
         dispatch(setPage(1));
         updateSearchParams({ page: 1 });
         dispatch(loadItems({ page: 1, limit, sort, search }));
-        // handleCloseToolbar();
     }
 
     logDebug("ItemsPage.jsx -> items length:", items.length);
@@ -236,6 +249,8 @@ const ItemsPage = () => {
                         onDelete={handleDelete} 
                         onEdit={handleEdit} 
                         onImageUpload={handleImageUpload}
+                        refreshInventory={refreshInventory}
+                        stockLookup={stockLookup}
                     />
                     
                     <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2 }}>
@@ -255,7 +270,7 @@ const ItemsPage = () => {
                     open={showConfirm}
                     title="Delete Item"
                     message={`This item will be deleted permanently: ${itemToDelete?.name}?`}
-                    onClose={cancelDelete}
+                    onClose={() => setShowConfirm(false)}
                     onConfirm={confirmDelete}
                     error={deleteError}
                 />
@@ -264,7 +279,7 @@ const ItemsPage = () => {
             {showEditForm && (
                 <EditItemDialog
                     open={showEditForm}
-                    onClose={handleEditFormClose}
+                    onClose={() => setShowEditForm(false)}
                     item={itemToEdit}
                     onSave={handleEditFormSave}
                 />

@@ -1,6 +1,6 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import { getAllItems, getPaginatedItems } from "../../services/itemsService.js";
-import { logInfo } from "../../utils/logger.js";
+import { logInfo, logDebug } from "../../utils/logger.js";
 
 export const loadItems = createAsyncThunk(
     'items/loadItems',
@@ -57,6 +57,15 @@ const itemsSlice = createSlice({
         },
         setSort: ( state, action ) => {
             state.sort = action.payload;
+        },
+        updateItemImageLocal: (state, action ) => {
+            const { itemId, imageUrl } = action.payload;
+            logDebug("itemsSlice -> updateItemImageLocal -> itemId:", itemId);
+            logDebug("itemsSlice -> updateItemImageLocal -> imageUrl:", imageUrl);
+            const existingItem = state.list.find((item) => item._id === itemId);
+            if (existingItem) {
+                existingItem.imageUrl = imageUrl;
+            }
         }
     },
     extraReducers: (builder) => {
@@ -90,5 +99,5 @@ const itemsSlice = createSlice({
     }
 });
 
-export const { setPage, setLimit, setSearch, setSort } = itemsSlice.actions;
+export const { setPage, setLimit, setSearch, setSort, updateItemImageLocal } = itemsSlice.actions;
 export default itemsSlice.reducer;

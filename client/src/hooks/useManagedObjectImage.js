@@ -29,6 +29,7 @@ const getSharedDefultBlob = async ( fallBackUrl, fetchFunction ) => {
 export const useManagedImage = ( imagePath, fetchFunction, fallBackUrl ) => {
     
     const [ displayUrl, setDisplayUrl ] = useState( null );
+    const [ previewUrl, setPreviewUrl ] = useState( null );
     const [ isImageLoading, setIsImageLoading ] = useState( true );
     const activeBlobRef = useRef( null );
 
@@ -42,7 +43,6 @@ export const useManagedImage = ( imagePath, fetchFunction, fallBackUrl ) => {
     };
 
     useEffect(() => {
-
         const loadImages = async () => {
             setIsImageLoading(true);
 
@@ -52,6 +52,7 @@ export const useManagedImage = ( imagePath, fetchFunction, fallBackUrl ) => {
                     cleanupOldBlob();
                     activeBlobRef.current = blobUrl;
                     setDisplayUrl(blobUrl);
+                    setPreviewUrl(null);
                     setIsImageLoading(false);
                     return;
                 } catch (error) {
@@ -71,11 +72,20 @@ export const useManagedImage = ( imagePath, fetchFunction, fallBackUrl ) => {
 },[imagePath, fallBackUrl, fetchFunction])
 
     const setLocalPreview = (file) => {
-        cleanupOldBlob();
+        // cleanupOldBlob();
+        if (previewUrl) URL.revokeObjectURL(previewUrl);
         const newBlobUrl = URL.createObjectURL(file);
-        activeBlobRef.current = newBlobUrl;
-        setDisplayUrl(newBlobUrl);
+        setPreviewUrl(newBlobUrl);
+        // activeBlobRef.current = newBlobUrl;
+        // setDisplayUrl(newBlobUrl);
     };
-    return { displayUrl, setLocalPreview, isImageLoading };
+    const clearLocalPreview = () => {
+        if (previewUrl) {
+            URL.revokeObjectURL(previewUrl);
+            setPreviewUrl(null);
+        }
+    };
 
+    const currentDisplayUrl = previewUrl || displayUrl;
+    return { displayUrl, setLocalPreview, clearLocalPreview, isImageLoading };
 };

@@ -25,12 +25,14 @@ const storage = multer.diskStorage({
             logger.debug('upload.js -> Generated Backup Name:', backupName);
             return cb(null, backupName);
         }
+        const code = req.itemCode || req.body.itemCode;
 
-        if (req.itemCode) {
-            const itemFilename = `${req.itemCode}${ext}`;
-            logger.debug('upload.js -> itemFilename:', itemFilename);
+        if (code) {
+            const itemFilename = `${code}${ext}`;
+            logger.debug('upload.js -> itemFilename:', {itemFilename});
             return cb(null, itemFilename);
-        }
+        } 
+        return cb(new Error("ITEM_CODE_MISSING"));
     }
 });
 

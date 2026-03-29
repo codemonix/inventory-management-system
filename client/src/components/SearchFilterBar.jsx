@@ -1,38 +1,55 @@
+import { useState, useEffect, useRef } from "react";
 import {
-    Box,
     TextField,
     FormControl,
     InputLabel,
     Select,
     MenuItem,
     Paper,
+    InputAdornment,
+    IconButton
 } from "@mui/material";
-import { useState, useRef } from "react";
+
+import ClearIcon from '@mui/icons-material/Clear';
+import SearchIcon from '@mui/icons-material/Search';
 
 
 const SearchFilterBar = ({search, limit, sort, onSearchChange, onLimitChange, onSortChange }) => {
     const [inputValue, setInputValue] = useState(search || '');
     const debounceTimeoutRef = useRef(null);
 
+    useEffect(() => {
+        setInputValue(search);
+    }, [search]);
+
     const handleChange = (e) => {
-        e.preventDefault();
         const value = e.target.value;
         setInputValue(value);
-        clearTimeout(debounceTimeoutRef.current);
+        if (debounceTimeoutRef.current) {
+            clearTimeout(debounceTimeoutRef.current);
+        }
+
         if (value.trim() === '') {
             onSearchChange(''); // Clear search if input is empty
             return;
         }
         debounceTimeoutRef.current = setTimeout(() => {
             onSearchChange(value);
-        }, 2000);
+        }, 500);
     };
 
     const handleKeyDown = (e) => {
         if (e.key === 'Enter') {
-            clearTimeout(debounceTimeoutRef.current);
+            if (debounceTimeoutRef.current) {
+                clearTimeout(debounceTimeoutRef.current);
+            }
             onSearchChange(inputValue);
         }
+    };
+
+    const handleClear = () => {
+        setInputValue('');
+        onSearchChange('');
     };
 
     return (
@@ -40,11 +57,12 @@ const SearchFilterBar = ({search, limit, sort, onSearchChange, onLimitChange, on
             sx={{
                 display: "flex",
                 gap: 2,
-                padding: 1,
-                marginBottom: 2,
+                p: 2,
+                mb: 3,
                 flexWrap: "wrap",
                 alignItems: "center",
-            }}>
+            }}
+        >
             <TextField 
                 label="Search"
                 variant="outlined"
@@ -53,13 +71,27 @@ const SearchFilterBar = ({search, limit, sort, onSearchChange, onLimitChange, on
                 onKeyDown={handleKeyDown}
                 placeholder="Search by name"
                 sx={{ flexGrow: 1, minWidth: 200 }}
+                slotProps={{
+                    startAdorment: (
+                        <InputAdornment position="start">
+                            <SearchIcon color="action" />
+                        </InputAdornment>
+                    ),
+                    endAdorment: inputValue ? (
+                        <InputAdornment position="end">
+                            <IconButton onClick={handleClear} edge="end" size="small">
+                                <ClearIcon fontSize="small" />
+                            </IconButton>
+                        </InputAdornment>
+                    ) : null,
+                }}
             />
 
             <FormControl sx={{ minWidth: 120}} >
                 <InputLabel>limit</InputLabel>
                 <Select 
                     value={limit}
-                    label="limit"
+                    label="Limit"
                     onChange={(e) => onLimitChange(Number(e.target.value))}
                     >
                     {[5, 10, 20, 50].map((l) => (
@@ -69,6 +101,7 @@ const SearchFilterBar = ({search, limit, sort, onSearchChange, onLimitChange, on
                     ))}
                 </Select>
             </FormControl>
+            
             <FormControl sx={{ minWidth: 180 }}>
                 <InputLabel>Sort by</InputLabel>
                 <Select 

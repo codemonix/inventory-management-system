@@ -9,6 +9,7 @@ export async function fetchItemCode(req, res, next) {
         const itemId = req.params.itemId;
         const item = await Item.findById(itemId);
         if (!item) {
+            logger.warn("fetchItemCode -> Item not found:", {itemId});
             return res.status(404).json({ error: "Item not found" });
         }
         req.itemCode = item.code;
