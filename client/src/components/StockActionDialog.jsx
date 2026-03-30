@@ -11,7 +11,7 @@ import {
 
 import CheckIcon from '@mui/icons-material/Check';
 import CloseIcon from '@mui/icons-material/Close';
-import { logInfo } from "../utils/logger";
+import { logDebug, logInfo } from "../utils/logger";
 
 const StockActionDialog = ({ 
         open, onClose, onSubmit, 
@@ -21,7 +21,7 @@ const StockActionDialog = ({
         const [ locationId, setLocationId ] = useState('');
         const [ quantity, setQuantity ] = useState('');
 
-        logInfo("locations:", locations);
+        logDebug("StockActionDialog.jsx -> locations:", locations);
 
         useEffect(() => {
             if (open) {
@@ -42,6 +42,7 @@ const StockActionDialog = ({
             if (Number(quantity) > 0 && locationId) {
                 onSubmit(locationId, Number(quantity));
             }
+            logInfo("StockAction submitted.")
         };
 
         const getDialogTitle = () => {

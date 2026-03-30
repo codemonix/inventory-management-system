@@ -30,7 +30,6 @@ export const useStockAction = ({ onSuccess }) => {
         setLocalError(""); // Clear any previous errors
 
         if (type === 'TRANSFER') {
-            // Optional chaining prevents crashes if tempTransfer isn't loaded yet
             setDefaultLocation(tempTransfer?.fromLocation || null);
         } else {
             setDefaultLocation(null);

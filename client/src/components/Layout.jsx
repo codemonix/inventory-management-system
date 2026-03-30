@@ -18,7 +18,7 @@ const Layout = () => {
             '/locations': 'Locations',
             '/users': 'Users',
             '/logs': 'Logs',
-            '/transfers': 'Transfers',
+            '/transfers': 'Transfer Manager',
         };
 
         setPageName(routeNames[location.pathname] || 'App');

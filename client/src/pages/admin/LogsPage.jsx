@@ -15,7 +15,7 @@ import {
     TableRow,
     Paper,
     TableSortLabel,
-    Button, Stack, Box, Typography, Tabs, Tab, Chip,
+    Button, Stack, Box, Tabs, Tab, Chip,
     TablePagination,
 } from '@mui/material'
 import { useSearchParams } from "react-router-dom";

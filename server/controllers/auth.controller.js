@@ -4,10 +4,6 @@ import generateToken from '../utils/generateToken.js';
 import logger from '../utils/logger.js'
 
 
-
-// const JWT_SECRET = process.env.JWT_SECRET || 'dev_secret';
-
-
 export async function  registerUser(req, res) {
     
     try {
@@ -18,7 +14,6 @@ export async function  registerUser(req, res) {
 
 
         const existing = await User.findOne({ email });
-        // log(existing);
         if (existing) {
             logger.info('Email already exist!');
             return res.status(409).json({ error: 'Email already registered' });
@@ -45,7 +40,7 @@ export async function  registerUser(req, res) {
         });
 
     } catch (error) {
-        logger.error('Register user:', error);
+        logger.error('auth.controller.js -> registerUser -> Error during registration:', error.message);
         res.status(500).json({ error: 'Server error, please try again later.'});
     }
 }

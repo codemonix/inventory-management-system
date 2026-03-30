@@ -1,164 +1,100 @@
-import { useSelector, useDispatch } from "react-redux";
-import { useState, useEffect } from "react";
-import { finalizeTransfer, createTransfer, loadTransfers, loadTempTransfer, confirmTransfer, clearTempTransferState } from "../redux/slices/transferSlice.js";
-import TempTransferCard from "./TempTransferCard.jsx";
-import FinalizedTransferCard from "./FinalizedTransferCard.jsx";
-import StartTransferDialog from "./StartTransferDialog.jsx";
-import { fetchLocations } from "../redux/slices/locationsSlice.js";
-import { logDebug, logInfo } from "../utils/logger.js";
-import { selectTempTransferDetailed } from "../redux/selectors/transferSelector.js";
-import { loadAllItems } from "../redux/slices/itemsSlice.js";
+// src/components/TransferList.jsx
+import { useState } from "react";
+import { useTransferManager } from "../hooks/useTransferManager.js";
 import { Dialog, DialogContent, DialogTitle } from "@mui/material";
+
+// Sub-components
+import ActiveTransferSection from "./ActiveTransferSection.jsx";
+import TransferHistorySection from "./TransferHistorySection.jsx";
+import StartTransferDialog from "./StartTransferDialog.jsx";
 import TransferItemsList from "./TransferItemsList.jsx";
 import ConfirmModal from "./ConfirmModal.jsx";
 
-
 const TransferList = () => {
-    const { transfers, tempTransfer, transferStatus, tempTransferStatus } = useSelector((state) => state.transfer);
-    const populatedTempTransfer = useSelector(selectTempTransferDetailed);
-    const dispatch = useDispatch();
-    const [showdialog, setShowdialog] = useState(false);
+    // Data & Logic from Custom Hook
+    const { 
+        transfers, tempTransfer, tempTransferStatus, populatedTempTransfer, 
+        startNewTransfer, finalizeCurrentTransfer, confirmPastTransfer 
+    } = useTransferManager();
+
+    // UI State for Modals
+    const [showStartDialog, setShowStartDialog] = useState(false);
     const [openItems, setOpenItems] = useState(false);
-    const [selectedTransfer, setSelectedTransfer] = useState(null);
     const [confirmOpen, setConfirmOpen] = useState(false);
+    const [selectedTransfer, setSelectedTransfer] = useState(null);
 
-
-    useEffect(() => {
-        if (transferStatus === 'idle') {
-            dispatch(loadTransfers());
-            dispatch(loadTempTransfer());
-        }
-    }, [dispatch, transferStatus ]);
-
-    useEffect(() => {
-        dispatch(loadAllItems());
-    },[])
-
-    useEffect (() => {
-        logInfo("TransferList populatedTempTransfer:", populatedTempTransfer)
-    }, [populatedTempTransfer]);
-
-    useEffect(() => {
-        logInfo("TransferList transfers:", transfers)
-    }, [transfers]);
-
-    useEffect(() => {
-        logInfo("TransferList tempTransfer:", tempTransfer)
-    }, [tempTransfer])
-
-    useEffect(() => {
-        dispatch(fetchLocations());
-    },[])
-
-    const handleTransferConfirmDialog = ( transfer ) => {
-        if (transfer.status !== 'confirmed') {
-            setSelectedTransfer( transfer );
-            setConfirmOpen(true)
-        } else {
-            logInfo("transfer already confirmed!")
-        }
-        logInfo("TransferList -> handleTransferConfirm -> ",transfer)
+    // Handlers
+    const handleStartNew = async (fromLocation, toLocation) => {
+        await startNewTransfer(fromLocation, toLocation);
+        setShowStartDialog(false);
     };
 
-    const handleConfirmTransfer = () => {
-        dispatch(confirmTransfer(selectedTransfer));
+    const handleConfirm = () => {
+        confirmPastTransfer(selectedTransfer);
         setConfirmOpen(false);
-    }
-
+    };
 
     const handleOpenItems = (transfer) => {
         setSelectedTransfer(transfer);
         setOpenItems(true);
     };
 
-    const handleCloseItems = () => {
-        setOpenItems(false);
-        setSelectedTransfer(null);
-    }
-
-    const handleFinalize = () => {
-        if (tempTransfer?.items?.length > 0) {
-            dispatch(finalizeTransfer()).then((result) => {
-                if (finalizeTransfer.fulfilled.match(result)) {
-                    return dispatch(clearTempTransferState())
-                }
-            }).then(() => dispatch(loadTransfers())).then(() => dispatch(loadTempTransfer()));
+    const handleOpenConfirmDialog = (transfer) => {
+        if (transfer.status !== 'confirmed') {
+            setSelectedTransfer(transfer);
+            setConfirmOpen(true);
         }
-    }
-
-    const handleStartNewTransfer = ( fromLocation, toLocation ) => {
-        dispatch(createTransfer({fromLocation, toLocation})).then(
-            dispatch(loadTempTransfer())
-        );
-
-        setShowdialog(false);
-    }
-
-    logDebug("poppulatedTemp -> TransferList -> befor return:", populatedTempTransfer)
-    logDebug("TransferList status:", transferStatus)
+    };
 
     return (
-        <div className="p-1">
-            <section className="mb-6">
-                <h2 className="text-xl font-bold mb-2">Temporary Transfer (In progress)</h2>
-            { tempTransferStatus === 'loading' ? (
-                <>
-                    <p className="text-gray-500 italic" >Loading temporary transfer ... </p>
-                </>
-            ) : !tempTransfer ? (
-                <>
-                    <p className="text-gray-500 italic">No active transfer in progress.</p>
-                    <button onClick={() => setShowdialog(true)}
-                        className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700" >
-                        Start New Transfer
-                    </button>
-                </>
-            ) : (
-                    <TempTransferCard populatedTempTransfer={populatedTempTransfer} 
-                        onFinalize={handleFinalize} />
-            )}
-            </section>
+        <div className="max-w-5xl mx-auto p-2 md:p-6 space-y-10">
+            
+            <ActiveTransferSection 
+                tempTransfer={tempTransfer}
+                tempTransferStatus={tempTransferStatus}
+                populatedTempTransfer={populatedTempTransfer}
+                onStartNew={() => setShowStartDialog(true)}
+                onFinalize={finalizeCurrentTransfer}
+            />
 
-            <section className="mb-6">
-                <h2 className="text-xl font-bold mb-2">Finalized Transfers</h2>
-                {transfers.length === 0 ? (
-                    <p className="text-gray-500 italic">No finalized transfers available.</p>
-                ) : (
-                transfers.map((transfer) => (
-                    <FinalizedTransferCard key={ transfer._id } transfer={ transfer } onViewItems={ () => handleOpenItems(transfer) }
-                        onConfirm={ () => handleTransferConfirmDialog(transfer)}
-                    />
-                ))
-                )}
-            </section>
+            <TransferHistorySection 
+                transfers={transfers}
+                onViewItems={handleOpenItems}
+                onConfirmDialog={handleOpenConfirmDialog}
+            />
 
-            {showdialog && (
+            {/* --- Modals & Dialogs --- */}
+            
+            {showStartDialog && (
                 <StartTransferDialog
-                open={showdialog}
-                onClose={() => setShowdialog(false)}
-                onStartNewTransfer={handleStartNewTransfer}
+                    open={showStartDialog}
+                    onClose={() => setShowStartDialog(false)}
+                    onStartNewTransfer={handleStartNew}
                 />
             )}
 
-            { openItems && (
-                <Dialog open={openItems} onClose={handleCloseItems} fullWidth maxWidth="md" >
-                    <DialogTitle>Items in Transfer</DialogTitle>
-                    <DialogContent >
-                        { selectedTransfer && (
-                            <TransferItemsList items={selectedTransfer.items} 
-                                onDelete={ () => {}}
-                                onEdit={ () => {}}
-                                onConfirm={ () => {}} />
-                        )}
-                    </DialogContent>
-                </Dialog>
-            )}
+            <Dialog open={openItems} onClose={() => setOpenItems(false)} fullWidth maxWidth="sm">
+                <DialogTitle className="border-b bg-gray-50">
+                    Items for Transfer {selectedTransfer?._id ? `#${selectedTransfer._id.slice(-6)}` : ''}
+                </DialogTitle>
+                <DialogContent>
+                    <div className="py-4">
+                        <TransferItemsList 
+                            items={selectedTransfer?.items || []} 
+                            onDelete={() => {}} 
+                            onEdit={() => {}} 
+                            onConfirm={() => {}} 
+                        />
+                    </div>
+                </DialogContent>
+            </Dialog>
+
             <ConfirmModal 
                 open={confirmOpen}
-                title='Confirm Transfer'
-                message='Are you sure the items have arrived at the destinaion?'
-                onClose={ () => setConfirmOpen(false)}
-                onConfirm={handleConfirmTransfer}
+                title='Confirm Arrival'
+                message={`Are you sure the items have arrived at ${selectedTransfer?.toLocation?.name || 'their destination'}?`}
+                onClose={() => setConfirmOpen(false)}
+                onConfirm={handleConfirm}
             />
             
         </div>

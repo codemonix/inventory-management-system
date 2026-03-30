@@ -1,4 +1,4 @@
-import { Dialog, DialogTitle, DialogContent, IconButton, Tooltip, Button } from '@mui/material';
+import { Dialog, DialogTitle, DialogContent, IconButton, Tooltip } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import { useState } from 'react';
