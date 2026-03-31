@@ -72,12 +72,9 @@ export const useManagedImage = ( imagePath, fetchFunction, fallBackUrl ) => {
 },[imagePath, fallBackUrl, fetchFunction])
 
     const setLocalPreview = (file) => {
-        // cleanupOldBlob();
         if (previewUrl) URL.revokeObjectURL(previewUrl);
         const newBlobUrl = URL.createObjectURL(file);
         setPreviewUrl(newBlobUrl);
-        // activeBlobRef.current = newBlobUrl;
-        // setDisplayUrl(newBlobUrl);
     };
     const clearLocalPreview = () => {
         if (previewUrl) {

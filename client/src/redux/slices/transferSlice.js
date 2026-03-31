@@ -1,83 +1,16 @@
 
-
-import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
+import { createSlice } from "@reduxjs/toolkit";
 import { logDebug, logInfo } from "../../utils/logger.js";
 
-import { getTransfers, getTempTransfer, 
-    createTempTransfer, addItemToTempTransfer, 
-    finalizeTempTransfer, removeItemFromTempTransfer, confirmTransfer as confirmTransferApi } from "../../services/transfersServices.js";
-
-export const loadTransfers = createAsyncThunk(
-    'transfer/loadTransfers',
-    async () => {
-        const response = await getTransfers();
-        logInfo("transferSlice.js -> loadTransfers response: ", response);
-        return response;
-    }
-        
-)
-
-// From here they are all for temporary transfer, not finalized yet
-
-export const loadTempTransfer = createAsyncThunk(
-    'transfer/loadTempTransfer',
-    async () => {
-        const response = await getTempTransfer();
-        logInfo("transferSlice.js -> loadTempTransfer response: ", response);
-        return response;
-    }
-);
-
-// this will create Temporary Transfer package, there is no direct transfer creation
-export const createTransfer = createAsyncThunk(
-    'transfer/createTempTransfer',
-    async ( { fromLocation, toLocation } ) => {
-        const response = await createTempTransfer( { fromLocation, toLocation } );
-        logInfo("transferSlice.js -> createTempTransfer response: ", response);
-        return response;
-    }
-);
-
-export const addItem = createAsyncThunk(
-    'transfer/addItemToTempTransfer',
-    async ( { itemId, quantity, sourceLocationId } ) => {
-        const response = await addItemToTempTransfer( { itemId, quantity, sourceLocationId } );
-        logInfo("transferSlice.js -> addItemToTempTransfer response: ", response);
-        return response;
-    }
-);
-
-export const finalizeTransfer = createAsyncThunk(
-    'transfer/finalizeTempTransfer',
-    async () => {
-        const response = await finalizeTempTransfer();
-        logInfo("finalizeTempTransfer response: ", response);
-        return response;
-    }
-);
-
-export const removeItem = createAsyncThunk(
-    'transfer/removeItemFromTempTransfer',
-    async ( { itemId } ) => {
-        const response = await removeItemFromTempTransfer( { itemId } );
-        logInfo("removeItemFromTempTransfer response: ", response);
-        return response;
-    }
-);
-
-// this one is Not for tempTransfer
-export const confirmTransfer = createAsyncThunk(
-    'transfer/confirmTransfer',
-    async ( transferId, thunkApi ) => {
-        try {
-            const response = await confirmTransferApi( transferId );
-            logInfo('confirmTransfer response:', response);
-            return response;
-        } catch (error) {
-            return thunkApi.rejectWithValue(error.response?.data?.message || 'Confirm failed')
-        }
-    }
-);
+import {
+    loadTransfers, 
+    loadTempTransfer, 
+    createTransfer, 
+    addItem, 
+    finalizeTransfer, 
+    removeItem, 
+    confirmTransfer
+} from "../thunks/transferThunks.js";
 
 const initialState = {
     tempTransfer: {
@@ -105,6 +38,7 @@ const transferSlice = createSlice({
             state.tempTransferStatus = 'idle';
             state.transferStatus = 'idle'
             state.error = null;
+            state.transferError = null;
         }
     },
     extraReducers: ( builder ) => {
@@ -112,19 +46,39 @@ const transferSlice = createSlice({
             // Load Transfers
             .addCase(loadTransfers.pending, ( state ) => {
                 state.transferStatus = 'loading';
-                state.error = null;
+                state.transferError = null;
             })
             .addCase(loadTransfers.fulfilled, ( state, action ) => {
                 state.transferStatus = 'succeeded';
                 state.transfers = action.payload;
-                logInfo("Transfers loaded payload:", action.payload)
+                logInfo("Transfers loaded, payload:", action.payload)
             })
             .addCase(loadTransfers.rejected, ( state, action ) => {
                 state.transferStatus = 'failed';
-                console.error("loadTransfers error: ", action.error.message);
-                state.error = action.error.message;
+                state.transferError = action.payload || action.error.message;
+                logDebug("loadTransfers error: ", state.transferError)
             })
-            // Load Temp Transfer and related actions
+
+            // Confirm receiving Transfer package
+            .addCase(confirmTransfer.pending, ( state ) => {
+                state.transferStatus = 'loading';
+                state.transferError = null;
+            })
+            .addCase(confirmTransfer.fulfilled, ( state, action ) => {
+                state.transferStatus = 'succeeded';
+                const index = state.transfers.findIndex( t => t._id === action.payload.transfer._id);
+                if ( index !== -1 ) {
+                    state.transfers[index] = action.payload.transfer;
+                }
+            })
+            .addCase(confirmTransfer.rejected, ( state, action ) => {
+                state.transferStatus = 'failed';
+                state.transferError = action.payload || action.error.message;
+                logDebug("Confirm Transfer failed:", state.transferError)
+            })
+            
+            
+            // Load Temp Transfer 
             .addCase(loadTempTransfer.pending, ( state ) => {
                 state.tempTransferStatus = 'loading';
                 state.error = null;
@@ -135,13 +89,14 @@ const transferSlice = createSlice({
             })
             .addCase(loadTempTransfer.rejected, ( state, action ) => {
                 state.tempTransferStatus = 'failed';
-                logDebug("loadTempTransfer error: ", action.error.message);
-                state.error = action.error.message;
+                state.error = action.payload || action.error.message;
+                logDebug("loadTempTransfer error: ", state.error);
             })
 
+            // Create Temp Transfer
             .addCase(createTransfer.pending, ( state ) => {
                 state.tempTransferStatus = 'loading';
-                state.transferError = null;
+                state.error = null;
             })
 
             .addCase(createTransfer.fulfilled, ( state, action ) => {
@@ -150,10 +105,12 @@ const transferSlice = createSlice({
             })
             .addCase(createTransfer.rejected, ( state, action ) => {
                 state.tempTransferStatus = 'failed';
-                logDebug("createTransfer/tempTransfer faled:", action.error.message)
-                state.error = action.error.message
+                state.error = action.payload || action.error.message;
+                logDebug("createTransfer/tempTransfer faled:", state.error)
             })
 
+
+            // Add Item to Temp Transfer
             .addCase(addItem.pending, ( state ) => {
                 state.tempTransferStatus = 'loading';
                 state.error = null;
@@ -164,34 +121,37 @@ const transferSlice = createSlice({
                 if (state.tempTransfer && state.tempTransfer.items) {
                     state.tempTransfer = action.payload;
                 }
-                logInfo("addItem to tempTransfer:", action.payload.items)
+                logInfo("Item added to Temp transfer:", action.payload.items);
             })
 
             .addCase(addItem.rejected, ( state, action ) => {
                 state.tempTransferStatus = 'failed';
-                logInfo("addItem to temp transfer failed:", action.error.message)
-                state.error = action.error.message
+                state.error = action.payload || action.error.message;
+                logInfo("addItem to temp transfer failed:", state.error);
             })
+
+            // Finalize Temp Transfer
             .addCase(finalizeTransfer.pending, ( state ) => {
                 state.tempTransferStatus = 'loading';
                 state.error = null;
             })
             .addCase(finalizeTransfer.fulfilled, ( state, action ) => {
+                state.tempTransferStatus = 'idle';
                 state.transfers.push(action.payload);
                 state.tempTransfer = {
                     fromLocation: "",
                     toLocation: "",
                     items: [],
                 };
-                state.tempTransferStatus = 'idel';
-                logInfo("tempTranfsref finalized")
+                logInfo("tempTransfer finalized")
             })
             .addCase(finalizeTransfer.rejected, ( state, action ) => {
                 state.tempTransferStatus = 'failed';
-                state.error = action.error.message;
-                logDebug("finalize tempTransfer failed:", action.error.message)
+                state.error = action.payload || action.error.message;
+                logDebug("finalize tempTransfer failed:", state.error)
             })
 
+            // Remove Item from Temp Transfer
             .addCase(removeItem.pending, ( state ) => {
                 state.tempTransferStatus = 'loading';
                 state.error = null;
@@ -206,26 +166,10 @@ const transferSlice = createSlice({
             })
             .addCase(removeItem.rejected, ( state, action ) => {
                 state.tempTransferStatus = 'failed';
-                state.error = action.error.message;
-                logDebug("Remove item from tempTransfer failed:", action.error.message)
+                state.error = action.payload || action.error.message;
+                logDebug("Remove item from tempTransfer failed:", state.error)
             })
-            .addCase(confirmTransfer.pending, ( state ) => {
-                state.transferStatus = 'loading';
-                state.error = null;
-            })
-            .addCase(confirmTransfer.fulfilled, ( state, action ) => {
-                state.transferStatus = 'succeeded';
-                state.error = null;
-                const index = state.transfers.findIndex( t => t._id === action.payload.transfer._id);
-                if ( index !== -1 ) {
-                    state.transfers[index] = action.payload.transfer;
-                }
-            })
-            .addCase(confirmTransfer.rejected, ( state, action ) => {
-                state.transferStatus = 'failed';
-                state.error = action.error.message;
-                logDebug("Confirm Transfer failed:", action.error.message)
-            })
+
     },
 });
 

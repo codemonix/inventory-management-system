@@ -1,6 +1,6 @@
 import { useState, useContext } from "react";
 import { AuthContext } from "../context/AuthContext.jsx";
-import { logError, logInfo } from "../utils/logger.js";
+import { logDebug, logError, logInfo } from "../utils/logger.js";
 
 
 
@@ -19,7 +19,7 @@ function LoginForm () {
 
         try {
             await login(email, password);
-            logInfo("Login successful,", email);
+            logDebug("Login successful,", email);
         } catch (error) {
             logError("Login error:", error.message);
             const errorMessage = error.response?.data?.message || error.message;

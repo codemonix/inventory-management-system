@@ -86,7 +86,7 @@ const DashboardPage = () => {
                 />
                 
                 <StatusHandler status={loading ? 'loading' : ""} error={error}>
-                    <div className="flex flex-wrap justify-center gap-0 mt-3">
+                    <div className="flex flex-wrap justify-center gap-0 mt-3 ">
                         {items.map((item) => (
                             <ItemCardDashboard 
                                 key={item.itemId} 
@@ -108,7 +108,7 @@ const DashboardPage = () => {
                     itemId={currentItemId}
                     locations={locations}
                     type={actionType}
-                    errorMessage={error}
+                    errorMessage={stockError}
                     defaultLocation={defaultLocation}
                 />
                 

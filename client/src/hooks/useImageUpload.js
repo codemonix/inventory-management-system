@@ -1,7 +1,7 @@
 import { useState } from "react";
 import imageCompressor from "browser-image-compression";
 import api from "../api/api";
-import { logDebug, logError, logInfo } from "../utils/logger";
+import { logDebug, logError, logInfo, logWarning } from "../utils/logger";
 
 export const useImageUpload = ({ onSuccess, setLocalPreview, clearLocalPreview }) => {
     const [isUploading, setIsUploading] = useState(false);
@@ -17,6 +17,7 @@ export const useImageUpload = ({ onSuccess, setLocalPreview, clearLocalPreview }
             });
         } catch (error) {
             logError("Error compressing image:", error.message);
+            logWarning("Falling back to original image");
             return file; // Fallback to original file
         }
     };

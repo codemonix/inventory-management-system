@@ -7,6 +7,7 @@ import {
     TextField,
     MenuItem,
     IconButton,
+    Typography
 } from '@mui/material';
 
 import CheckIcon from '@mui/icons-material/Check';
@@ -63,6 +64,11 @@ const StockActionDialog = ({
                 <form onSubmit={handleSubmit} >
                     <DialogTitle sx={{ fontSize: "1rem", pb: 0.5}} >{getDialogTitle()}</DialogTitle>
                     <DialogContent sx={{ display: 'flex', flexDirection: "column", gap: 1, pt: 1 , minWidth: 250 }}  >
+                        {errorMessage && (
+                            <Typography color="error" variant="caption" sx={{ mt: 1, fontWeight: 'bold' }}>
+                                {errorMessage}
+                            </Typography>
+                        )}
                         <TextField sx={{ mt: 1 }}
                         select
                         fullWidth
@@ -81,8 +87,9 @@ const StockActionDialog = ({
                             fullWidth
                             label="Quantity"
                             value={quantity}
-                            onChange={(e) => setQuantity(Number(e.target.value))}
+                            onChange={(e) => setQuantity(e.target.value)}
                             autoFocus
+                            error={!!errorMessage}
                         />
                     </DialogContent>
                     <DialogActions sx={{ px: 3, pb: 2 }}>

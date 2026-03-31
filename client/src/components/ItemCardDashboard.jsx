@@ -3,7 +3,6 @@ import {
     CardContent,
     Typography,
     IconButton,
-    Box,
     Skeleton,
 } from "@mui/material";
 import StockDetails from "./StockDetail";
@@ -15,7 +14,7 @@ import ImageWithCameraOver from "./ImageWithCameraOver.jsx";
 import { logDebug } from "../utils/logger.js";
 import { fetchItemImage } from "../services/itemsService.js";
 
-const defaultImage = "/uploads/items/default.jpg"; // Placeholder image URL
+const defaultImage = "/uploads/items/default.jpg"; 
 
 const ItemCardDashboard = ({ item, onIn, onOut, locationColors, onAddToTransfer }) => {
 
@@ -29,64 +28,48 @@ const ItemCardDashboard = ({ item, onIn, onOut, locationColors, onAddToTransfer 
     logDebug("ItemCardDashboard.jsx -> item:", item);
 
     return (
-        <Card sx={{ display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "stretch",
-                    minHeight: 100,
-                    maxWidth: 450,
-                    minWidth: 350,
-                    m: 0.75,
-                    }} >
-            <Box sx={{ display: "flex", flexDirection: "row", flexGrow: 1 }}>
-                <CardContent sx={{ flex: "1", p: 1 }}>
-                    <Box sx={{ display: "flex", flexDirection: "column", flexGrow: 1, height: '100%' }}>
-
-                    <Typography variant="h7">{ item.name }</Typography> 
-                    <Box justifyContent="flex-end" alignSelf="flex-start" sx={{ display: "flex", mt: 'auto' }}>
-                        <IconButton onClick={onIn} color="primary" >
-                            <InputTwoToneIcon />
-                        </IconButton>
-                        <IconButton onClick={onOut} color="error" >
-                            <OutputTwoToneIcon />
-                        </IconButton>
-                        <IconButton onClick={onAddToTransfer} color="secondary" >
-                            <SwapHorizonIcon />
-                        </IconButton>
-                    </Box> 
-                    </Box>
+        <Card className="flex justify-between items-stretch min-h-[100px] w-full max-w-[450px] m-1.5">
+            {/* Main Content Area */}
+            <div className="flex flex-row grow">
+                <CardContent className="flex-1 p-2">
+                    <div className="flex flex-col grow h-full">
+                        <Typography variant="subtitle1">{ item.name }</Typography> 
+                        
+                        <div className="flex justify-end self-start mt-auto">
+                            <IconButton onClick={onIn} color="primary">
+                                <InputTwoToneIcon />
+                            </IconButton>
+                            <IconButton onClick={onOut} color="error">
+                                <OutputTwoToneIcon />
+                            </IconButton>
+                            <IconButton onClick={onAddToTransfer} color="secondary">
+                                <SwapHorizonIcon />
+                            </IconButton>
+                        </div> 
+                    </div>
                 </CardContent>
-                <Box sx={{ display: "flex", gap: 1, px: 2, pb: 1 }}>
+                
+                <div className="flex gap-2 px-4 pb-2">
                     <StockDetails item={item} locationColors={locationColors} />
-                </Box>
-            </Box>
-            {/* Image */}
-            <Box sx={{
-                position: "relative",
-                display: "flex", 
-                flexBasis: "30%",
-                minWidth: "100px", 
-                maxWidth: "150px", 
-                alignItems: "stretch",
-                justifyContent: "center",
-                overflow: "hidden"
-            }}>
+                </div>
+            </div>
 
+            {/* Image Area */}
+            <div className="relative flex basis-[30%] min-w-[100px] max-w-[150px] items-stretch justify-center overflow-hidden">
                 { isImageLoading ? (
                     <Skeleton 
                         variant="rectangular"
-                        width="100%"
-                        height="100%"
                         animation="wave"
-                        sx={{ borderRadius: 1, position: "absolute", top: 0, left: 0, right: 0, bottom: 0 }}
+                        className="w-full h-full rounded absolute inset-0"
                     />
                 ) : (
                     <ImageWithCameraOver 
                         imageUrl={displayUrl}
                         readOnly={true}
-                        sx={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                        className="w-full h-full object-cover"
                     />
                 )}
-            </Box>
+            </div>
         </Card>
     );
 };

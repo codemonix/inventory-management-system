@@ -10,7 +10,8 @@ export default function LocationList({ locations, onDelete }) {
                     <span>{ location.name }</span>
                     <button onClick={ () => onDelete(location._id)}
                         className={`px-1 py-1 rounded transition duration-200
-    ${!isAdminOrManager ? 'bg-gray-400 cursor-not-allowed' : 'bg-red-500 hover:bg-red-600 text-white'}`}>
+                            ${!isAdminOrManager ? 'bg-gray-400 cursor-not-allowed' : 
+                            'bg-red-500 hover:bg-red-600 text-white'}`}>
                         Delete
                     </button>
                 </li>

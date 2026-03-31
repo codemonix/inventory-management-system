@@ -54,14 +54,7 @@ const SearchFilterBar = ({search, limit, sort, onSearchChange, onLimitChange, on
 
     return (
         <Paper elevation={2}
-            sx={{
-                display: "flex",
-                gap: 2,
-                p: 2,
-                mb: 3,
-                flexWrap: "wrap",
-                alignItems: "center",
-            }}
+            className="flex gap-4 p-4 mb-6 flex-wrap items-center"
         >
             <TextField 
                 label="Search"
@@ -70,7 +63,7 @@ const SearchFilterBar = ({search, limit, sort, onSearchChange, onLimitChange, on
                 onChange={handleChange}
                 onKeyDown={handleKeyDown}
                 placeholder="Search by name"
-                sx={{ flexGrow: 1, minWidth: 200 }}
+                className="grow min-w-[200px]"
                 slotProps={{
                     startAdorment: (
                         <InputAdornment position="start">
@@ -87,7 +80,7 @@ const SearchFilterBar = ({search, limit, sort, onSearchChange, onLimitChange, on
                 }}
             />
 
-            <FormControl sx={{ minWidth: 120}} >
+            <FormControl className="min-w-[120]" >
                 <InputLabel>limit</InputLabel>
                 <Select 
                     value={limit}
@@ -102,7 +95,7 @@ const SearchFilterBar = ({search, limit, sort, onSearchChange, onLimitChange, on
                 </Select>
             </FormControl>
             
-            <FormControl sx={{ minWidth: 180 }}>
+            <FormControl className="min-w-[180]">
                 <InputLabel>Sort by</InputLabel>
                 <Select 
                     value={sort}

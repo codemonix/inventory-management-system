@@ -39,7 +39,7 @@ const StartTransferDialog = ({ open, onClose, onStartNewTransfer }) => {
                 </div>
                 <div className='mb-4' >
                     <label className='block mb-1' htmlFor='toLocation'>To Location</label>
-                     <select 
+                    <select 
                         value={toLocation}
                         onChange={(e) => setToLocation(e.target.value)}
                         className='w-full border border-gray-300 rounded p-2'>

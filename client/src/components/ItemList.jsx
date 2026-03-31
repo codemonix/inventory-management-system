@@ -9,7 +9,7 @@ import StockActionDialog from "./StockActionDialog.jsx";
 import { useStockAction } from "../hooks/useStockAction.js";
 
 
-import { logDebug, logError, logInfo } from "../utils/logger.js";
+import { logDebug, logInfo } from "../utils/logger.js";
 
 
 const ItemList = ({ items, onDelete, onEdit, onImageUpload, refreshInventory, stockLookup }) => {
@@ -28,17 +28,6 @@ const ItemList = ({ items, onDelete, onEdit, onImageUpload, refreshInventory, st
         closeDialog,
         submitAction
     } = useStockAction({ onSuccess: refreshInventory });
-    
-
-    // // Optimization: MAP for inventory look up
-    // const stockLookup = useMemo(() => {
-    //     return inventory.reduce((acc, entry) => {
-    //         const total = entry.stock?.reduce((sum, s) => sum + s.quantity, 0) || 0;
-    //         const id = entry.itemId || entry._id;
-    //         acc[id] = total;
-    //         return acc;
-    //     },{});
-    // }, [inventory]);
 
     logDebug('ItemList.jsx ->  locations', locations)
     logDebug('Items', items)

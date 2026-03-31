@@ -29,7 +29,7 @@ export const AuthProvider = ({ children }) => {
 
                 })
                 .catch((error) => {
-                    console.error('Invalid token or fetch user data failed:', error.message);
+                    logError('AuthProvider -> Invalid token or fetch user data failed:', error.message);
                     setIsLoggedIn(false);
                     setUser(null);
                 })
@@ -60,7 +60,7 @@ export const AuthProvider = ({ children }) => {
                 
             }
     } catch (error) {
-        logError("Login failed:", error.message);
+        logError("AuthProvider -> Login failed:", error.message);
         throw error;
     }
     };
@@ -76,9 +76,9 @@ export const AuthProvider = ({ children }) => {
     const register = async ({name, email, password} ) => {
         try {
             const { token, user } = await registerApi(name, email, password);
-            logInfo("register -> user:", user)
-            logInfo("register -> token", token)
-            logInfo("is user approved?", user.isApproved)
+            logDebug("register -> user:", user.email)
+            logDebug("register -> token", !!token)
+            logDebug("is user approved?", user.isApproved)
             if (user.isApproved) {
                 localStorage.setItem('token', token);
                 setUser(user);
@@ -86,6 +86,7 @@ export const AuthProvider = ({ children }) => {
                 setIsManager(user.role === 'manager');
                 setIsLoggedIn(true);
             }
+            logInfo("User registered successfully");
         } catch (error) {
             logError("Register failed:", error.message);
             throw error;

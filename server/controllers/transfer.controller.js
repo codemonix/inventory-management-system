@@ -32,7 +32,7 @@ export const addItemToTempTransfer = async (req, res) => {
 
     const stock = await Inventory.findOne({ itemId, locationId: sourceLocationId });
     if (!stock || stock.quantity < quantity) {
-        return res.status(400).json({ message: 'Insufficient stock' });
+        return res.status(422).json({ message: 'Insufficient stock' });
     }
 
     stock.quantity -= quantity;

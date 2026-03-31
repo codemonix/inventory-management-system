@@ -4,7 +4,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { setPage, setLimit, setSort, setSearch } from '../redux/slices/dashboardSlice.js';
 import { getDashboardData } from "../redux/thunks/dashboardThunks.js";
 import { selectDashboardPage, selectDashboardLimit } from "../redux/selectors/dashboardSelectors.js";
-import { loadTempTransfer, loadTransfers } from "../redux/slices/transferSlice.js";
+import { loadTempTransfer, loadTransfers } from "../redux/thunks/transferThunks.js";
 
 export const useDashboardData = () => {
     const dispatch = useDispatch();
@@ -16,7 +16,7 @@ export const useDashboardData = () => {
     const limit = useSelector(selectDashboardLimit);
     const transferStatus = useSelector((state) => state.transfer.status);
 
-    // 1. Sync URL Parameters with Redux State
+    // Sync URL Parameters with Redux State
     useEffect(() => {
         const pageParam = parseInt(searchParams.get('page')) || 1;
         const limitParam = parseInt(searchParams.get('limit')) || 10;
@@ -33,12 +33,12 @@ export const useDashboardData = () => {
         dispatch(setSort(sortParam));
     }, [searchParams, dispatch, setSearchParams]);
 
-    // 2. Fetch Dashboard Data when params change
+    // Fetch Dashboard Data when params change
     useEffect(() => {
         dispatch(getDashboardData({ page, limit, sort, search }));
     }, [page, limit, sort, search, dispatch]);
 
-    // 3. Load Transfer Data
+    // Load Transfer Data
     useEffect(() => {
         if (transferStatus === 'idle') {
             dispatch(loadTempTransfer());

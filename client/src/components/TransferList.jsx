@@ -1,4 +1,4 @@
-// src/components/TransferList.jsx
+
 import { useState } from "react";
 import { useTransferManager } from "../hooks/useTransferManager.js";
 import { Dialog, DialogContent, DialogTitle } from "@mui/material";
@@ -74,11 +74,41 @@ const TransferList = () => {
             )}
 
             <Dialog open={openItems} onClose={() => setOpenItems(false)} fullWidth maxWidth="sm">
-                <DialogTitle className="border-b bg-gray-50">
-                    Items for Transfer {selectedTransfer?._id ? `#${selectedTransfer._id.slice(-6)}` : ''}
+                <DialogTitle className="border-b bg-gray-50 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 py-4 pr-12 relative">
+                    
+                    <span className="font-bold text-gray-500 text-sm">
+                        Transfer {selectedTransfer?._id ? `#${selectedTransfer._id.slice(-6)}` : 'Details'}
+                    </span>
+                    
+                    {/* The Location Badge Header */}
+                    {(selectedTransfer?.fromLocation || selectedTransfer?.toLocation) && (
+                        <div className="flex items-center text-sm font-semibold text-gray-700 bg-white border border-gray-200 px-3 py-1.5 rounded-full shadow-sm">
+                            <span className="truncate max-w-[100px]" title={selectedTransfer.fromLocation?.name}>
+                                {selectedTransfer.fromLocation?.name || 'Unknown'}
+                            </span>
+                            <span className="mx-2 text-blue-500 text-lg leading-none">→</span>
+                            <span className="truncate max-w-[100px]" title={selectedTransfer.toLocation?.name}>
+                                {selectedTransfer.toLocation?.name || 'Unknown'}
+                            </span>
+                        </div>
+                    )}
+
+                    {/* Close Button */}
+                    <button 
+                        onClick={() => setOpenItems(false)}
+                        className="absolute top-4 right-4 text-gray-400 hover:text-gray-700 bg-white border border-gray-200 hover:bg-gray-100 p-1.5 rounded-full shadow-sm transition-colors"
+                        aria-label="Close modal"
+                    >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+
                 </DialogTitle>
-                <DialogContent>
-                    <div className="py-4">
+                
+                {/* Transfer Items List */} 
+                <DialogContent className="bg-gray-50/30">
+                    <div className="pt-4 pb-2">
                         <TransferItemsList 
                             items={selectedTransfer?.items || []} 
                             onDelete={() => {}} 
@@ -88,7 +118,6 @@ const TransferList = () => {
                     </div>
                 </DialogContent>
             </Dialog>
-
             <ConfirmModal 
                 open={confirmOpen}
                 title='Confirm Arrival'

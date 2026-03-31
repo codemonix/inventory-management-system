@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { addItem } from "../redux/slices/transferSlice.js";
+import { addItem } from "../redux/thunks/transferThunks.js";
 import { stockIn, stockOut } from "../services/inventoryServices.js";
-import { logDebug } from "../utils/logger.js";
+import { logError, logWarning } from "../utils/logger.js";
 
 /**
  * Custom hook to handle inventory stock actions (IN, OUT, TRANSFER).
@@ -27,7 +27,7 @@ export const useStockAction = ({ onSuccess }) => {
         setCurrentItemId(item.itemId);
         setActionType(type);
         setDialogOpen(true);
-        setLocalError(""); // Clear any previous errors
+        setLocalError(""); 
 
         if (type === 'TRANSFER') {
             setDefaultLocation(tempTransfer?.fromLocation || null);
@@ -51,32 +51,37 @@ export const useStockAction = ({ onSuccess }) => {
             switch (actionType) {
                 case 'IN':
                     await stockIn(currentItemId, locationId, quantity);
-                    if (onSuccess) onSuccess(); // Trigger data refresh
                     break;
 
                 case 'OUT':
                     await stockOut(currentItemId, locationId, quantity);
-                    if (onSuccess) onSuccess(); // Trigger data refresh
                     break;
 
                 case 'TRANSFER':
                     // Validate that the selected location matches the active transfer's source
                     if (tempTransfer?.fromLocation && tempTransfer.fromLocation !== locationId) {
+                        logWarning("Location mismatch!");
                         setLocalError("Location mismatch! Please select the correct source location.");
-                        return; // Stop execution, keep dialog open
+                        return false; // Stop execution, keep dialog open
                     }
-                    dispatch(addItem({ itemId: currentItemId, quantity, sourceLocationId: locationId }));
+                    await dispatch(addItem({ itemId: currentItemId, quantity, sourceLocationId: locationId })).unwrap();
                     break;
-
-                default:
-                    console.warn(`Unknown action type: ${actionType}`);
-            }
-
+                    
+                    default:
+                        logWarning( "Unknown action type:", actionType);
+                        setLocalError("Unknown action type.");
+                        return false;
+                    }
+                    
+            if (onSuccess) onSuccess(); 
             closeDialog(); // Only close if the try block succeeds without returning early
+            return true;
 
         } catch (err) {
-            logDebug("Error in useStockAction -> submitAction:", err);
-            setLocalError(err.message || "An error occurred while processing the stock action.");
+            logError("Error in useStockAction -> submitAction:", err);
+            const errorMessage = typeof err === 'string' ? err : (err.message || "An error occurred.");
+            setLocalError(errorMessage);
+            return false;
         }
     };
 

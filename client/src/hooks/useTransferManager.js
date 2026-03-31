@@ -3,8 +3,9 @@ import { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { 
     loadTransfers, loadTempTransfer, createTransfer, 
-    finalizeTransfer, clearTempTransferState, confirmTransfer 
-} from "../redux/slices/transferSlice.js";
+    finalizeTransfer, confirmTransfer 
+} from "../redux/thunks/transferThunks.js";
+import { clearTempTransferState } from "../redux/slices/transferSlice.js";
 import { fetchLocations } from "../redux/slices/locationsSlice.js";
 import { loadAllItems } from "../redux/slices/itemsSlice.js";
 import { selectTempTransferDetailed } from "../redux/selectors/transferSelector.js";

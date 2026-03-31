@@ -81,6 +81,7 @@ export default function CreateForm ({ title, label, placeholder, onCreate, onSuc
                     required
                     autoComplete="off"
                     sx={{ mb: 3 }}
+                    autoFocus
                 />
                 
                 <Button

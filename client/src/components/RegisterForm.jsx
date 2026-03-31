@@ -52,7 +52,7 @@ const RegisterForm = ({ onError }) => {
                 margin="normal"
                 required
             />
-            <Button variant="contained" color="primary" fullWidth type="submit" sx={{ mt: 2 }} >
+            <Button variant="contained" color="primary" fullWidth type="submit" className='mt-4' >
                 Register
             </Button>
         </form>

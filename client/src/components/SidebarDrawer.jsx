@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { NavLink } from "react-router-dom";
-import { Box, Drawer, Divider, List, ListItem, ListItemButton, ListItemIcon, ListItemText, IconButton } from "@mui/material";
+import { Box, Drawer, Divider, List, ListItem, 
+    ListItemButton, ListItemIcon, ListItemText, IconButton } from "@mui/material";
 import MenuIcon from '@mui/icons-material/Menu';
 import { useAuth } from "../context/AuthContext.jsx";
 import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
@@ -26,25 +27,26 @@ function SidebarDrawer() {
         { label: "Locations", to: "/locations" },
         { label: "Transfers", to: "/transfers" },
     ];
-  const getNavItemStyles = (isActive) => ({
-  backgroundColor: isActive ? '#1e40af' : 'transparent', 
-  color: isActive ? '#ffffff' : 'rgb(58, 91, 161)', 
-  m: 1,
-  px: 2,
-  '&:hover': {
-    backgroundColor: '#1d4ed8', 
-    color: '#fff',
-  },
-});
+
+    const getNavItemStyles = (isActive) => ({
+    backgroundColor: isActive ? '#1e40af' : 'transparent', 
+    color: isActive ? '#ffffff' : 'rgb(58, 91, 161)', 
+    m: 1,
+    px: 2,
+    '&:hover': {
+        backgroundColor: '#1d4ed8', 
+        color: '#fff',
+        },
+    });
 
     const drawerContent = (
-        <Box sx={{ width: 250, height: '100%', display: 'flex', flexDirection: 'column' }} onClick={toggleSidebar}>
-            <Box>
+        <div className="w-[250px] h-full flex flex-col" onClick={toggleSidebar}>
+            <div>
             <List>
                 {navItems.map(({ label, to }) => (
                     <ListItem key={to} disablePadding>
-                        <NavLink to={to} 
-                            style={ { textDecoration: 'none', width: '100%', color: 'inherit' } }>
+                        <NavLink to={to}
+                            className="no-underline w-full text-inherit">
                             {({ isActive }) => (
                                 <ListItemButton sx={getNavItemStyles(isActive)}>
                                     <ListItemText primary={label} />
@@ -59,7 +61,7 @@ function SidebarDrawer() {
                         <Divider />
                         <List>
                             <ListItem disablePadding>
-                                <NavLink to="/manage" style={ { textDecoration: 'none', width: '100%'}}>
+                                <NavLink to="/manage" className="no-underline w-full">
                                     {({ isActive}) => (
                                         <ListItemButton
                                             sx={{
@@ -72,7 +74,7 @@ function SidebarDrawer() {
                                                 },
                                             }}
                                             >
-                                                <ListItemIcon sx={{ color: '#fff'}} >
+                                                <ListItemIcon className="text-white" >
                                                     <AdminPanelSettingsIcon fontSize="small" />
                                                 </ListItemIcon>
                                                 <ListItemText primary="Manage" />
@@ -83,14 +85,14 @@ function SidebarDrawer() {
                         </List>
                     </>
                 )}
-        </Box>
+        </div>
 
         { isLoggedIn && (
-            <Box sx={{ mt: 'auto'}} >
+            <div className="mt-auto" >
                 <Divider />
                 <List >
                     <ListItem disablePadding>
-                        <NavLink to="/logout" style={{ textDecoration: 'none', width: '100%' }} >
+                        <NavLink to="/logout" className="no-underline w-full block" >
                             <ListItemButton 
                                 sx={{ 
                                     backgroundColor: '#f87171',
@@ -107,9 +109,9 @@ function SidebarDrawer() {
                         </NavLink>
                     </ListItem>
                 </List>
-            </Box>
+            </div>
         )}
-        </Box>
+        </div>
     );
 
     return (
