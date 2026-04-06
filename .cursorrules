@@ -1,0 +1,26 @@
+# 1. ARCHITECTURAL STANDARDS (The "No Spaghetti" Rule)
+- Always use a Layered Architecture (Routes -> Controllers -> Services).
+- Backend: Use TypeScript, Express, and Prisma/Drizzle.
+- Frontend: Use React (Vite), Tailwind CSS, and Custom Hooks for logic.
+- Folder Structure: Create dedicated folders for 'services', 'hooks', 'types', and 'components' before writing code.
+
+# 2. DATABASE & DATA INTEGRITY
+- Use PostgreSQL via Prisma. 
+- Always use a Singleton pattern for the Prisma Client to prevent connection leaks.
+- Database field names should be camelCase.
+- Never use 'any' type; always define interfaces in a 'shared' or 'types' directory.
+
+# 3. BILINGUAL & MULTILINGUAL CONTEXT
+- The app supports English and Turkish.
+- Variables/Functions: Use English naming.
+- UI Labels: Use a translation-ready structure (e.g., constants or i18next).
+- AI Prompting: When writing prompts for Vision APIs, explicitly request bilingual responses (En/Tr).
+
+# 4. DEVOPS & DEPLOYMENT
+- Always include a 'docker-compose.yml' for local development (PostgreSQL + App).
+- Use .env files for sensitive data; never hardcode API keys.
+
+# 5. CODING STYLE
+- Use functional components in React.
+- Prefer 'Lucide-React' for icons.
+- When refactoring, use the 'Red/Green' diff view to ensure no logic is lost.

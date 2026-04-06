@@ -48,7 +48,7 @@ const ItemCard = ({ item, onIn, onOut, onDelete, onEdit, onImageUpload, totalSto
                 <CardContent className="flex-[1_0_auto] p-2 pb-0">
                     <Typography variant="subtitle1" className="font-bold">{ item.name }</Typography>
                     
-                    <div className="flex flex-col sm:flex-row gap-2">
+                    <div className="flex flex-col sm:flex-row gap-0">
                         <div className="min-w-[125px]">
                             <Typography variant="body2" color="text.secondary">
                                 { item.code ? `#: ${item.code}` : "" }
@@ -56,7 +56,7 @@ const ItemCard = ({ item, onIn, onOut, onDelete, onEdit, onImageUpload, totalSto
                         </div>
                         
                         <div className="flex gap-2">
-                            <div className="min-w-[90px]">
+                            <div className="min-w-[80px]">
                                 <Typography variant="body2" color="text.secondary">
                                     <strong>Price:</strong> {item.price || "--"} €
                                 </Typography>

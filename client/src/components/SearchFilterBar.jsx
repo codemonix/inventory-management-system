@@ -22,6 +22,14 @@ const SearchFilterBar = ({search, limit, sort, onSearchChange, onLimitChange, on
         setInputValue(search);
     }, [search]);
 
+    useEffect(() => {
+        return () => {
+            if (debounceTimeoutRef.current) {
+                clearTimeout(debounceTimeoutRef.current);
+            }
+        };
+    }, []);
+
     const handleChange = (e) => {
         const value = e.target.value;
         setInputValue(value);

@@ -24,10 +24,18 @@ const SettingsPage = () => {
     const [loading, setLoading] = useState(false);
     const [message, setMessage] = useState(null);
     const [error, setError] = useState(null);
+    const [localLogLevel, setLocalLogLevel] = useState('info');
+    const [localEnableDbLogging, setLocalEnableDbLogging] = useState(true);
+    const [confirmOpen, setConfirmOpen] = useState(false);
+    const [resetDialogOpen, setResetDialogOpen] = useState(false);
+    const [actionType, setActionType] = useState(null);
+    const [restoreFile, setRestoreFile] = useState(null);
+    const [confirmPhrase, setConfirmPhrase] = useState('');
+
     const dispatch = useDispatch();
     const { settings, isLoading } = useSelector((state) => state.system);
-    const [localLogLevel, setLocalLogLevel] = useState('info');
-    const [localEnableDbLogging, setLocalEnableDbLogging] = useState(true)
+    const navigate = useNavigate();
+    const { logout } = useAuth();
 
     useEffect(() => {
         dispatch(fetchSystemSettings());
@@ -61,19 +69,6 @@ const SettingsPage = () => {
     const hasUnsavedChanges = 
         localLogLevel !== settings?.logLevel ||
         localEnableDbLogging !== settings?.enableDbLogging;
-    
-    
-    // Modals
-    const [confirmOpen, setConfirmOpen] = useState(false);
-    const [resetDialogOpen, setResetDialogOpen] = useState(false);
-    
-    // State for actions
-    const [actionType, setActionType] = useState(null); // 'RESTORE', 'CLEAR_TRANSFERS', 'CLEAR_ITEMS'
-    const [restoreFile, setRestoreFile] = useState(null);
-    const [confirmPhrase, setConfirmPhrase] = useState('');
-
-    const navigate = useNavigate();
-    const { logout } = useAuth();
 
     // 1. BACKUP
     const handleBackup = async () => {

@@ -2,34 +2,34 @@ import { Outlet, useLocation } from "react-router-dom";
 import SidebarDrawer from "./SidebarDrawer.jsx";
 import { useAuth } from "../context/AuthContext.jsx";
 import { logDebug } from "../utils/logger.js";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 
+const ROUTE_NAMES = {
+    '/dashboard': 'Dashboard',
+    '/items': 'Items',
+    '/locations': 'Locations',
+    '/users': 'Users',
+    '/logs': 'Logs',
+    '/transfers': 'Transfer Manager',
+}
 
 const Layout = () => {
 
     const { user } = useAuth();
     const location = useLocation();
-    const [pageName, setPageName] = useState('');
+
+    const pageName = ROUTE_NAMES[location.pathname] || 'App';
+    const userName = user?.user?.name;
+    
 
     useEffect(() => {
-        const routeNames = {
-            '/dashboard': 'Dashboard',
-            '/items': 'Items',
-            '/locations': 'Locations',
-            '/users': 'Users',
-            '/logs': 'Logs',
-            '/transfers': 'Transfer Manager',
-        };
-
-        setPageName(routeNames[location.pathname] || 'App');
-
-        const titlePrefix = user?.user?.name ? `${user.user.name} | ` : '';
+        const titlePrefix = userName ? `${userName} | ` : '';
         document.title = `${titlePrefix}${pageName}`;
-    },[location.pathname, user?.user?.name])
+    },[location.pathname, userName, pageName])
 
     logDebug("Layout.jsx -> user", user);
     return (
-        <div className="flex-row bg-gray-300">
+        <div className="flex flex-col min-h-screen bg-gray-300">
             <h1 className="text-center p-3"><span >{user?.user?.name}</span> | {pageName} </h1>
             <SidebarDrawer />
             <main className="flex-1">

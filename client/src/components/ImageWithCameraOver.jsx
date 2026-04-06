@@ -36,7 +36,7 @@ function ImageWithCameraOver ({ imageUrl, onChange, readOnly = false }) {
                     <BrokenImageIcon color="disabled" fontSize="large" />
                 </Box>
             ) : (
-                <img 
+                <img
                     src={imageUrl}
                     alt='Preview'
                     onError={() => setHasError(true)}
@@ -54,7 +54,7 @@ function ImageWithCameraOver ({ imageUrl, onChange, readOnly = false }) {
                     sx={{
                         position: 'absolute',
                         bottom: 8,
-                        right: 8,
+                        right: 15,
                         backgroundColor: 'rgba(0,0,0,0.2)',
                         color: 'rgba(255, 255, 255, 0.4)',
                         "&:hover": {

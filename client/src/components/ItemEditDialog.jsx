@@ -1,12 +1,24 @@
 
 import { Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField } from '@mui/material';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { logError } from '../utils/logger';
 
 const EditItemDialog = ({ open, onClose, item, onSave }) => {
     const [formData, setFormData] = useState({
-        name: item?.name,
-        price: item?.price,
+        name: '',
+        price: '',
     });
+    const [isSubmitting, setIsSubmitting] = useState(false);
+
+    useEffect(() => {
+        if (open && item) {
+            setFormData({
+                name: item.name,
+                price: item.price,
+            });
+        }
+    }, [open, item]);
+
 
     const handleChange = (e) => {
         setFormData((prevData) => ({
@@ -16,17 +28,16 @@ const EditItemDialog = ({ open, onClose, item, onSave }) => {
     };
 
     const handleSubmit = async () => {
+        setIsSubmitting(true);
         try {
-            onSave(formData);
+            await onSave(formData);
             onClose();
         } catch (error) {
             logError(error.message);
+        } finally {
+            setIsSubmitting(false);
         }
     };
-
-    const handleClose = () => {
-        onClose();
-    }
 
     return (
         <Dialog open={open} onClose={onClose}>
@@ -57,13 +68,17 @@ const EditItemDialog = ({ open, onClose, item, onSave }) => {
                 />
             </DialogContent>
                 <DialogActions>
-                    <Button onClick={handleClose} color='secondary'>Cancel</Button>
-                    <Button type='submit' color='primary'>Save</Button>
+                    <Button onClick={() => onClose()} color='secondary'>Cancel</Button>
+                    <Button 
+                        type='submit' 
+                        color='primary' 
+                        disabled={isSubmitting}
+                    >
+                        {isSubmitting ? 'Saveing...' : 'Save'}
+                    </Button>
                 </DialogActions>
             </form>
-
         </Dialog>
-
     );    
 };
 

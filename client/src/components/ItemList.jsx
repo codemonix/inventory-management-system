@@ -42,7 +42,7 @@ const ItemList = ({ items, onDelete, onEdit, onImageUpload, refreshInventory, st
                 p: 0
             }}
         >
-            {items && items.length > 0 ? (
+            {items?.length > 0 ? (
                 items.map((item) => (
                     <ItemCard 
                         key={item._id} 

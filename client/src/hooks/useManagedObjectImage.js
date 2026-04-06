@@ -43,12 +43,20 @@ export const useManagedImage = ( imagePath, fetchFunction, fallBackUrl ) => {
     };
 
     useEffect(() => {
+        let cancelled = false;
+
         const loadImages = async () => {
             setIsImageLoading(true);
 
             if (imagePath && imagePath !== fallBackUrl) {
                 try {
                     const blobUrl = await fetchFunction(imagePath);
+                    if (cancelled) {
+                        if (blobUrl && blobUrl !== sharedDefaultBlobUrl) {
+                            URL.revokeObjectURL(blobUrl);
+                        }
+                        return;
+                    }
                     cleanupOldBlob();
                     activeBlobRef.current = blobUrl;
                     setDisplayUrl(blobUrl);
@@ -61,14 +69,18 @@ export const useManagedImage = ( imagePath, fetchFunction, fallBackUrl ) => {
                     logWarning("falling back to default image");
                 }
             }
-    
+
             const defaultBlob = await getSharedDefultBlob(fallBackUrl, fetchFunction);
+            if (cancelled) return;
             setDisplayUrl(defaultBlob);
             setIsImageLoading(false);
         };
         loadImages();
-    
-        return () => cleanupOldBlob();
+
+        return () => {
+            cancelled = true;
+            cleanupOldBlob();
+        };
 },[imagePath, fallBackUrl, fetchFunction])
 
     const setLocalPreview = (file) => {

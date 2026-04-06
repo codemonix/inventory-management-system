@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useSearchParams } from 'react-router-dom';
 
@@ -53,7 +53,14 @@ const ItemsPage = () => {
     const [isAddOpen, setIsAddOpen] = useState(false);
     const [isSearchOpen, setIsSearchOpen] = useState(false);
 
-    
+    const refreshInventory = useCallback(async () => {
+        try {
+            const updatedInventory = await fetchFullInventory();
+            setInventory(updatedInventory);
+        } catch (error) {
+            logError("ItemsPage.jsx -> refreshInventory -> Error fetching inventory:", error.message);
+        }
+    }, []);
 
     // Sync URL Params to Redux
     useEffect(() => {
@@ -76,17 +83,7 @@ const ItemsPage = () => {
     useEffect(() => {
         refreshInventory();
         dispatch(fetchLocations());
-    },[dispatch]);
-
-    // Hepers for ItemList
-    const refreshInventory = async () => {
-        try {
-            const updatedInventory = await fetchFullInventory();
-            setInventory(updatedInventory);
-        } catch (error) {
-            logError("ItemsPage.jsx -> refreshInventory -> Error fetching inventory:", error.message);
-        }
-    };
+    }, [dispatch, refreshInventory]);
 
     const stockLookup = useMemo(() => {
         return inventory.reduce((acc, entry) => {
@@ -203,7 +200,7 @@ const ItemsPage = () => {
     logDebug("ItemsPage.jsx -> items length:", items.length);
     logDebug("ItemsPage -> status:", status);
     return (
-        <Container maxWidth="xl" sx={{ py: 1, px: 1 }}>
+        <Container maxWidth="xl" sx={{ py: 1, px: 0 }}>
             <ActionToolbar 
                 isAddOpen={isAddOpen}
                 isSearchOpen={isSearchOpen}

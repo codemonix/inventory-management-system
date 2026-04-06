@@ -15,10 +15,12 @@ export const AuthProvider = ({ children }) => {
     const [ isManager, setIsManager ] = useState(false);
 
     useEffect(() => {
+        let cancelled = false;
         const token = localStorage.getItem("token");
         if (token) {
             fetchUserData(token)
                 .then((userData) => {
+                    if (cancelled) return;
                     setUser(userData);      // Set user data in state
                     const isAdmin = userData?.user.role === "admin";        // Check if user is admin based on role
                     const isManager = userData?.user.role === "manager";    // Check if user is manager based on role
@@ -29,21 +31,24 @@ export const AuthProvider = ({ children }) => {
 
                 })
                 .catch((error) => {
+                    if (cancelled) return;
                     logError('AuthProvider -> Invalid token or fetch user data failed:', error.message);
                     setIsLoggedIn(false);
                     setUser(null);
                 })
                 .finally(() => {
-                    setLoading(false);
-                }); 
+                    if (!cancelled) setLoading(false);
+                });
         } else {
             setLoading(false);
         }
 
+        return () => {
+            cancelled = true;
+        };
     }, []); 
 
 
-    //TODO: check if token is still valid befor sending to backend
     const login = async (email, password) => {
         try {
             const res = await loginApi(email, password);
