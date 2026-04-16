@@ -1,6 +1,6 @@
 import { Logger as WinstonLogger } from 'winston';
 
-export type LogLevel = 'error' | 'warn' | 'http' | 'info' | 'debug';
+export type LogLevel = 'error' | 'warn' | 'info' | 'http' | 'verbose' | 'debug' | 'silly';
 
 export type LogLevelsMap = Record<LogLevel, number>;
 

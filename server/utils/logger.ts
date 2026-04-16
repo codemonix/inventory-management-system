@@ -8,7 +8,9 @@ const levels: LogLevelsMap = {
     warn: 1,
     http: 2,
     info: 3,
-    debug: 4,
+    verbose: 4,
+    debug: 5,
+    silly: 6
 };
 
 // Global state for dynamic updates without restarting the server

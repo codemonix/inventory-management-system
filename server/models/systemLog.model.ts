@@ -1,5 +1,5 @@
 import mongoose, { Schema, Document } from 'mongoose';
-import { ISystemLog } from '../types/systemLog.types.js';
+import { ISystemLog } from '../types/system.types.js';
 
 const systemLogSchema = new Schema<ISystemLog>({
     timestamp: { type: Date, default: Date.now },
