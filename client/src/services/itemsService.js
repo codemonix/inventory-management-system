@@ -15,7 +15,7 @@ export const getPaginatedItems = async ({ page = 1, limit = 20, search = "", sor
     try {
         const response = await api.get(`/items?page=${page}&limit=${limit}&search=${search}&sort=${sort}`);
         logInfo("getPaginatedItems response:", response)
-        return response.data
+        return response.data.result
     } catch (error) {
         if (error.response && error.response.status === 400) {
             throw new Error(error.response.data.message);

@@ -105,7 +105,7 @@ const UserManagementPage = () => {
 
     const handleToggleActive = (user) => {
         if ( currentUser.role === "admin" || currentUser.role === "manager") {
-            dispatch(toggleUserActive({ id: user.id, isActive: !user.isActive }));
+            dispatch(toggleUserActive({ id: user._id, isActive: !user.isActive }));
         }
     };
 

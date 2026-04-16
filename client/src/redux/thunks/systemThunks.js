@@ -4,7 +4,7 @@ import { logError } from '../../utils/logger';
 
 export const fetchSystemLogs = createAsyncThunk(
     'system/fetchLogs',
-    async ({skip = 0, page , limit = 50, level = 'all', sortBy = 'timestamp', sortOrder = 'desc' }, { rejectWithValue }) => {
+    async ({skip = 0, page = 1 , limit = 50, level = 'all', sortBy = 'timestamp', sortOrder = 'desc' }, { rejectWithValue }) => {
         try {
             const response = await api.get(`/system/logs?skip=${skip}&sortBy=${sortBy}&sortOrder=${sortOrder}&page=${page}&limit=${limit}&level=${level}`);
             return response.data;

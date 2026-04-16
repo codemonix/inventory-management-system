@@ -1,6 +1,6 @@
 import api from "../api/api.js";
 
-export const getLocations = async () => api.get("/locations").then((res) => res.data); // { locations: [...] }
+export const getLocations = async () => api.get("/locations").then((res) => res.data.locations); // { locations: [...] }
 
 export const createLocation = async (location) => api.post("/locations", location).then((res) => res.data); // { location: { id, name, description } }
 

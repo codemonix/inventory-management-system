@@ -48,28 +48,29 @@ export default function LogsPage() {
     const sortBy = searchParams.get( 'sortBy' ) || 'createdAt';
     const sortOrder = searchParams.get( 'sortOrder' ) || 'desc';
 
-    const [ page, setPage ] = useState(0); 
+    const [ page, setPage ] = useState(1); 
     const [ limit, setLimit ] = useState(20);
 
 
     useEffect(() => {
         if (tabValue === 1) {
-            const skip = page * limit;
+            const skip = (page - 1) * limit;
             dispatch(fetchSystemLogs({ skip, page, limit, sortBy: 'createdAt', sortOrder: 'desc'}));
         }
     },[tabValue, dispatch, page, limit])
 
     const handleTabChange = (event, newValue) => {
         setTabValue(newValue);
+        setPage(1);
     };
 
     const handlePageChange = (event, newPage) => {
-        setPage(newPage);
+        setPage(newPage + 1);
     };
 
     const handleLimitChange = (event) => {
         setLimit(parseInt(event.target.value, 10));
-        setPage(0);
+        setPage(1);
     };
 
     
@@ -125,7 +126,7 @@ export default function LogsPage() {
     //Fetch if params change
     useEffect(() => {
         dispatch(resetLogs());
-        dispatch(fetchLogs({ search, sortBy, sortOrder, skip: 0, limit: 20 }));
+        dispatch(fetchLogs({ search, page, sortBy, sortOrder, skip: 0, limit: 20 }));
     }, [search, sortBy, sortOrder, dispatch]);
 
     const handleSort = field => {
@@ -138,7 +139,7 @@ export default function LogsPage() {
         });
     };
 
-    logDebug("LogsPage.jsx -> totalLogs, totalPages, loadingSystem", {totalLogs, totalPages, systemLoading});
+    logDebug("LogsPage.jsx -> totalLogs, totalPages, loadingSystem", {totalLogs, totalPages, loading});
     return (
         <Box sx={{ width: '100%', p: 1 }}>
             
@@ -207,7 +208,7 @@ export default function LogsPage() {
                 </div>
             </CustomTabPanel>
 
-            {/* TAB 1: The new System Logs grid */}
+            {/* TAB 1: System Logs grid */}
             <CustomTabPanel value={tabValue} index={1}>
                 <Paper >
 
@@ -274,7 +275,7 @@ export default function LogsPage() {
                     <TablePagination
                         component="div"
                         count={totalLogs || 0}
-                        page={page}
+                        page={page - 1}
                         onPageChange={handlePageChange}
                         rowsPerPage={limit}
                         onRowsPerPageChange={handleLimitChange}

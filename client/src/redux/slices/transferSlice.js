@@ -66,7 +66,8 @@ const transferSlice = createSlice({
             })
             .addCase(confirmTransfer.fulfilled, ( state, action ) => {
                 state.transferStatus = 'succeeded';
-                const index = state.transfers.findIndex( t => t._id === action.payload.transfer._id);
+                logDebug("Confirm Transfer success:", action.payload);
+                const index = state.transfers.findIndex( t => t._id === action.payload._id);
                 if ( index !== -1 ) {
                     state.transfers[index] = action.payload.transfer;
                 }
