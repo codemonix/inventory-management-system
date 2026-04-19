@@ -49,6 +49,10 @@ api.interceptors.response.use((response) => {
     }
 );
 
+export const isApiError = (error) => {
+    return axios.isAxiosError(error);
+}
+
 export default api;
 
 

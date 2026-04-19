@@ -24,7 +24,7 @@ import SearchFilterBar from '../components/SearchFilterBar.jsx';
 import ActionToolbar from '../components/ActionToolbar.jsx';
 
 // Services and Utils
-import { createItem, deleteItem, updateItem } from '../services/itemsService.js';
+import { createItem, deleteItem, updateItem } from '../services/itemServices.js';
 import { fetchFullInventory } from '../services/inventoryServices.js';
 import { logDebug, logError, logInfo } from '../utils/logger.js';
 

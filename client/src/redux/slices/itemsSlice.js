@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import { getAllItems, getPaginatedItems } from "../../services/itemsService.js";
+import { getAllItems, getPaginatedItems } from "../../services/itemServices.js";
 import { logInfo, logDebug } from "../../utils/logger.js";
 
 export const loadItems = createAsyncThunk(

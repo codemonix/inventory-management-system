@@ -1,5 +1,5 @@
 import { logDebug } from "../utils/logger";
-import { fetchItemImage } from "../services/itemsService.js";
+import { fetchItemImage } from "../services/itemServices.js";
 import { useManagedImage } from "../hooks/useManagedObjectImage.js";
 
 export default function ItemCardTransfer({ item: transferItem }) {

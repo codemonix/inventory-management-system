@@ -1,15 +1,21 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, ReactNode } from "react";
 import { AuthContext } from "./AuthContext.jsx";
 import { loginApi, fetchUserData, registerApi } from "../services/authServices.js";
 import { logDebug, logError, logInfo } from "../utils/logger.js";
+import { IUser } from "../types/auth.types.js";
+
+interface AuthProviderProps {
+    children: ReactNode;
+}
 
 
-export const AuthProvider = ({ children }) => {
+
+export const AuthProvider = ({ children }: AuthProviderProps) => {
     const [isLoggedIn, setIsLoggedIn] = useState(() => {
         const token = localStorage.getItem("token");
         return !!token;                      // Check if token exists to set initial logged-in state
     });
-    const [ user, setUser ] = useState(null);
+    const [ user, setUser ] = useState<IUser | null>(null);
     const [ loading, setLoading ] = useState(true);
     const [ isAdmin, setIsAdmin ] = useState(false);
     const [ isManager, setIsManager ] = useState(false);
@@ -18,10 +24,10 @@ export const AuthProvider = ({ children }) => {
         let cancelled = false;
         const token = localStorage.getItem("token");
         if (token) {
-            fetchUserData(token)
+            fetchUserData()
                 .then((userData) => {
                     if (cancelled) return;
-                    setUser(userData);      // Set user data in state
+                    setUser(userData.user);      // Set user data in state
                     const isAdmin = userData?.user.role === "admin";        // Check if user is admin based on role
                     const isManager = userData?.user.role === "manager";    // Check if user is manager based on role
                     setIsAdmin(isAdmin);
@@ -30,11 +36,13 @@ export const AuthProvider = ({ children }) => {
                     logDebug("User data fetched successfully userData, user", userData, user);
 
                 })
-                .catch((error) => {
+                .catch((error: any) => {
                     if (cancelled) return;
                     logError('AuthProvider -> Invalid token or fetch user data failed:', error.message);
                     setIsLoggedIn(false);
                     setUser(null);
+                    setIsAdmin(false);
+                    setIsManager(false);
                 })
                 .finally(() => {
                     if (!cancelled) setLoading(false);
@@ -49,7 +57,7 @@ export const AuthProvider = ({ children }) => {
     }, []); 
 
 
-    const login = async (email, password) => {
+    const login = async (email: string, password: string): Promise<void> => {
         try {
             const res = await loginApi(email, password);
             logInfo("login res.user:", res.user)
@@ -64,12 +72,12 @@ export const AuthProvider = ({ children }) => {
                 setIsManager(isManager);
                 
             }
-    } catch (error) {
+    } catch (error: any) {
         logError("AuthProvider -> Login failed:", error.message);
         throw error;
     }
     };
-    const logout = () => {
+    const logout = (): void => {
         localStorage.removeItem("token");
         setIsLoggedIn(false);
         setUser(null);
@@ -78,12 +86,14 @@ export const AuthProvider = ({ children }) => {
         logInfo("User logged out");
     };
 
-    const register = async ({name, email, password} ) => {
+    const register = async ({name, email, password}: Record<string, string> ): Promise<void> => {
         try {
             const { token, user } = await registerApi(name, email, password);
+
             logDebug("register -> user:", user.email)
             logDebug("register -> token", !!token)
             logDebug("is user approved?", user.isApproved)
+
             if (user.isApproved) {
                 localStorage.setItem('token', token);
                 setUser(user);
@@ -92,7 +102,7 @@ export const AuthProvider = ({ children }) => {
                 setIsLoggedIn(true);
             }
             logInfo("User registered successfully");
-        } catch (error) {
+        } catch (error: any) {
             logError("Register failed:", error.message);
             throw error;
         }

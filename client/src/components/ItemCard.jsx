@@ -13,7 +13,7 @@ import InputTwoToneIcon from '@mui/icons-material/InputTwoTone';
 import OutputTwoTone from '@mui/icons-material/OutputTwoTone';
 
 import ImageWithCameraOver from "./ImageWithCameraOver";
-import { fetchItemImage } from "../services/itemsService";
+import { fetchItemImage } from "../services/itemServices";
 import { useManagedImage } from "../hooks/useManagedObjectImage";
 import { useImageUpload } from "../hooks/useImageUpload";
 

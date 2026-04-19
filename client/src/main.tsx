@@ -9,10 +9,10 @@ import { Provider } from 'react-redux'
 
 document.body.classList.add('bg-gray-100')
 
-createRoot(document.getElementById('root')).render(
-  // <StrictMode>
-   <Provider store={store}>
+createRoot(document.getElementById('root')!).render(
+  <StrictMode>
+    <Provider store={store}>
         <App />
     </Provider>
-  // </StrictMode>,
+  </StrictMode>,
 )
