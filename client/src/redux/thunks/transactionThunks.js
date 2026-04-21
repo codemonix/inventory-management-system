@@ -1,5 +1,5 @@
 import { createAsyncThunk } from "@reduxjs/toolkit";
-import { getLogs } from "../../services/transactionServices";
+import { getLogs } from "../../services/transactionService";
 import { logDebug } from "../../utils/logger";
 
 export const fetchLogs = createAsyncThunk(

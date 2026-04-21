@@ -1,14 +1,14 @@
 import { createAsyncThunk } from "@reduxjs/toolkit";
-import { getUsers, toggleUserActiveStatus, toggleUserApprovedStatus, updateUser } from "../../services/userServices";
+import { getUsers, toggleUserActiveStatus, toggleUserApprovedStatus, updateUser } from "../../services/userService";
 import { logError, logInfo } from "../../utils/logger";
 
 export const fetchUsers = createAsyncThunk(
     'users/fetchUsers',
     async ( params, thunkAPI ) => {
         try {
-            const res = await getUsers(params);
-            logInfo("Thunk users:", res.data)
-            return res.data;
+            const users = await getUsers(params);
+            logInfo("Thunk users:", users)
+            return users;
         } catch (error) {
             logError("userThunks:", error.message)
             return thunkAPI.rejectWithValue( error.message || "Error fetching users!")
@@ -19,21 +19,21 @@ export const updateUserDetails = createAsyncThunk(
     'users/updateUserDetails',
     async ( { id, ...data }) => {
         logInfo("thunk data:", data)
-        const res = await updateUser( id, data );
-        return res.data;
+        const updatedUser = await updateUser( id, data );
+        return updatedUser;
     });
 
 export const toggleUserActive = createAsyncThunk(
     'user/toggleUserActive',
     async ({ id, isActive }) => {
-        const res = await toggleUserActiveStatus( id, isActive );
-        return res.data;
+        const data = await toggleUserActiveStatus( id, isActive );
+        return data;
     });
 
 export const toggleUserApproved = createAsyncThunk(
     'user/toggleUserApproved',
     async ({ id, isApproved }) => {
-        const res = await toggleUserApprovedStatus( id, isApproved );
-        return res.data;
+        const data = await toggleUserApprovedStatus( id, isApproved );
+        return data;
     }
 );

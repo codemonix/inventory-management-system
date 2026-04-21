@@ -7,7 +7,7 @@ import {
     finalizeTempTransfer, 
     removeItemFromTempTransfer, 
     confirmTransfer as confirmTransferApi 
-} from "../../services/transfersServices.js";
+} from "../../services/transferService.js";
 import { logDebug, logInfo, logError } from "../../utils/logger";
 
 // Standard Transfers

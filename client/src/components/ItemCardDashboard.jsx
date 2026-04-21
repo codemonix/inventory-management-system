@@ -12,7 +12,7 @@ import SwapHorizonIcon from '@mui/icons-material/SwapHoriz';
 import { useManagedImage } from "../hooks/useManagedObjectImage.js";
 import ImageWithCameraOver from "./ImageWithCameraOver.jsx";
 import { logDebug } from "../utils/logger.js";
-import { fetchItemImage } from "../services/itemServices.js";
+import { fetchItemImage } from "../services/itemService.js";
 
 const defaultImage = "/uploads/items/default.jpg"; 
 

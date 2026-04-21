@@ -24,8 +24,8 @@ import SearchFilterBar from '../components/SearchFilterBar.jsx';
 import ActionToolbar from '../components/ActionToolbar.jsx';
 
 // Services and Utils
-import { createItem, deleteItem, updateItem } from '../services/itemServices.js';
-import { fetchFullInventory } from '../services/inventoryServices.js';
+import { createItem, deleteItem, updateItem } from '../services/itemService.js';
+import { fetchFullInventory } from '../services/inventoryService.js';
 import { logDebug, logError, logInfo } from '../utils/logger.js';
 
 const ItemsPage = () => {

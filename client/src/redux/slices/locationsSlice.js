@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import { getLocations } from '../../services/locationsService.js';
+import { getLocations } from '../../services/locationService.js';
 import { logDebug } from '../../utils/logger.js';
 
 export const fetchLocations = createAsyncThunk(

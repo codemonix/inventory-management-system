@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useAuth } from "../context/AuthContext.jsx";
 
 // Services
-import { getLocations, deleteLocation, createLocation } from "../services/locationsService.js";
+import { getLocations, deleteLocation, createLocation } from "../services/locationService.js";
 
 // Components
 import CreateForm from "../components/CreateForm.jsx";

@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 
 // Context and Services
 import { useAuth } from "../context/AuthContext.jsx";
-import { getLocations } from "../services/locationsService.js"
+import { getLocations } from "../services/locationService.js"
 
 // Custom Hooks
 import { useDashboardData } from "../hooks/useDashboardData.js";

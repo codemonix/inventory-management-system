@@ -1,6 +1,6 @@
 import { useState, useEffect, ReactNode } from "react";
 import { AuthContext } from "./AuthContext.jsx";
-import { loginApi, fetchUserData, registerApi } from "../services/authServices.js";
+import { loginApi, fetchUserData, registerApi } from "../services/authService.js";
 import { logDebug, logError, logInfo } from "../utils/logger.js";
 import { IUser } from "../types/auth.types.js";
 
