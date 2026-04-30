@@ -50,7 +50,7 @@ const ItemCardDashboard = ({ item, onIn, onOut, locationColors, onAddToTransfer 
                 </CardContent>
                 
                 <div className="flex gap-2 px-4 pb-2">
-                    <StockDetails item={item} locationColors={locationColors} />
+                    <StockDetails item={item} locationColors={locationColors} width='100px' />
                 </div>
             </div>
 

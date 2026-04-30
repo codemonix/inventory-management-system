@@ -9,6 +9,8 @@ import {
     IUpdateInventoryParams
 } from "../types/inventory.types.js";
 import { AppError } from "../errors/AppError.js";
+import logger from "../utils/logger.js";
+
 
 export const createInventoryRecord = async (itemId: string, locationId: string, quantity: number) => {
     if (!mongoose.Types.ObjectId.isValid(itemId) || !mongoose.Types.ObjectId.isValid(locationId)) {
@@ -35,7 +37,7 @@ export const createInventoryRecord = async (itemId: string, locationId: string, 
 
 export const getPagedInventory = async (params: IGetInventoryParams) => {
     const page = Math.max(params.page || 1, 1);
-    const limit = Math.max(params.limit || 20, 1);
+    const limit = Math.max(params.limit || 10, 1);
 
     let sortStage: Record<string, 1 | -1> = { "name": 1 };
     if (params.sort) {
@@ -72,6 +74,7 @@ export const getPagedInventory = async (params: IGetInventoryParams) => {
             $group: {
                 _id: "$itemId",
                 name: { $first: "$item.name" },
+                code: { $first: "$item.code" },
                 image: { $first: "$item.imageUrl" },
                 stock: {
                     $push: {
@@ -87,6 +90,7 @@ export const getPagedInventory = async (params: IGetInventoryParams) => {
             $project: {
                 _id: 0,
                 itemId: "$_id",
+                code: 1,
                 name: 1,
                 image: 1,
                 stock: 1,
@@ -99,7 +103,7 @@ export const getPagedInventory = async (params: IGetInventoryParams) => {
     );
 
     const items = await Inventory.aggregate(pipeline) as IAggregatedInventory[];
-
+    logger.debug(`inventory.Service -> params.page:${params.page}, page;${page}`)
     return {
         items,
         pagination: { totalCount, totalPages, currentPage, pageSize: limit }
@@ -116,6 +120,7 @@ export const getAllInventory = async (): Promise<IAggregatedInventory[]> => {
             $group: {
                 _id: "$itemId",
                 name: { $first: "$item.name" },
+                code: { $first: "$item.code" },
                 image: { $first: "$item.imageUrl" },
                 stock: {
                     $push: {
@@ -131,6 +136,7 @@ export const getAllInventory = async (): Promise<IAggregatedInventory[]> => {
             $project: {
                 _id: 0,
                 itemId: "$_id",
+                code: 1,
                 name: 1,
                 image: 1,
                 stock: 1,
@@ -139,7 +145,8 @@ export const getAllInventory = async (): Promise<IAggregatedInventory[]> => {
         },
         { $sort: { name: 1 } }
     ];
-
+    const dashboardInventory = await Inventory.aggregate(pipeline) as IAggregatedInventory[];
+    
     return await Inventory.aggregate(pipeline) as IAggregatedInventory[];
 };
 

@@ -9,11 +9,11 @@ import {
 
 
 
-export const getAllItems = async (): Promise<IItem[]> => {
+export const getAllItems = async (): Promise<{items: IItem[]}> => {
     try {
         const response = await api.get<{items: IItem[]}>("/items/all");
         logInfo("getAllItems response:", response.data);
-        return response.data.items; // { items: [{ id, name, description, price, imageUrl }] }
+        return response.data; // { items: [{ id, name, description, price, imageUrl }] }
     } catch (error) {
         const errorMessage = error instanceof Error ? error.message : "Get All Items failed"
         logError("Failed to fetch items:", errorMessage);
@@ -22,6 +22,7 @@ export const getAllItems = async (): Promise<IItem[]> => {
 }
 
 export const getPaginatedItems = async (params: GetItemsParams= {}): Promise<PaginatedItemsResult> => {
+    logDebug("itemsService -> getPaginatedItems params:", params);
     const { page = 1, limit = 20, search = "", sort = "name_asc" } = params;
     try {
         const response = await api.get<{result: PaginatedItemsResult}>(`/items?page=${page}&limit=${limit}&search=${search}&sort=${sort}`);

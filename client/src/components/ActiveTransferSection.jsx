@@ -1,4 +1,5 @@
 
+import { logDebug } from "../utils/logger.js";
 import TempTransferCard from "./TempTransferCard.jsx";
 
 const ActiveTransferSection = ({ 
@@ -8,6 +9,8 @@ const ActiveTransferSection = ({
     onStartNew, 
     onFinalize 
 }) => {
+    logDebug("ActiveTransferSection -> poulatedTempTransfer:", populatedTempTransfer);
+    
     return (
         <section>
             <div className="flex justify-between items-center mb-4 border-b pb-2">
@@ -33,7 +36,8 @@ const ActiveTransferSection = ({
             ) : (
                 <TempTransferCard 
                     populatedTempTransfer={populatedTempTransfer} 
-                    onFinalize={onFinalize} 
+                    onFinalize={onFinalize}
+                    isUpdating={tempTransferStatus}
                 />
             )}
         </section>

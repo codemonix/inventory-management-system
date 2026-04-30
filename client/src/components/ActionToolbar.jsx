@@ -1,6 +1,8 @@
-import { Box, Button, Collapse, Divider } from '@mui/material';
-import SearchIcon from '@mui/icons-material/Search';
+import { Box, Button, Collapse, IconButton, useMediaQuery, useTheme, Stack } from '@mui/material';
+
+// Icons
 import AddIcon from '@mui/icons-material/Add';
+import SearchIcon from '@mui/icons-material/Search';
 import CloseIcon from '@mui/icons-material/Close';
 
 const ActionToolbar = ({
@@ -11,83 +13,113 @@ const ActionToolbar = ({
     searchComponent,
     addComponent
 }) => {
+    const theme = useTheme();
+    const isDesktop = useMediaQuery(theme.breakpoints.up('md'));
+
+    // ==========================================
+    // DESKTOP VIEW
+    // ==========================================
+    if (isDesktop) {
+        return (
+            <Box sx={{ mb: 1 }}>
+                {/* Top Row: Always-visible Search + Add Button */}
+                <Stack direction="row" spacing={2} alignItems="stretch" justifyContent="space-between">
+                    
+                    {/* Search & Filter Component stretches to fill available space */}
+                    <Box sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+                        {searchComponent}
+                    </Box>
+
+                    {/* Primary Action Button */}
+                    <Button
+                        variant={isAddOpen ? "outlined" : "contained"}
+                        color={isAddOpen ? "error" : "primary"}
+                        startIcon={isAddOpen ? <CloseIcon /> : null}
+                        onClick={onToggleAdd}
+                        sx={{ 
+                            // height: '56px', // Matches standard MUI text field height
+                            // whiteSpace: 'nowrap',
+                            // px: 2,
+                            py: 3,
+                            alignSelf: 'flex-start',
+                            height: '100%',
+                            lineHeight: 1.1,
+                            fontWeight: 'bold',
+                            minWidth: '100px'
+                        }}
+                    >
+                        {isAddOpen ? ("Cancel") : (<span>Add<br />Item</span>)}
+                    </Button>
+                </Stack>
+
+                {/* The Create Form drops down smoothly below the bar when clicked */}
+                <Collapse in={isAddOpen}>
+                    <Box sx={{ mt: 2, p: 1, bgcolor: 'background.paper', borderRadius: 2, boxShadow: 2, border: '1px solid #e0e0e0' }}>
+                        {addComponent}
+                    </Box>
+                </Collapse>
+            </Box>
+        );
+    }
+
+    // ==========================================
+    // MOBILE VIEW
+    // ==========================================
     return (
-        <Box sx={{ width: '100%', mb: 1 }}>
-            
-            {/* 1. Persistent, Responsive Header Buttons */}
-            <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1 }}>
-                
-                {/* Search Toggle Button */}
+        <Box sx={{ mb: 2 }}>
+            {/* Split Full-Width Buttons for Touch */}
+            <Stack direction="row" spacing={2} sx={{ mb: 0, px: 1 }}>
                 <Button
-                    variant={isSearchOpen ? "contained" : "outlined"}
-                    color={isSearchOpen ? "inherit" : "primary"}
+                    fullWidth
+                    variant={isSearchOpen ? "outlined" : "contained"}
+                    // color="error"
+                    startIcon={isSearchOpen ? <CloseIcon /> : <SearchIcon />}
                     onClick={onToggleSearch}
-                    disableElevation
                     sx={{ 
-                        borderRadius: 2, 
-                        textTransform: 'none', 
-                        fontWeight: 600,
-                        // Small square on mobile, standard button on tablet/desktop
-                        minWidth: { xs: '48px', sm: '140px' }, 
-                        px: { xs: 0, sm: 2 },
-                        bgcolor: 'grey.300',         
-                        color: 'text.primary',       
+                        flex: 1, 
+                        height: '48px', // Standard mobile touch target height
+                        fontWeight: 'bold',
+                        color: '#374151', // Dark text for readability
+                        borderColor: '#e5e7eb', // Subtle border
+                        bgcolor: isSearchOpen ? '#f9fafb' : 'transparent',
                         '&:hover': {
-                            bgcolor: 'grey.400',     
+                        bgcolor: '#f3f4f6', // Slightly darker off-white on hover
+                        borderColor: '#d1d5db',
                         }
                     }}
                 >
-                    {isSearchOpen ? <CloseIcon /> : <SearchIcon />}
-                    {/* Hide text on extra-small screens (mobile) */}
-                    <Box component="span" sx={{ display: { xs: 'none', sm: 'inline' }, ml: 1 }}>
-                        {isSearchOpen ? "Close" : "Search & Filter"}
-                    </Box>
+                    {isSearchOpen ? "Close" : "Search"}
                 </Button>
 
-                {/* Add Toggle Button */}
                 <Button
-                    variant={isAddOpen ? "contained" : "contained"}
+                    fullWidth
+                    variant={isAddOpen ? "outlined" : "contained"}
                     color={isAddOpen ? "error" : "primary"}
+                    startIcon={isAddOpen ? <CloseIcon /> : <AddIcon />}
                     onClick={onToggleAdd}
-                    disableElevation
                     sx={{ 
-                        borderRadius: 2, 
-                        textTransform: 'none', 
-                        fontWeight: 600,
-                        minWidth: { xs: '48px', sm: '140px' },
-                        px: { xs: 0, sm: 2 } 
+                        flex: 1, 
+                        height: '48px', 
+                        fontWeight: 'bold' 
                     }}
                 >
-                    {isAddOpen ? <CloseIcon /> : <AddIcon />}
-                    {/* Hide text on extra-small screens (mobile) */}
-                    <Box component="span" sx={{ display: { xs: 'none', sm: 'inline' }, ml: 1 }}>
-                        {isAddOpen ? "Cancel" : "Add Item"}
-                    </Box>
+                    {isAddOpen ? "Cancel" : "Add Item"}
                 </Button>
-            </Box>
+            </Stack>
 
-            {/* A subtle divider that fades in when a panel is open */}
-            <Divider sx={{ 
-                mt: 1, 
-                mb: 1, 
-                opacity: (isAddOpen || isSearchOpen) ? 1 : 0, 
-                transition: 'opacity 0.3s' 
-            }} />
-
-            {/* 2. Search Panel Slide-in */}
-            <Collapse in={isSearchOpen} unmountOnExit>
-                <Box sx={{ pb: 1 }}>
+            {/* Collapsible Search */}
+            <Collapse in={isSearchOpen && !isAddOpen}>
+                <Box sx={{ mb: 2 }}>
                     {searchComponent}
                 </Box>
             </Collapse>
 
-            {/* 3. Add Panel Slide-in */}
-            <Collapse in={isAddOpen} unmountOnExit>
-                <Box sx={{ display: 'flex', justifyContent: 'center', pb: 1 }}>
+            {/* Collapsible Create Form */}
+            <Collapse in={isAddOpen}>
+                <Box sx={{ mb: 2, p: 2, bgcolor: 'background.paper', borderRadius: 2, boxShadow: 1, border: '1px solid #e0e0e0' }}>
                     {addComponent}
                 </Box>
-            </Collapse> 
-
+            </Collapse>
         </Box>
     );
 };

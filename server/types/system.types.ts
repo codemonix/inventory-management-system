@@ -25,6 +25,9 @@ export interface IGetLogsParams {
     limit?: number;
     level?: string;
     type?: string;
+    search?: string;
+    sortBy?: string;
+    sortOrder?: 'asc' | 'desc';
 }
 
 export interface IGetLogsResult {

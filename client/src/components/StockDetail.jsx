@@ -1,11 +1,11 @@
 
 import { Box, Typography, Avatar } from '@mui/material';
 
-const StockDetails = ({ item, locationColors }) => {
+const StockDetails = ({ item, locationColors, direction = 'column ', width }) => {
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'flex-start', alignItems: 'flex-start', flexGrow: 1, width: '100px'}}>
+    <Box sx={{ display: 'flex', flexDirection: direction, justifyContent: 'flex-start', alignItems: 'flex-start', flexGrow: 1, width: width}}>
       {item.stock.map((stock) => (
-        <Box key={stock.locationId} display="flex" alignItems="center" spacing={1} mt={1}>
+        <Box key={stock.locationId} display="flex" flexDirection="row" alignItems="center" justifyContent="center" mt={1} mr={1}>
           <Avatar
             sx={{
               width: 16,
@@ -13,7 +13,7 @@ const StockDetails = ({ item, locationColors }) => {
               backgroundColor: locationColors[stock.locationName] || 'gray',
             }}
           />
-          <Typography variant="body2" sx={{ marginLeft: 1 }}>
+          <Typography variant="body2" ml={0.5}>
             {stock.locationName}: {stock.quantity}
           </Typography>
         </Box>

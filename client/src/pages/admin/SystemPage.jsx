@@ -16,7 +16,9 @@ import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 import WarningAmberIcon from '@mui/icons-material/WarningAmber';
 
 import { downloadBackup, restoreSystem, clearSystemData, performFactoryReset } from '../../services/systemService.js';
-import { fetchSystemSettings, updateSystemSettings, clearSystemLogs } from '../../redux/thunks/systemThunks.js';
+// import { fetchSystemSettings, updateSystemSettings } from '../../redux/thunks/settingsThunks.js';
+import { fetchSystemSettings, updateSystemSettings } from '../../services/settingsService.js';
+import { clearSystemLogs } from '../../services/systemLogService.js';
 import ConfirmModal from '../../components/ConfirmModal';
 import { logError } from '../../utils/logger.js';
 
@@ -32,14 +34,30 @@ const SettingsPage = () => {
     const [restoreFile, setRestoreFile] = useState(null);
     const [confirmPhrase, setConfirmPhrase] = useState('');
 
+    const [settings, setSettings] = useState({
+        logLevel: 'info',
+        enableDbLogging: true
+    });
+    const [isLoading, setIsLoading] = useState(false);
+
+
+
     const dispatch = useDispatch();
-    const { settings, isLoading } = useSelector((state) => state.system);
+    // const { settings, isLoading } = useSelector((state) => state.system);
     const navigate = useNavigate();
     const { logout } = useAuth();
 
     useEffect(() => {
-        dispatch(fetchSystemSettings());
-    }, [dispatch]);
+        const loadSettings = async () => {
+            try {
+                const config = await fetchSystemSettings();
+                setSettings(config);
+            } catch (err) {
+                logError("Systempage.jsx -> loadSettings err:", err.message)
+            }
+        }
+        loadSettings();
+    }, []);
 
     useEffect(() => {
         if (settings.logLevel) {
@@ -50,19 +68,29 @@ const SettingsPage = () => {
         }
     }, [settings]);
 
-    const handleSaveSettings = () => {
-        dispatch(updateSystemSettings({ 
-            ...settings, 
-            logLevel: localLogLevel,
-            enableDbLogging: localEnableDbLogging
-        }));
-        setMessage("Logging settings updated successfully.");
-        setTimeout(() => setMessage(null), 2500);
+    const handleSaveSettings = async () => {
+        try {
+            await updateSystemSettings({ 
+                ...settings, 
+                logLevel: localLogLevel,
+                enableDbLogging: localEnableDbLogging
+            });
+            setMessage("Logging settings updated successfully.");
+            setTimeout(() => setMessage(null), 2500);
+        } catch (err) {
+            setError("Logging settings update failed.");
+            logError("Systempage.jsx -> handleSaveSettings err:", err.message)
+        }
     };
 
-    const handleClearLogs = () => {
+    const handleClearLogs = async () => {
         if (window.confirm('Are you sure you want to permamently delete all system logs?')) {
-            dispatch(clearSystemLogs());
+            try {
+                await clearSystemLogs();
+            } catch (err) {
+                setError("Clearing system logs failed.");
+                logError("Systempage.jsx -> handleClearLogs err:", err.message)
+            }
         }
     };
 

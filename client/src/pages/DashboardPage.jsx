@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useTheme, useMediaQuery } from "@mui/material";
 
 // Context and Services
 import { useAuth } from "../context/AuthContext.jsx";
@@ -12,6 +13,7 @@ import { useStockAction } from "../hooks/useStockAction.js";
 import StatusHandler from "../components/StatusHandler.jsx";
 import PaginationControls from "../components/PaginationControls.jsx";
 import ItemCardDashboard from "../components/ItemCardDashboard.jsx";
+import DesktopInventoryTable from "../components/DesktopInventoryTable.jsx"; 
 import SearchFilterBar from "../components/SearchFilterBar.jsx";
 import StockActionDialog from "../components/StockActionDialog.jsx";
 
@@ -27,6 +29,9 @@ const DashboardPage = () => {
     logInfo("loading Dashboard Page ...")
     const { isLoggedIn } = useAuth();
     const [ locations , setLocations ] = useState([]);
+    
+    const theme = useTheme();
+    const isDesktop = useMediaQuery(theme.breakpoints.up('md'));
     
     const { 
         items, totalItems, sort, loading, error, search, page, limit, 
@@ -53,19 +58,20 @@ const DashboardPage = () => {
     }
 
     const handlePageChange = ( newPage ) => {
+        logDebug("DashboardPage -> handlePageChange -> newPage:", newPage);
         dispatch({ type: 'dashboard/setPage', payload: newPage });
         updateSearchParams({ page: newPage });
     };
 
-
     return (
-        <div className="bg-gray-400 min-h-screen p-1">
+        <div className="bg-gray-400 min-h-screen p-2 md:p-6">
             {stockError && (
-                <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4 max-w-4xl mx-auto">
+                <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4 max-w-7xl mx-auto">
                     {stockError}
                 </div>
             )}
             
+            <div className="max-w-7xl mx-auto">
                 <SearchFilterBar 
                     search={search}
                     limit={limit}
@@ -86,18 +92,32 @@ const DashboardPage = () => {
                 />
                 
                 <StatusHandler status={loading ? 'loading' : ""} error={error}>
-                    <div className="flex flex-wrap justify-center gap-0 mt-3 ">
-                        {items.map((item) => (
-                            <ItemCardDashboard 
-                                key={item.itemId} 
-                                item={item} 
-                                locationColors={locationColors} 
+                    <div className="mt-6">
+                        {isDesktop ? (
+                            <DesktopInventoryTable 
+                                items={items}
                                 locations={locations}
-                                onIn={() => openDialog(item, 'IN')}
-                                onOut={() => openDialog(item, 'OUT')}
-                                onAddToTransfer={() => openDialog(item, 'TRANSFER')}
+                                locationColors={locationColors}
+                                onIn={(item) => openDialog(item, 'IN')}
+                                onOut={(item) => openDialog(item, 'OUT')}
+                                onAddToTransfer={(item) => openDialog(item, 'TRANSFER')}
                             />
-                        ))}
+                        ) : (
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                {items.map((item) => (
+                                    <div key={item.itemId} className="flex justify-center h-full w-full">
+                                        <ItemCardDashboard 
+                                            item={item} 
+                                            locationColors={locationColors} 
+                                            locations={locations}
+                                            onIn={() => openDialog(item, 'IN')}
+                                            onOut={() => openDialog(item, 'OUT')}
+                                            onAddToTransfer={() => openDialog(item, 'TRANSFER')}
+                                        />
+                                    </div>
+                                ))}
+                            </div>
+                        )}
                     </div>
                 </StatusHandler>
 
@@ -112,7 +132,7 @@ const DashboardPage = () => {
                     defaultLocation={defaultLocation}
                 />
                 
-                <div className="mt-8">
+                <div className="mt-8 mb-6 flex justify-center">
                     <PaginationControls 
                         page={page}
                         totalCount={totalItems}
@@ -120,6 +140,7 @@ const DashboardPage = () => {
                         onChange={handlePageChange}
                     />
                 </div>
+            </div>
         </div>
     );
 };

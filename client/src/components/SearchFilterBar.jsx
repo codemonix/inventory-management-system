@@ -62,7 +62,7 @@ const SearchFilterBar = ({search, limit, sort, onSearchChange, onLimitChange, on
 
     return (
         <Paper elevation={2}
-            className="flex gap-4 p-4 mb-6 flex-wrap items-center"
+            className="flex gap-4 p-3 mb-2 flex-wrap items-center"
         >
             <TextField 
                 label="Search"

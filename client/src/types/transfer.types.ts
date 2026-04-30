@@ -1,12 +1,12 @@
 
 
 export interface ITransferItem {
-    item: string;
+    itemId: string;
     quantity: number;
 }
 
 export interface ITransfer {
-    _id?: string;
+    _id: string;
     fromLocation: string;
     toLocation: string;
     items: ITransferItem[];
@@ -38,7 +38,7 @@ export interface TempTransferResponse {
 
 // Generic Action response
 export interface TempTransferActionResponse {
-    tempTransfer: ITempTransfer;
+    temp: ITempTransfer;
     message?: string;
 }
 

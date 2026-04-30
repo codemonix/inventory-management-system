@@ -1,8 +1,9 @@
 
 export interface ILocation {
-    id: string;
+    _id: string;
     name: string;
     description?: string;
+    color?: string;
 }
 
 // DTO for standard response with one location

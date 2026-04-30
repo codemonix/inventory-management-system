@@ -2,7 +2,7 @@ import api, { isApiError } from "../api/api";
 import { logInfo, logError } from "../utils/logger";
 import { FetchLogsParams, PaginatedLogsResult } from "../types/transaction.types";
 
-export const getLogs = async (params: FetchLogsParams = {}): Promise<PaginatedLogsResult> => {
+export const fetchTransactionLogs = async (params: FetchLogsParams = {}): Promise<PaginatedLogsResult> => {
     const { 
         search = '', 
         sortBy = 'createdAt', 

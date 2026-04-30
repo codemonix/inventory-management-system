@@ -7,6 +7,7 @@ export interface IStockEntry {
 
 export interface IInventoryRecord {
     itemId: string;
+    code: string;
     name: string;
     image: string;
     stocks: IStockEntry[];

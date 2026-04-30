@@ -40,6 +40,7 @@ export const getItems = async (req: Request, res: Response, next: NextFunction):
             sort: req.query.sort as string
         });
 
+        logger.debug(`item.controller -> getItems -> page: ${req.query.page}, limit: ${req.query.limit}`);
         res.status(200).json({success: true, result});
     } catch (error) {
         next(error);

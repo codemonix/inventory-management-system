@@ -1,5 +1,5 @@
 import api, { isApiError } from "../api/api";
-import { logInfo, logError } from "../utils/logger";
+import { logInfo, logError, logDebug } from "../utils/logger";
 import {
     ITransfer,
     ITempTransfer,
@@ -13,6 +13,7 @@ import {
 
 export const getTransfers = async (): Promise<ITransfer[]> => {
     try {
+        logDebug("Fetching transfers...")
         const response = await api.get<{transfers: ITransfer[]}>("/transfers")
         logInfo("Transfers Fetched successfully")
         return response.data.transfers;
@@ -63,9 +64,10 @@ export const deleteTransfer = async (id: string): Promise<DeleteResponse> => {
 } 
 
 
-export const confirmTransfer = async (transfer: Pick<ITransfer, "_id">): Promise<TransferResponse> => {
+export const confirmTransfer = async (transfer: string): Promise<TransferResponse> => {
     try {
-        const response = await api.put<TransferResponse>(`/transfers/${transfer._id}/confirm`);
+        logDebug("transferService -> confirmTransfer -> transfer:", transfer);
+        const response = await api.put<TransferResponse>(`/transfers/${transfer}/confirm`);
         logInfo("Transfer confirmed successfully, response:", response.data)
         return response.data;
     } catch (error) {
@@ -80,6 +82,7 @@ export const getTempTransfer = async (): Promise<ITempTransfer> => {
     try {
         const response = await api.get<TempTransferResponse>("/transfers/temp");
         logInfo("Temp Transfer fetched successfully")
+        logDebug("transferService -> getTempTransfer -> temp:", response.data.temp);
         return response.data.temp;
     } catch (error) {
         if (isApiError(error)) throw new Error(error.response?.data?.message || "Failed to fetch temp transfer.");
@@ -88,7 +91,7 @@ export const getTempTransfer = async (): Promise<ITempTransfer> => {
 } 
 
 
-export const createTempTransfer = async (tempTransfer: Omit<ITempTransfer, "id">): Promise<ITempTransfer> => {
+export const createTempTransfer = async (tempTransfer: Pick<ITempTransfer, "fromLocation" | "toLocation">): Promise<ITempTransfer> => {
     try {
         const response = await api.post<TempTransferResponse>("/transfers/temp/init", tempTransfer);
         logInfo("Temp Transfer created successfully")
@@ -100,10 +103,11 @@ export const createTempTransfer = async (tempTransfer: Omit<ITempTransfer, "id">
 
 }
 
-export const addItemToTempTransfer = async (item: { item: string, quantity: number }): Promise<TempTransferActionResponse> => {
+export const addItemToTempTransfer = async (item: { item: string, quantity: number, sourceLocationId: string}): Promise<TempTransferActionResponse> => {
     try {
         const response = await api.post<TempTransferActionResponse>("/transfers/temp/add", item);
-        logInfo("Item added to temp transfer successfully")
+        logInfo("Item added to temp transfer successfully");
+        logDebug("transferService -> addItemToTempTransfer -> response:", response.data.temp);
         return response.data;
     } catch (error) {
         if (isApiError(error)) throw new Error(error.response?.data?.message || "Failed to add item to transfer.");

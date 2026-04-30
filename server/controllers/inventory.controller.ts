@@ -51,7 +51,6 @@ export const getFullInventory = async (
 ): Promise<void> => {
     try {
         const fullInventory = await inventoryService.getAllInventory();
-        logger.debug("inventory.controller -> getFullInventory, inventory:", fullInventory);
         res.json(fullInventory);
         return;
     } catch (error) {

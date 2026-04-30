@@ -6,3 +6,4 @@ export interface SystemActionResponse {
 }
 
 export type ClearTarget = 'items' | 'locations' | 'inventory' | 'all' | 'logs';
+

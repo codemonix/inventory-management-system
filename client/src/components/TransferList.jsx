@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { useTransferManager } from "../hooks/useTransferManager.js";
+import { useTransferManager } from "../hooks/useTransferManager";
 import { Dialog, DialogContent, DialogTitle } from "@mui/material";
 
 // Sub-components
@@ -10,7 +10,11 @@ import StartTransferDialog from "./StartTransferDialog.jsx";
 import TransferItemsList from "./TransferItemsList.jsx";
 import ConfirmModal from "./ConfirmModal.jsx";
 
+import { logDebug, logInfo } from "../utils/logger";
+
 const TransferList = () => {
+    logDebug(" Loading TransferList component...");
+
     // Data & Logic from Custom Hook
     const { 
         transfers, tempTransfer, tempTransferStatus, populatedTempTransfer, 
@@ -30,7 +34,7 @@ const TransferList = () => {
     };
 
     const handleConfirm = () => {
-        confirmPastTransfer(selectedTransfer);
+        confirmPastTransfer(selectedTransfer._id);
         setConfirmOpen(false);
     };
 
@@ -45,6 +49,11 @@ const TransferList = () => {
             setConfirmOpen(true);
         }
     };
+
+    logDebug("TransferList -> tempTransfer:", tempTransfer);
+    logDebug("TransferList -> tempTransferStatus:", tempTransferStatus);
+    logDebug("TransferList -> populatedTempTransfer:", populatedTempTransfer);
+
 
     return (
         <div className="max-w-5xl mx-auto p-2 md:p-6 space-y-10">

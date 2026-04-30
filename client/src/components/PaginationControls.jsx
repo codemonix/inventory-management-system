@@ -14,7 +14,10 @@ const PaginationControls = ({ page = 1, totalCount = 0, limit = 10, onChange }) 
             <Pagination 
                 count={pageCount}
                 page={page}
-                onChange={(_, value) => onChange(value)}
+                onChange={(_, value) => {
+                    logDebug("Pagination page value", value); 
+                    onChange(value)}
+                } 
                 color="primary"
                 showFirstButton
                 showLastButton
