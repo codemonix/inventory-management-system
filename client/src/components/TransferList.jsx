@@ -1,7 +1,7 @@
-
 import { useState } from "react";
 import { useTransferManager } from "../hooks/useTransferManager";
-import { Dialog, DialogContent, DialogTitle } from "@mui/material";
+import { Dialog, DialogContent, DialogTitle, Box, Typography, IconButton } from "@mui/material";
+import CloseIcon from '@mui/icons-material/Close';
 
 // Sub-components
 import ActiveTransferSection from "./ActiveTransferSection.jsx";
@@ -15,7 +15,7 @@ import { logDebug, logInfo } from "../utils/logger";
 const TransferList = () => {
     logDebug(" Loading TransferList component...");
 
-    // Data & Logic from Custom Hook
+    // Data & Logic from Custom Hook (100% UNTOUCHED)
     const { 
         transfers, tempTransfer, tempTransferStatus, populatedTempTransfer, 
         startNewTransfer, finalizeCurrentTransfer, confirmPastTransfer 
@@ -54,9 +54,8 @@ const TransferList = () => {
     logDebug("TransferList -> tempTransferStatus:", tempTransferStatus);
     logDebug("TransferList -> populatedTempTransfer:", populatedTempTransfer);
 
-
     return (
-        <div className="max-w-5xl mx-auto p-2 md:p-6 space-y-10">
+        <Box sx={{ maxWidth: 'lg', mx: 'auto', p: { xs: 1, md: 3 }, display: 'flex', flexDirection: 'column', gap: 5 }}>
             
             <ActiveTransferSection 
                 tempTransfer={tempTransfer}
@@ -83,50 +82,89 @@ const TransferList = () => {
             )}
 
             <Dialog open={openItems} onClose={() => setOpenItems(false)} fullWidth maxWidth="sm">
-                <DialogTitle className="border-b bg-gray-50 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 py-4 pr-12 relative">
+                <DialogTitle 
+                    sx={{ 
+                        borderBottom: '1px solid', 
+                        borderColor: 'divider', 
+                        bgcolor: 'background.default', 
+                        display: 'flex', 
+                        flexDirection: { xs: 'column', sm: 'row' }, 
+                        justifyContent: 'space-between', 
+                        alignItems: { xs: 'flex-start', sm: 'center' }, 
+                        gap: 1.5, 
+                        py: 2, 
+                        pr: 6, // Padding for the absolute close button
+                        position: 'relative' 
+                    }}
+                >
                     
-                    <span className="font-bold text-gray-500 text-sm">
+                    <Typography variant="subtitle2" fontWeight="bold" color="text.secondary">
                         Transfer {selectedTransfer?._id ? `#${selectedTransfer._id.slice(-6)}` : 'Details'}
-                    </span>
+                    </Typography>
                     
                     {/* The Location Badge Header */}
                     {(selectedTransfer?.fromLocation || selectedTransfer?.toLocation) && (
-                        <div className="flex items-center text-sm font-semibold text-gray-700 bg-white border border-gray-200 px-3 py-1.5 rounded-full shadow-sm">
-                            <span className="truncate max-w-[100px]" title={selectedTransfer.fromLocation?.name}>
+                        <Box 
+                            sx={{ 
+                                display: 'flex', 
+                                alignItems: 'center', 
+                                typography: 'subtitle2', 
+                                fontWeight: 600, 
+                                color: 'text.primary', 
+                                bgcolor: 'background.paper', 
+                                border: '1px solid', 
+                                borderColor: 'divider', 
+                                px: 1.5, 
+                                py: 0.75, 
+                                borderRadius: '50px', 
+                                boxShadow: 1 
+                            }}
+                        >
+                            <Typography noWrap sx={{ maxWidth: 100, fontSize: 'inherit', fontWeight: 'inherit' }} title={selectedTransfer.fromLocation?.name}>
                                 {selectedTransfer.fromLocation?.name || 'Unknown'}
-                            </span>
-                            <span className="mx-2 text-blue-500 text-lg leading-none">→</span>
-                            <span className="truncate max-w-[100px]" title={selectedTransfer.toLocation?.name}>
+                            </Typography>
+                            <Box component="span" sx={{ mx: 1, color: 'primary.main', fontSize: '1.125rem', lineHeight: 1 }}>→</Box>
+                            <Typography noWrap sx={{ maxWidth: 100, fontSize: 'inherit', fontWeight: 'inherit' }} title={selectedTransfer.toLocation?.name}>
                                 {selectedTransfer.toLocation?.name || 'Unknown'}
-                            </span>
-                        </div>
+                            </Typography>
+                        </Box>
                     )}
 
                     {/* Close Button */}
-                    <button 
+                    <IconButton 
                         onClick={() => setOpenItems(false)}
-                        className="absolute top-4 right-4 text-gray-400 hover:text-gray-700 bg-white border border-gray-200 hover:bg-gray-100 p-1.5 rounded-full shadow-sm transition-colors"
+                        size="small"
                         aria-label="Close modal"
+                        sx={{ 
+                            position: 'absolute', 
+                            top: 16, 
+                            right: 16, 
+                            color: 'text.secondary', 
+                            bgcolor: 'background.paper', 
+                            border: '1px solid', 
+                            borderColor: 'divider', 
+                            boxShadow: 1, 
+                            '&:hover': { bgcolor: 'action.hover', color: 'text.primary' } 
+                        }}
                     >
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
-                        </svg>
-                    </button>
+                        <CloseIcon fontSize="small" />
+                    </IconButton>
 
                 </DialogTitle>
                 
                 {/* Transfer Items List */} 
-                <DialogContent className="bg-gray-50/30">
-                    <div className="pt-4 pb-2">
+                <DialogContent sx={{ bgcolor: 'background.default', pt: 2, pb: 1 }}>
+                    <Box sx={{ pt: 2, pb: 1 }}>
                         <TransferItemsList 
                             items={selectedTransfer?.items || []} 
                             onDelete={() => {}} 
                             onEdit={() => {}} 
                             onConfirm={() => {}} 
                         />
-                    </div>
+                    </Box>
                 </DialogContent>
             </Dialog>
+
             <ConfirmModal 
                 open={confirmOpen}
                 title='Confirm Arrival'
@@ -135,7 +173,7 @@ const TransferList = () => {
                 onConfirm={handleConfirm}
             />
             
-        </div>
+        </Box>
     );
 };
 

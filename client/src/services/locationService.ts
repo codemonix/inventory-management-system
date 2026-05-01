@@ -1,5 +1,5 @@
 import api, { isApiError } from "../api/api.js";
-import { logError, logInfo } from "../utils/logger.js";
+import { logDebug, logError, logInfo } from "../utils/logger.js";
 import { ILocation, LocationResponse, DeleteResponse } from "../types/location.types.js";
 
 
@@ -45,8 +45,8 @@ export const createLocation = async (location: Omit<ILocation, "id">): Promise<L
 
 export const updateLocation = async (id: string, location: Partial<ILocation>) => {
     try {
-        const response = await api.put<ILocation>(`/locations/${id}`, location);
-        logInfo("locationService -> updateLocation response:", response.data);
+        const response = await api.put<{location: ILocation}>(`/locations/${id}`, location);
+        logDebug("locationService -> updateLocation response:", response.data.location);
         return response.data;
     } catch (error) {
         if (isApiError(error)) {

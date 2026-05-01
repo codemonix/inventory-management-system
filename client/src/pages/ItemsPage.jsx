@@ -244,4 +244,3 @@ const ItemsPage = () => {
 };
 
 export default ItemsPage;
-// ```</Tooltip></Tooltip>

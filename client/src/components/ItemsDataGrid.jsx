@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { Paper, Tooltip, IconButton, Skeleton, Typography } from '@mui/material';
+import { Paper, Tooltip, IconButton, Skeleton, Typography, Box } from '@mui/material';
 import { DataGrid } from '@mui/x-data-grid';
 
 // Icons
@@ -18,7 +18,7 @@ import PaginationControls from './PaginationControls.jsx';
 const defaultImage = "/uploads/items/default.jpg";
 
 // ==========================================
-// CUSTOM CELL: Image with Tailwind Hover
+// CUSTOM CELL: Image
 // ==========================================
 const GridImageCell = ({ row }) => {
     const { displayUrl, isImageLoading } = useManagedImage(
@@ -35,28 +35,37 @@ const GridImageCell = ({ row }) => {
                     sx: {
                         backgroundColor: 'transparent',
                         padding: 0,
-                        boxShadow: 'none',
                         maxWidth: 'none',
+                        boxShadow: 'none',
                     }
                 }
             }}
             title={
                 !isImageLoading ? (
-                    <img 
+                    <Box 
+                        component="img"
                         src={displayUrl} 
                         alt={row.name} 
-                        className="w-64 h-auto rounded-lg shadow-2xl border-2 border-white bg-white"
+                        sx={{ 
+                            width: 256, 
+                            height: 'auto', 
+                            borderRadius: 2, // Matches the 8px global theme
+                            boxShadow: 3,    // Gives it that nice pop
+                            border: '2px solid',
+                            borderColor: 'background.paper', // Uses theme color instead of hardcoded 'white'
+                            bgcolor: 'background.paper' 
+                        }}
                     />
                 ) : ""
             }
         >
-            <div className="h-full aspect-square min-h-[60px] cursor-pointer relative py-1">
+            <Box sx={{ height: '100%', aspectRatio: '1/1', minHeight: 60, cursor: 'pointer', position: 'relative', py: 1 }}>
                 {isImageLoading ? (
-                    <Skeleton variant="rectangular" className="w-full h-full absolute inset-0 rounded" />
+                    <Skeleton variant="rectangular" sx={{ width: '100%', height: '100%', position: 'absolute', inset: 0, borderRadius: 1 }} />
                 ) : (
-                    <img src={displayUrl} alt={row.name} className="w-full h-full object-cover absolute inset-0 rounded" />
+                    <Box component="img" src={displayUrl} alt={row.name} sx={{ width: '100%', height: '100%', objectFit: 'cover', position: 'absolute', inset: 0, borderRadius: 1 }} />
                 )}
-            </div>
+            </Box>
         </Tooltip>
     );
 };
@@ -64,40 +73,33 @@ const GridImageCell = ({ row }) => {
 // ==========================================
 // CUSTOM CELL: Actions
 // ==========================================
-const GridActionCell = ({ row, onEdit, onDelete, onImageUpload, onIn, onOut }) => {
+const GridActionCell = ({ row, onEdit, onDelete, onImageUpload, onIn, onOut, iconSize = 'small' }) => {
     const { isUploading, triggerImageUpload } = useImageUpload({
         onSuccess: onImageUpload,
         setLocalPreview: () => {} 
     });
 
     return (
-        <div className="flex justify-end gap-1 items-center h-full pr-2 py-2">
-            <Tooltip title="Stock In">
-                <IconButton size="small" color="primary" onClick={() => onIn(row._id)}>
-                    <InputTwoToneIcon fontSize="small" />
+        <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 0, alignItems: 'center', height: '100%', p: 1 }}>
+            {/* <Tooltip title="Stock In"> */}
+                <IconButton size={iconSize} color="primary" onClick={() => onIn(row._id)} title='Stock In'>
+                    <InputTwoToneIcon fontSize={iconSize} />
                 </IconButton>
-            </Tooltip>
-            <Tooltip title="Stock Out">
-                <IconButton size="small" color="error" onClick={() => onOut(row._id)}>
-                    <OutputTwoTone fontSize="small" />
+            {/* </Tooltip> */}
+            {/* <Tooltip title="Stock Out"> */}
+                <IconButton size={iconSize} color="error" onClick={() => onOut(row._id)} title='Stock Out'>
+                    <OutputTwoTone fontSize={iconSize} />
                 </IconButton>
-            </Tooltip>
-            <Tooltip title={isUploading ? "Uploading..." : "Upload Image"}>
-                <IconButton size="small" color="secondary" disabled={isUploading} onClick={() => triggerImageUpload(row.code, row._id, row.imageUrl)}>
-                    <PhotoCameraIcon fontSize="small" />
+                <IconButton size={iconSize} color="secondary" disabled={isUploading} onClick={() => triggerImageUpload(row.code, row._id, row.imageUrl)} title={isUploading ? "Uploading..." : "Upload Image"}>
+                    <PhotoCameraIcon fontSize={iconSize} />
                 </IconButton>
-            </Tooltip>
-            <Tooltip title="Edit Item">
-                <IconButton size="small" color="primary" onClick={() => onEdit(row)}>
-                    <EditIcon fontSize="small" />
+                <IconButton size={iconSize} color="primary" onClick={() => onEdit(row)} title='Edit Item'>
+                    <EditIcon fontSize={iconSize} />
                 </IconButton>
-            </Tooltip>
-            <Tooltip title="Delete Item">
-                <IconButton size="small" color="error" onClick={() => onDelete(row)}>
-                    <DeleteIcon fontSize="small" />
+                <IconButton size={iconSize} color="error" onClick={() => onDelete(row)} title='Delete Item'>
+                    <DeleteIcon fontSize={iconSize} />
                 </IconButton>
-            </Tooltip>
-        </div>
+        </Box>
     );
 };
 
@@ -118,23 +120,23 @@ const ItemsDataGrid = ({
             headerAlign: 'center',
             align: 'center',
             disableColumnMenu: true,
-            className: 'image-no-padding',
             renderCell: (params) => <GridImageCell row={params.row} />
         },
         { 
             field: 'name', 
             headerName: 'Item Details', 
+            headerAlign: 'center', 
             flex: 1, 
             minWidth: 200,
             renderCell: (params) => (
-                <div className="flex flex-col justify-center h-full py-2">
-                    <Typography variant="subtitle2" className="font-semibold text-gray-800">
-                        {params.row.name}
+                <Box sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', height: '100%', py: 1 }}>
+                    <Typography variant="subtitle2" sx={{ fontWeight: 'bold', color: 'text.primary' }}>
+                        Name: {params.row.name}
                     </Typography>
-                    <Typography variant="caption" className="text-gray-500">
+                    <Typography variant="caption" sx={{ color: 'text.secondary' }}>
                         Code: {params.row.code || 'N/A'}
                     </Typography>
-                </div>
+                </Box>
             )
         },
         { 
@@ -142,7 +144,7 @@ const ItemsDataGrid = ({
             headerName: 'Price (€)', 
             width: 90, 
             align: 'right', 
-            headerAlign: 'right' 
+            headerAlign: 'center', 
         },
         {
             field: 'stock',
@@ -179,6 +181,7 @@ const ItemsDataGrid = ({
                     onImageUpload={onImageUpload}
                     onIn={onIn}
                     onOut={onOut}
+                    iconSize="medium"
                 />
             )
         }
@@ -187,9 +190,8 @@ const ItemsDataGrid = ({
     const gridRows = useMemo(() => items.map(item => ({ ...item, id: item._id })), [items]);
 
     return (
-        <Paper className="w-full shadow-md rounded-lg overflow-hidden bg-white mb-4">
+        <Paper elevation={0} sx={{ width: '100%', border: '1px solid', borderColor: 'divider', borderRadius: 2, overflow: 'hidden', bgcolor: 'background.paper', mb: 2 }}>
             <DataGrid
-                autoHeight
                 rows={gridRows}
                 columns={columns}
                 disableRowSelectionOnClick
@@ -197,33 +199,42 @@ const ItemsDataGrid = ({
                 hideFooter={true} 
                 sx={{
                     border: 0,
+                    // Dynamic Dark Mode Colors for the Header
                     '& .MuiDataGrid-columnHeaders': {
-                        backgroundColor: '#f9fafb',
-                        color: '#4b5563',
-                        fontWeight: 'bold',
-                        borderBottom: '1px solid #e5e7eb',
+                        backgroundColor: 'action.hover', // Subtle gray/off-white background
+                        color: 'text.primary',          // Deepest black/gray text
+                        fontWeight: 800,                // "Extra Bold" for maximum punch
+                        fontSize: '0.85rem',            // Slightly smaller text to keep it professional
+                        textTransform: 'uppercase',     // Optional: Makes it feel like a strict "Label"
+                        letterSpacing: '0.5px',         // Better readability for uppercase
+                        borderBottom: '2px solid',      // Thicker bottom border for a "Shelf" look
+                        borderColor: 'divider',
                     },
                     '& .MuiDataGrid-cell': {
                         display: 'flex',
                         alignItems: 'center',
-                    },
-                    '& .image-no-padding': {
-                        padding: 0,
+                        borderColor: 'divider',
                     },
                 }}
             />
-            {/* Pagination Docked at the Bottom */}
-            <div className="flex justify-center p-3 border-t border-gray-200 bg-gray-50">
+            {/* Pagination Docked at the Bottom - MUI Compliant */}
+            <Box sx={{ 
+                display: 'flex', 
+                justifyContent: 'center', 
+                p: 2, 
+                borderTop: '1px solid', 
+                borderColor: 'divider',
+                bgcolor: 'action.hover' 
+            }}>
                 <PaginationControls 
                     page={page} 
                     totalCount={totalCount} 
                     limit={limit} 
                     onChange={onPageChange} 
                 />
-            </div>
+            </Box>
         </Paper>
     );
 };
 
 export default ItemsDataGrid;
-// ```</Paper>

@@ -10,6 +10,7 @@ const itemSchema = new Schema<IItem>(
         imageUrl: { type: String },
         category: { type: String },
         price: { type: Number},
+        description: { type: String },
     },
     { timestamps: true },
 );

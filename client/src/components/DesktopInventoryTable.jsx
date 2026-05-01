@@ -1,9 +1,11 @@
+import { useMemo } from 'react';
 import {
     Paper,
     IconButton,
     Typography,
     Skeleton,
-    Tooltip
+    Tooltip,
+    Box
 } from "@mui/material";
 import { DataGrid } from '@mui/x-data-grid';
 import InputTwoToneIcon from '@mui/icons-material/InputTwoTone';
@@ -38,28 +40,64 @@ const ImageCell = ({ item }) => {
             }}
             title={
                 !isImageLoading ? (
-                    <img 
+                    <Box 
+                        component="img"
                         src={displayUrl} 
                         alt={item.name} 
-                        className="w-64 h-auto rounded-lg shadow-2xl border-2 border-white bg-white"
+                        sx={{ 
+                            width: 256, 
+                            height: 'auto', 
+                            borderRadius: 2, 
+                            boxShadow: 24, 
+                            border: '2px solid white',
+                            backgroundColor: 'white'
+                        }}
                     />
                 ) : ""
             }
         >
-            <div className="h-full aspect-square min-h-[60px] cursor-pointer relative py-1">
+            <Box sx={{ 
+                height: '100%', 
+                aspectRatio: '1/1', 
+                minHeight: '60px', 
+                cursor: 'pointer', 
+                position: 'relative', 
+                py: 0.5,
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+                overflow: 'hidden'
+            }}>
                 {isImageLoading ? (
-                    <Skeleton variant="rectangular" className="w-full h-full absolute inset-0 rounded" />
+                    <Skeleton 
+                        variant="rectangular" 
+                        sx={{ 
+                            width: '100%', 
+                            height: '100%', 
+                            borderRadius: 1 
+                        }} 
+                    />
                 ) : (
-                    <img src={displayUrl} alt={item.name} className="w-full h-full object-cover absolute inset-0 rounded" />
+                    <Box 
+                        component="img"
+                        src={displayUrl} 
+                        alt={item.name} 
+                        sx={{ 
+                            width: '100%', 
+                            height: '100%', 
+                            objectFit: 'cover', // Ensures consistent grid rhythm
+                            borderRadius: 1 
+                        }} 
+                    />
                 )}
-            </div>
+            </Box>
         </Tooltip>
     );
 };
 
-const DesktopInventoryTable = ({ items, locationColors, onIn, onOut, onAddToTransfer }) => {
+const DesktopInventoryTable = ({ items = [], locationColors, onIn, onOut, onAddToTransfer, locations }) => {
     
-    const columns = [
+    const columns = useMemo(() => [
         {
             field: 'image',
             headerName: 'Image',
@@ -74,28 +112,31 @@ const DesktopInventoryTable = ({ items, locationColors, onIn, onOut, onAddToTran
         {
             field: 'name',
             headerName: 'Item Details',
+            headerAlign: 'center',
             minWidth: 250,
+            flex: 1,
             renderCell: (params) => (
-                <div className="flex flex-col justify-center h-full py-2">
-                    <Typography variant="subtitle2" className="!font-semibold text-2xl text-gray-800">
+                <Box sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', h: '100%', py: 2 }}>
+                    <Typography variant="subtitle2" sx={{ fontWeight: 'bold', fontSize: '1.1rem', color: 'text.primary' }}>
                         Name: {params.row.name}
                     </Typography>
-                    <Typography variant="caption" className="text-gray-500">
+                    <Typography variant="caption" sx={{ color: 'text.secondary' }}>
                         Code: {params.row.code}
                     </Typography>
-                </div>
+                </Box>
             )
         },
         {
             field: 'stock',
             headerName: 'Current Stock',
-            flex: 1, 
+            headerAlign: 'center',
+            flex: 1.5, 
             minWidth: 250,
             sortable: false,
             renderCell: (params) => (
-                <div className="flex items-center h-full py-2">
-                    <StockDetails item={params.row} locationColors={locationColors} direction="row" />
-                </div>
+                <Box sx={{ display: 'flex', alignItems: 'center', h: '100%', py: 2 }}>
+                    <StockDetails item={params.row} locationColors={locationColors} direction="row" locations={locations} />
+                </Box>
             )
         },
         {
@@ -107,51 +148,63 @@ const DesktopInventoryTable = ({ items, locationColors, onIn, onOut, onAddToTran
             headerAlign: 'center',
             disableColumnMenu: true,
             renderCell: (params) => (
-                <div className="flex justify-end gap-1 items-center h-full pr-2">
-                    <Tooltip title="Stock In">
-                        <IconButton size="small" onClick={() => onIn(params.row)} color="primary">
-                            <InputTwoToneIcon fontSize="small" />
+                <Box sx={{ display: 'flex', justifyContent: 'center', gap: 1, alignItems: 'center', height: '100%', px: 2}}>
+                    
+                        <IconButton size="medium" onClick={() => onIn(params.row)} color="primary" title="Stock In">
+                            <InputTwoToneIcon fontSize="medium" />
                         </IconButton>
-                    </Tooltip>
-                    <Tooltip title="Stock Out">
-                        <IconButton size="small" onClick={() => onOut(params.row)} color="error">
-                            <OutputTwoToneIcon fontSize="small" />
+                        <IconButton size="medium" onClick={() => onOut(params.row)} color="error" title="Stock Out">
+                            <OutputTwoToneIcon fontSize="medium" />
                         </IconButton>
-                    </Tooltip>
-                    <Tooltip title="Transfer">
-                        <IconButton size="small" onClick={() => onAddToTransfer(params.row)} color="secondary">
-                            <SwapHorizonIcon fontSize="small" />
+                        <IconButton size="medium" onClick={() => onAddToTransfer(params.row)} color="secondary" title="Add to Transfer">
+                            <SwapHorizonIcon fontSize="medium" />
                         </IconButton>
-                    </Tooltip>
-                </div>
+                </Box>
             )
         }
-    ];
+    ], [locationColors, onIn, onOut, onAddToTransfer]);
 
     return (
-        <Paper className="w-full shadow-md rounded-lg overflow-hidden bg-white mb-4">
+        <Paper 
+            elevation={2} 
+            sx={{ 
+                width: '100%', 
+                borderRadius: 2, 
+                overflow: 'hidden', 
+                bgcolor: 'background.paper',
+                mb: 4 
+            }}
+        >
             <DataGrid
                 rows={items}
                 getRowId={(row) => row.itemId}
                 columns={columns}
                 disableRowSelectionOnClick
-                getRowHeight={() => 'auto'} gination layout issue
+                getRowHeight={() => 'auto'}
                 hideFooter={true} 
                 sx={{
                     border: 0,
-                    mb: 1,
-                    '& .MuiDataGrid-columnHeaders': {
-                        backgroundColor: '#f9fafb',
-                        color: '#4b5563',
-                        fontWeight: 'bold',
-                        borderBottom: '1px solid #e5e7eb',
+                    '& .MuiDataGrid-virtualScroller': {
+                        overflow: 'hidden !important', 
                     },
                     '& .MuiDataGrid-cell': {
                         display: 'flex',
                         alignItems: 'center',
+                        borderBottom: '1px solid',
+                        borderColor: 'divider',
                     },
                     '& .image-no-padding': {
                         padding: 0,
+                    },
+                    '& .MuiDataGrid-columnHeaders': {
+                        backgroundColor: 'action.hover', 
+                        color: 'text.primary',          
+                        fontWeight: 800,                
+                        fontSize: '0.85rem',            
+                        textTransform: 'uppercase',     
+                        letterSpacing: '0.5px',         
+                        borderBottom: '2px solid',      
+                        borderColor: 'divider',
                     },
                 }}
             />

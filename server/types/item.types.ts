@@ -10,6 +10,7 @@ export interface IItem extends Document {
     imageUrl?: string;
     category?: string;
     price?: number;
+    description?: string;
     createdAt: Date;
     updatedAt: Date;
 }

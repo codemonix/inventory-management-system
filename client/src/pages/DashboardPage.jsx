@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useTheme, useMediaQuery } from "@mui/material";
+import { useTheme, useMediaQuery, Box, Container, Alert, Typography } from "@mui/material";
 
 // Context and Services
 import { useAuth } from "../context/AuthContext.jsx";
@@ -54,7 +54,13 @@ const DashboardPage = () => {
     logDebug("DashboardPage -> inventory", items);
     
     if (!isLoggedIn) {
-        return <p className="text-red-500">Please log in to view the dashboard.</p>;
+        return (
+            <Box sx={{ p: 4, textAlign: 'center' }}>
+                <Typography color="error" fontWeight="bold">
+                    Please log in to view the dashboard.
+                </Typography>
+            </Box>
+        );
     }
 
     const handlePageChange = ( newPage ) => {
@@ -64,14 +70,19 @@ const DashboardPage = () => {
     };
 
     return (
-        <div className="bg-gray-400 min-h-screen p-2 md:p-6">
+        // 👇 1. Tightened outer padding (px is now 8px on mobile, 16px on desktop)
+        <Box sx={{ pt: { xs: 0.5, md: 1 }, pb: { xs: 2, md: 3 }, px: { xs: 1, md: 2 } }}>
             {stockError && (
-                <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4 max-w-7xl mx-auto">
-                    {stockError}
-                </div>
+                // 👇 2. Added disableGutters to stop the double-padding
+                <Container maxWidth="xl" disableGutters sx={{ mb: 2 }}>
+                    <Alert severity="error" sx={{ borderRadius: 2 }}>
+                        {stockError}
+                    </Alert>
+                </Container>
             )}
             
-            <div className="max-w-7xl mx-auto">
+            {/* 👇 3. Added disableGutters here as well */}
+            <Container maxWidth="xl" disableGutters sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                 <SearchFilterBar 
                     search={search}
                     limit={limit}
@@ -92,7 +103,7 @@ const DashboardPage = () => {
                 />
                 
                 <StatusHandler status={loading ? 'loading' : ""} error={error}>
-                    <div className="mt-6">
+                    <Box>
                         {isDesktop ? (
                             <DesktopInventoryTable 
                                 items={items}
@@ -103,9 +114,15 @@ const DashboardPage = () => {
                                 onAddToTransfer={(item) => openDialog(item, 'TRANSFER')}
                             />
                         ) : (
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <Box 
+                                sx={{ 
+                                    display: 'grid', 
+                                    gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)' }, 
+                                    gap: 2 
+                                }}
+                            >
                                 {items.map((item) => (
-                                    <div key={item.itemId} className="flex justify-center h-full w-full">
+                                    <Box key={item.itemId} sx={{ display: 'flex', justifyContent: 'center', height: '100%', width: '100%' }}>
                                         <ItemCardDashboard 
                                             item={item} 
                                             locationColors={locationColors} 
@@ -114,11 +131,11 @@ const DashboardPage = () => {
                                             onOut={() => openDialog(item, 'OUT')}
                                             onAddToTransfer={() => openDialog(item, 'TRANSFER')}
                                         />
-                                    </div>
+                                    </Box>
                                 ))}
-                            </div>
+                            </Box>
                         )}
-                    </div>
+                    </Box>
                 </StatusHandler>
 
                 <StockActionDialog
@@ -132,16 +149,16 @@ const DashboardPage = () => {
                     defaultLocation={defaultLocation}
                 />
                 
-                <div className="mt-8 mb-6 flex justify-center">
+                <Box sx={{ mt: 2, mb: 2, display: 'flex', justifyContent: 'center' }}>
                     <PaginationControls 
                         page={page}
                         totalCount={totalItems}
                         limit={limit}
                         onChange={handlePageChange}
                     />
-                </div>
-            </div>
-        </div>
+                </Box>
+            </Container>
+        </Box>
     );
 };
 
