@@ -114,7 +114,12 @@ const ItemCard = ({ item, onIn, onOut, onDelete, onEdit, onImageUpload, totalSto
                     sx={{ p: 1, bgcolor: 'action.hover' }} // Slight background difference for the action bar
                 >
                     <Box>
-                        <IconButton size="small" onClick={(e) => onEdit(item, e.currentTarget)} color="primary" title="Edit Item">
+                        <IconButton 
+                            size="small"
+                            onClick={(e) => onEdit(item, e.currentTarget)} 
+                            color="primary" 
+                            title="Edit Item"
+                        >
                             <EditIcon fontSize="small" />
                         </IconButton>
                         <IconButton size="small" onClick={() => onDelete(item)} color="error" title="Delete Item">
@@ -122,10 +127,10 @@ const ItemCard = ({ item, onIn, onOut, onDelete, onEdit, onImageUpload, totalSto
                         </IconButton>
                     </Box>
                     <Box>
-                        <IconButton size="small" onClick={onIn} color="primary" title="Stock In">
+                        <IconButton size="small" onClick={onIn} color="primary" title="Stock In" aria-label="stock-in">
                             <InputTwoToneIcon fontSize="small" />
                         </IconButton>
-                        <IconButton size="small" onClick={onOut} color="error" title="Stock Out">
+                        <IconButton size="small" onClick={onOut} color="error" title="Stock Out" aria-label="stock-out">
                             <OutputTwoToneIcon fontSize="small" />
                         </IconButton>
                     </Box>
