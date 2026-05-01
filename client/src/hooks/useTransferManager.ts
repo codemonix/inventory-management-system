@@ -20,7 +20,6 @@ import { logDebug, logError } from "../utils/logger";
 // Types
 import { IItem } from "../types/item.types";
 import { ITransfer, ITempTransfer } from "../types/transfer.types";
-import { ILocation } from "../types/location.types";
 
 // ==========================================
 // THE CONTRACT: What this hook returns
