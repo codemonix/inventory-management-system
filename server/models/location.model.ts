@@ -5,6 +5,7 @@ import { ILocation } from '../types/location.types.js';
 const locationSchema = new Schema<ILocation>(
     {
         name: { type: String, required: true, unique: true },
+        color: { type: String, default: '#fff'},
         type: { type: String },
     },
     { timestamps: true },

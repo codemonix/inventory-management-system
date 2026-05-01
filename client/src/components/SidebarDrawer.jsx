@@ -1,129 +1,140 @@
-import { useState } from "react";
+import { useState, useContext } from "react";
 import { NavLink } from "react-router-dom";
-import { Box, Drawer, Divider, List, ListItem, 
-    ListItemButton, ListItemIcon, ListItemText, IconButton } from "@mui/material";
+import { 
+    Box, Drawer, Divider, List, ListItem, 
+    ListItemButton, ListItemIcon, ListItemText, IconButton,
+    useTheme
+} from "@mui/material";
 import MenuIcon from '@mui/icons-material/Menu';
-import { useAuth } from "../context/AuthContext.jsx";
 import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
-import { logDebug } from "../utils/logger.js";
+import DarkModeIcon from '@mui/icons-material/DarkMode';
+import LightModeIcon from '@mui/icons-material/LightMode';
+import LogoutIcon from '@mui/icons-material/Logout';
 
-
-
+import { useAuth } from "../context/AuthContext.jsx";
+import { ColorModeContext } from "../context/ThemeContextProvider.jsx";
 
 function SidebarDrawer() {
     const { isAdmin, isLoggedIn, isManager } = useAuth();
     const [isOpen, setIsOpen] = useState(false);
     const isManagerOrAdmin = isAdmin || isManager;
-    logDebug("SidebarDrawer -> isAdminOrManager", isManagerOrAdmin);
+    
+    // Hooks for Theme and Context
+    const theme = useTheme();
+    const { toggleColorMode } = useContext(ColorModeContext);
 
-    const toggleSidebar = () => {
-        setIsOpen((prev) => !prev);
-    };
+    const toggleSidebar = () => setIsOpen((prev) => !prev);
 
     const navItems = [
-        { label: "Home", to: "/" },
         { label: "Dashboard", to: "/dashboard" },
         { label: "Items", to: "/items" },
         { label: "Locations", to: "/locations" },
         { label: "Transfers", to: "/transfers" },
     ];
 
+    // Dynamic style function that reads directly from your theme.js
     const getNavItemStyles = (isActive) => ({
-    backgroundColor: isActive ? '#1e40af' : 'transparent', 
-    color: isActive ? '#ffffff' : 'rgb(58, 91, 161)', 
-    m: 1,
-    px: 2,
-    '&:hover': {
-        backgroundColor: '#1d4ed8', 
-        color: '#fff',
+        bgcolor: isActive ? 'primary.main' : 'transparent', 
+        color: isActive ? 'primary.contrastText' : 'text.primary', 
+        borderRadius: 1,
+        m: 1,
+        px: 2,
+        '&:hover': {
+            bgcolor: isActive ? 'primary.dark' : 'action.hover', 
         },
     });
 
     const drawerContent = (
-        <div className="w-[250px] h-full flex flex-col" onClick={toggleSidebar}>
-            <div>
-            <List>
-                {navItems.map(({ label, to }) => (
-                    <ListItem key={to} disablePadding>
-                        <NavLink to={to}
-                            className="no-underline w-full text-inherit">
-                            {({ isActive }) => (
-                                <ListItemButton sx={getNavItemStyles(isActive)}>
-                                    <ListItemText primary={label} />
-                                </ListItemButton>
-                            )}
+        <Box 
+            sx={{ width: 250, height: '100%', display: 'flex', flexDirection: 'column' }} 
+            onClick={toggleSidebar}
+        >
+            <Box>
+                <List>
+                    {navItems.map(({ label, to }) => (
+                        <ListItem key={to} disablePadding>
+                            <NavLink to={to} style={{ textDecoration: 'none', width: '100%' }}>
+                                {({ isActive }) => (
+                                    <ListItemButton sx={getNavItemStyles(isActive)}>
+                                        <ListItemText primary={label} />
+                                    </ListItemButton>
+                                )}
                             </NavLink>
-                    </ListItem>
-                ))}
-            </List>
+                        </ListItem>
+                    ))}
+                </List>
+                
                 {isLoggedIn && isManagerOrAdmin && (
                     <>  
                         <Divider />
                         <List>
                             <ListItem disablePadding>
-                                <NavLink to="/manage" className="no-underline w-full">
-                                    {({ isActive}) => (
-                                        <ListItemButton
-                                            sx={{
-                                                ...getNavItemStyles(isActive),
-                                                color: '#fff',
-                                                backgroundColor: isActive ? '#2563eb' : '#3b82f6',
-                                                ':hover': {
-                                                    backgroundColor: 'rgba(0, 98, 189, 0.96)', 
-                                                    
-                                                },
-                                            }}
-                                            >
-                                                <ListItemIcon className="text-white" >
-                                                    <AdminPanelSettingsIcon fontSize="small" />
-                                                </ListItemIcon>
-                                                <ListItemText primary="Manage" />
-                                            </ListItemButton>
+                                <NavLink to="/manage" style={{ textDecoration: 'none', width: '100%' }}>
+                                    {({ isActive }) => (
+                                        <ListItemButton sx={{ ...getNavItemStyles(isActive), color: isActive ? 'primary.contrastText' : 'secondary.main' }}>
+                                            <ListItemIcon sx={{ color: 'inherit', minWidth: 40 }}>
+                                                <AdminPanelSettingsIcon fontSize="small" />
+                                            </ListItemIcon>
+                                            <ListItemText primary="Manage" />
+                                        </ListItemButton>
                                     )}
                                 </NavLink>
                             </ListItem>                            
                         </List>
                     </>
                 )}
-        </div>
+            </Box>
 
-        { isLoggedIn && (
-            <div className="mt-auto" >
-                <Divider />
-                <List >
-                    <ListItem disablePadding>
-                        <NavLink to="/logout" className="no-underline w-full block" >
-                            <ListItemButton 
-                                sx={{ 
-                                    backgroundColor: '#f87171',
-                                    color: '#fff',
-                                    borderRadius: 1,
-                                    m: 1,
-                                    px: 2,
-                                    '&:hover': {
-                                        backgroundColor: '#ef4444',
-                                    },
-                                }}>
-                                <ListItemText primary="Logout" sx={{ textAlign: 'center'}}/>
-                            </ListItemButton>
-                        </NavLink>
-                    </ListItem>
-                </List>
-            </div>
-        )}
-        </div>
+            {isLoggedIn && (
+                <Box sx={{ mt: 'auto' }}>
+                    <Divider />
+                    <List>
+                        {/* Logout Button */}
+                        <ListItem disablePadding>
+                            <NavLink to="/logout" style={{ textDecoration: 'none', width: '100%' }}>
+                                <ListItemButton 
+                                    sx={{ 
+                                        bgcolor: 'error.main', 
+                                        color: 'error.contrastText',
+                                        borderRadius: 1,
+                                        m: 1,
+                                        px: 2,
+                                        '&:hover': { bgcolor: 'error.dark' },
+                                    }}>
+                                    <ListItemIcon sx={{ minWidth: 40, color: 'inherit' }}>
+                                        <LogoutIcon fontSize="small" />
+                                    </ListItemIcon>
+                                    <ListItemText primary="Logout" />
+                                </ListItemButton>
+                            </NavLink>
+                        </ListItem>
+                    </List>
+                </Box>
+            )}
+        </Box>
     );
 
     return (
-        <div>
-            <IconButton onClick={toggleSidebar} sx={{ position: 'fixed', top: 0, left: 10, zIndex: 1000 }}>
-                <MenuIcon fontSize="large" />
+        <Box>
+            <IconButton 
+                onClick={toggleSidebar} 
+                sx={{ 
+                    position: 'fixed', 
+                    top: 12, 
+                    left: 12, 
+                    zIndex: 1000, 
+                    bgcolor: 'background.paper', 
+                    boxShadow: 1,
+                    '&:hover': { bgcolor: 'action.hover' }
+                }}
+            >
+                <MenuIcon />
             </IconButton>
-            <Drawer open={isOpen} onClose={toggleSidebar} >
+            <Drawer open={isOpen} onClose={toggleSidebar}>
                 {drawerContent}
             </Drawer>
-        </div>
+        </Box>
     );
-};
+}
 
 export default SidebarDrawer;

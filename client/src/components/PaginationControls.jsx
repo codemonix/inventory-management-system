@@ -1,25 +1,21 @@
-import { Pagination } from "@mui/material";
-import { logDebug } from "../utils/logger";
+import { Pagination, Box } from "@mui/material";
 
 const PaginationControls = ({ page = 1, totalCount = 0, limit = 10, onChange }) => {
     const safeLimit = limit > 0 ? limit : 10;
     const pageCount = Math.max(0, Math.ceil(totalCount / safeLimit));
     
-    logDebug("PaginationControls -> pageCount:", pageCount, "totalCount:", totalCount, "limit:", limit);
-
-    if (pageCount <= 1) return null;
-
     return (
-        <div className="flex justify-center my-8">
+        <Box sx={{ display: 'flex', justifyContent: 'center', py: 2 }}>
             <Pagination 
                 count={pageCount}
                 page={page}
-                onChange={(_, value) => onChange(value)}
+                onChange={(_, value) => onChange(value)} 
                 color="primary"
                 showFirstButton
                 showLastButton
+                disabled={pageCount <= 1} // Disables instead of vanishing!
             />
-        </div>
+        </Box>
     );
 };
 

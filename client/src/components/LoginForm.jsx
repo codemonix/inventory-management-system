@@ -1,10 +1,9 @@
 import { useState, useContext } from "react";
 import { AuthContext } from "../context/AuthContext.jsx";
+import { Box, TextField, Button, Alert, Typography } from "@mui/material";
 import { logDebug, logError, logInfo } from "../utils/logger.js";
 
-
-
-function LoginForm () {
+function LoginForm() {
     const { login } = useContext(AuthContext); 
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
@@ -16,6 +15,7 @@ function LoginForm () {
 
     const handleLogin = async (e) => {
         e.preventDefault();
+        setError(null); // Clear previous errors on new submission
 
         try {
             await login(email, password);
@@ -23,8 +23,7 @@ function LoginForm () {
         } catch (error) {
             logError("Login error:", error.message);
             const errorMessage = error.response?.data?.message || error.message;
-            setError(errorMessage)
-
+            setError(errorMessage);
         }
     };
 
@@ -34,37 +33,70 @@ function LoginForm () {
     }
 
     return (
-        <form onSubmit={handleLogin} className="max-w-md mx-auto space-y-4">
+        <Box component="form" onSubmit={handleLogin} sx={{ maxWidth: 'sm', mx: 'auto', display: 'flex', flexDirection: 'column', gap: 2 }}>
+            
+            {/* Themed Demo Box */}
             {isDemo && (
-                <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg" >
-                    <button
-                        type="button"
-                        onClick={fillDemoCredentials}
-                        className="w-full py-2 bg-blue-600 hover:bg-blue-700 text-white rounded font-bold text-sm transition-colors"
-                    >
-                        Auto-Fill Demo Account
-                    </button>
-                </div>
+                <Alert 
+                    severity="info" 
+                    sx={{ mb: 1, borderRadius: 2, alignItems: 'center' }}
+                    action={
+                        <Button 
+                            color="info" 
+                            size="small" 
+                            variant="outlined"
+                            onClick={fillDemoCredentials}
+                            sx={{ bgcolor: 'background.paper' }}
+                        >
+                            Auto-Fill
+                        </Button>
+                    }
+                >
+                    Demo mode is active.
+                </Alert>
             )}
-            <input
+
+            <TextField
+                label="Email"
                 type="email"
-                placeholder="Email"
+                variant="outlined"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full p-2 border border-gray-300 rounded-md"
+                fullWidth
                 required
+                autoComplete="email"
             />
-            <input
+
+            <TextField
+                label="Password"
                 type="password"
-                placeholder="Password"
+                variant="outlined"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full p-2 border border-gray-300 rounded-md"
+                fullWidth
                 required
+                autoComplete="current-password"
             />
-            <button type="submit" className="w-full p-2 bg-blue-500 text-white p-2 rounded-md">Login</button>
-            { error && <p className="text-red-500 text-sm text-center">{error}</p>}
-        </form>
+
+            <Button 
+                type="submit" 
+                variant="contained" 
+                color="primary" 
+                fullWidth 
+                disableElevation
+                sx={{ py: 1.5, mt: 1, borderRadius: 2, fontWeight: 'bold' }}
+            >
+                Login
+            </Button>
+
+            {/* Themed Error Handling */}
+            {error && (
+                <Alert severity="error" sx={{ mt: 1, borderRadius: 2 }}>
+                    {error}
+                </Alert>
+            )}
+
+        </Box>
     );
 };
 

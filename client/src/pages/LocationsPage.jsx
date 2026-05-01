@@ -1,25 +1,23 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "../context/AuthContext.jsx";
 
-// Services
-import { getLocations, deleteLocation, createLocation } from "../services/locationsService.js";
+// Services (Added updateLocation)
+import { getLocations, deleteLocation, createLocation, updateLocation } from "../services/locationService.js";
 
 // Components
 import CreateForm from "../components/CreateForm.jsx";
 import LocationList from "../components/LocationList.jsx";
 
 // MUI components
-import { Container, Typography, Alert } from "@mui/material";
+import { Container, Alert, Paper, Box } from "@mui/material";
 
 // Utility
-import { logInfo, logError, logDebug } from "../utils/logger.js";
-
+import { logError, logDebug } from "../utils/logger.js";
 
 export default function LocationsPage() {
     const [locations, setLocations] = useState([]);
     const [errorMessage, setErrorMessage] = useState("");
     const { isAdmin, isManager } = useAuth();
-
 
     const isManagerOrAdmin = isAdmin || isManager;
 
@@ -28,7 +26,7 @@ export default function LocationsPage() {
             .then(setLocations)
             .catch((error) => {
                 setErrorMessage(error.message);
-                logError("LocationsPage.jsx -> Error fetching locations:", error.message)
+                logError("LocationsPage.jsx -> Error fetching locations:", error.message);
             });
     }, []);
 
@@ -38,32 +36,45 @@ export default function LocationsPage() {
             setLocations((prevLocations) => prevLocations.filter((location) => location._id !== id));
         } catch (error) {
             logError("LocationsPage.jsx -> Error deleting location:", error.message);
-            setErrorMessage("Faled to delete location.");
+            setErrorMessage("Failed to delete location.");
         }
     };
 
     const handleLocationCreated = (response) => {
-        logDebug("LocationsPage.jsx -> handleLocationCreated -> response.location:", response.location);
+        logDebug("LocationsPage.jsx -> handleLocationCreated -> response:", response);
         const newLocation = response.location || response;
         setLocations((prevLocations) => [...prevLocations, newLocation]);
     };
 
+    // NEW: Handler for updating the color
+    const handleUpdateLocation = async (id, updatedData) => {
+        try {
+            const updatedLocation = await updateLocation(id, updatedData);
+            setLocations((prevLocations) => 
+                prevLocations.map((loc) => loc._id === id ? updatedLocation.location : loc)
+            );
+            logInfo("LocationsPage.jsx -> handleUpdateLocation -> Location updated successfully");
+            logDebug("LocationsPage.jsx -> handleUpdateLocation -> updatedLocation:", updatedLocation);
+            logDebug("LocationsPage.jsx -> handleUpdateLocation -> locations:", locations);
+        } catch (error) {
+            logError("LocationsPage.jsx -> Error updating location:", error.message);
+            setErrorMessage("Failed to update location color.");
+        }
+    };
 
     return (
-        <div className="min-h-screen bg-gray-400 py-3 px-1 sm:px-2 lg:px-4">
-            <Container maxWidth="md" className="space-y-8">
+        <Box sx={{ py: 3, px: { xs: 1, sm: 2, lg: 4 } }}>
+            <Container maxWidth="md" sx={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
 
-                {/* Error Notification */}
                 {errorMessage && (
-                    <Alert severity="error" className="rounded-lg shadow-sm" onClose={() => setErrorMessage("")}>
-                        {error}
+                    <Alert severity="error" sx={{ borderRadius: 2 }} onClose={() => setErrorMessage("")}>
+                        {errorMessage}
                     </Alert>
                 )}
 
-                {/* Conditional Create Form for Admins/Managers */}
                 {isManagerOrAdmin && (
-                    <div className="flex justify-center">
-                        <div className="w-full max-w-md">
+                    <Box sx={{ display: 'flex', justifyContent: 'center' }}>
+                        <Box sx={{ width: '100%', maxWidth: 'sm' }}>
                             <CreateForm 
                                 title="Add New Location"
                                 label="Location Name"
@@ -71,16 +82,29 @@ export default function LocationsPage() {
                                 onCreate={createLocation}
                                 onSuccess={handleLocationCreated}
                             />
-                        </div>
-                    </div>
+                        </Box>
+                    </Box>
                 )}
 
-                {/* Location List Container */}
-                <div className="bg-white rounded-xl shadow-md p-4 sm:p-6 border border-gray-200">
-                    <LocationList locations={locations} onDelete={handleDelete} />
-                </div>
+                <Paper 
+                    elevation={0} 
+                    sx={{ 
+                        p: { xs: 2, sm: 3 }, 
+                        border: '1px solid', 
+                        borderColor: 'divider', 
+                        borderRadius: 2, 
+                        bgcolor: 'background.paper' 
+                    }}
+                >
+                    {/* Passed onUpdate down to the list */}
+                    <LocationList 
+                        locations={locations} 
+                        onDelete={handleDelete} 
+                        onUpdate={handleUpdateLocation} 
+                    />
+                </Paper>
 
             </Container>
-        </div>
+        </Box>
     );
 }

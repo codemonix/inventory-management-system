@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { addItem } from "../redux/thunks/transferThunks.js";
-import { stockIn, stockOut } from "../services/inventoryServices.js";
+import { stockIn, stockOut } from "../services/inventoryService.js";
 import { logError, logWarning } from "../utils/logger.js";
 
 /**

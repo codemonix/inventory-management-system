@@ -7,14 +7,14 @@ import {
     MenuItem,
     Paper,
     InputAdornment,
-    IconButton
+    IconButton,
+    Stack
 } from "@mui/material";
 
 import ClearIcon from '@mui/icons-material/Clear';
 import SearchIcon from '@mui/icons-material/Search';
 
-
-const SearchFilterBar = ({search, limit, sort, onSearchChange, onLimitChange, onSortChange }) => {
+const SearchFilterBar = ({ search, limit, sort, onSearchChange, onLimitChange, onSortChange }) => {
     const [inputValue, setInputValue] = useState(search || '');
     const debounceTimeoutRef = useRef(null);
 
@@ -24,21 +24,17 @@ const SearchFilterBar = ({search, limit, sort, onSearchChange, onLimitChange, on
 
     useEffect(() => {
         return () => {
-            if (debounceTimeoutRef.current) {
-                clearTimeout(debounceTimeoutRef.current);
-            }
+            if (debounceTimeoutRef.current) clearTimeout(debounceTimeoutRef.current);
         };
     }, []);
 
     const handleChange = (e) => {
         const value = e.target.value;
         setInputValue(value);
-        if (debounceTimeoutRef.current) {
-            clearTimeout(debounceTimeoutRef.current);
-        }
+        if (debounceTimeoutRef.current) clearTimeout(debounceTimeoutRef.current);
 
         if (value.trim() === '') {
-            onSearchChange(''); // Clear search if input is empty
+            onSearchChange('');
             return;
         }
         debounceTimeoutRef.current = setTimeout(() => {
@@ -48,9 +44,7 @@ const SearchFilterBar = ({search, limit, sort, onSearchChange, onLimitChange, on
 
     const handleKeyDown = (e) => {
         if (e.key === 'Enter') {
-            if (debounceTimeoutRef.current) {
-                clearTimeout(debounceTimeoutRef.current);
-            }
+            if (debounceTimeoutRef.current) clearTimeout(debounceTimeoutRef.current);
             onSearchChange(inputValue);
         }
     };
@@ -61,64 +55,81 @@ const SearchFilterBar = ({search, limit, sort, onSearchChange, onLimitChange, on
     };
 
     return (
-        <Paper elevation={2}
-            className="flex gap-4 p-4 mb-6 flex-wrap items-center"
+        // Replaced Tailwind with MUI Paper & Stack for guaranteed alignment
+        <Paper 
+            elevation={0} 
+            sx={{ 
+                p: 2, 
+                border: '1px solid', 
+                borderColor: 'divider', 
+                borderRadius: 2,
+                bgcolor: 'background.paper' 
+            }}
         >
-            <TextField 
-                label="Search"
-                variant="outlined"
-                value={inputValue}
-                onChange={handleChange}
-                onKeyDown={handleKeyDown}
-                placeholder="Search by name"
-                className="grow min-w-[200px]"
-                slotProps={{
-                    startAdorment: (
-                        <InputAdornment position="start">
-                            <SearchIcon color="action" />
-                        </InputAdornment>
-                    ),
-                    endAdorment: inputValue ? (
-                        <InputAdornment position="end">
-                            <IconButton onClick={handleClear} edge="end" size="small">
-                                <ClearIcon fontSize="small" />
-                            </IconButton>
-                        </InputAdornment>
-                    ) : null,
-                }}
-            />
+            <Stack 
+                direction={{ xs: 'column', md: 'row' }} 
+                spacing={2} 
+                alignItems="center"
+            >
+                {/* Search Input */}
+                <TextField 
+                    label="Search"
+                    variant="outlined"
+                    value={inputValue}
+                    onChange={handleChange}
+                    onKeyDown={handleKeyDown}
+                    placeholder="Search by name"
+                    fullWidth
+                    sx={{ flexGrow: 1 }}
+                    slotProps={{
+                        input: {
+                            startAdornment: (
+                                <InputAdornment position="start">
+                                    <SearchIcon color="action" />
+                                </InputAdornment>
+                            ),
+                            endAdornment: inputValue ? (
+                                <InputAdornment position="end">
+                                    <IconButton onClick={handleClear} edge="end" size="small">
+                                        <ClearIcon fontSize="small" />
+                                    </IconButton>
+                                </InputAdornment>
+                            ) : null,
+                        }
+                    }}
+                />
 
-            <FormControl className="min-w-[120]" >
-                <InputLabel>limit</InputLabel>
-                <Select 
-                    value={limit}
-                    label="Limit"
-                    onChange={(e) => onLimitChange(Number(e.target.value))}
+                {/* Limit Dropdown */}
+                <FormControl sx={{ minWidth: 140 }}>
+                    <InputLabel>Limit</InputLabel>
+                    <Select 
+                        value={limit}
+                        label="Limit"
+                        onChange={(e) => onLimitChange(Number(e.target.value))}
                     >
-                    {[5, 10, 20, 50].map((l) => (
-                        <MenuItem key={l} value={l}>
-                            {l} per page
-                        </MenuItem>
-                    ))}
-                </Select>
-            </FormControl>
-            
-            <FormControl className="min-w-[180]">
-                <InputLabel>Sort by</InputLabel>
-                <Select 
-                    value={sort}
-                    label="Sort by"
-                    onChange={(e) => onSortChange(e.target.value)}
-                >
-                    <MenuItem value="name_asc">Name ↑</MenuItem>
-                    <MenuItem value="name_desc">Name ↓</MenuItem>
-                    <MenuItem value="quantity_asc">Quantity ↑</MenuItem>
-                    <MenuItem value="quantity_desc">Quantity ↓</MenuItem>
-                </Select>
-            </FormControl>
-
+                        {[5, 10, 20, 50].map((l) => (
+                            <MenuItem key={l} value={l}>{l} per page</MenuItem>
+                        ))}
+                    </Select>
+                </FormControl>
+                
+                {/* Sort Dropdown */}
+                <FormControl sx={{ minWidth: 180 }}>
+                    <InputLabel>Sort by</InputLabel>
+                    <Select 
+                        value={sort}
+                        label="Sort by"
+                        onChange={(e) => onSortChange(e.target.value)}
+                    >
+                        <MenuItem value="name_asc">Name ↑</MenuItem>
+                        <MenuItem value="name_desc">Name ↓</MenuItem>
+                        <MenuItem value="quantity_asc">Quantity ↑</MenuItem>
+                        <MenuItem value="quantity_desc">Quantity ↓</MenuItem>
+                    </Select>
+                </FormControl>
+            </Stack>
         </Paper>
-    )
+    );
 };
 
 export default SearchFilterBar;

@@ -1,42 +1,37 @@
-
+import { Box, Typography, Button, Paper } from "@mui/material";
+import AddIcon from '@mui/icons-material/Add';
+import { logDebug } from "../utils/logger.js";
 import TempTransferCard from "./TempTransferCard.jsx";
 
-const ActiveTransferSection = ({ 
-    tempTransfer, 
-    tempTransferStatus, 
-    populatedTempTransfer, 
-    onStartNew, 
-    onFinalize 
-}) => {
+const ActiveTransferSection = ({ tempTransfer, tempTransferStatus, populatedTempTransfer, onStartNew, onFinalize }) => {
+    logDebug("ActiveTransferSection -> populatedTempTransfer:", populatedTempTransfer);
+    
     return (
-        <section>
-            <div className="flex justify-between items-center mb-4 border-b pb-2">
-                <h2 className="text-xl font-bold text-gray-800">In-Progress Transfer</h2>
+        <Paper elevation={0} sx={{ p: 3, border: '1px solid', borderColor: 'divider', borderRadius: 2, bgcolor: 'background.paper' }}>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2, pb: 2, borderBottom: '1px solid', borderColor: 'divider' }}>
+                <Typography variant="h6" fontWeight="bold">In-Progress Transfer</Typography>
                 {!tempTransfer && tempTransferStatus !== 'loading' && (
-                    <button 
-                        onClick={onStartNew}
-                        className="text-sm bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg shadow-sm transition-all"
-                    >
-                        + Start New
-                    </button>
+                    <Button variant="contained" color="primary" startIcon={<AddIcon />} onClick={onStartNew} sx={{ borderRadius: 2 }}>
+                        Start New
+                    </Button>
                 )}
-            </div>
+            </Box>
 
             {tempTransferStatus === 'loading' ? (
-                <div className="flex justify-center p-10">
-                    <div className="animate-pulse text-gray-400">Loading draft...</div>
-                </div>
+                <Box sx={{ py: 6, textAlign: 'center' }}>
+                    <Typography color="text.secondary">Loading draft...</Typography>
+                </Box>
             ) : !tempTransfer ? (
-                <div className="bg-gray-50 border-2 border-dashed border-gray-200 rounded-xl p-10 text-center">
-                    <p className="text-gray-500 mb-4">No active transfer session found.</p>
-                </div>
+                <Box sx={{ py: 6, textAlign: 'center', border: '2px dashed', borderColor: 'divider', borderRadius: 2, bgcolor: 'background.default' }}>
+                    <Typography color="text.secondary">No active transfer session found.</Typography>
+                </Box>
             ) : (
                 <TempTransferCard 
                     populatedTempTransfer={populatedTempTransfer} 
-                    onFinalize={onFinalize} 
+                    onFinalize={onFinalize}
                 />
             )}
-        </section>
+        </Paper>
     );
 };
 

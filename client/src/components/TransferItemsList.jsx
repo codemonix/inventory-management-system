@@ -1,3 +1,4 @@
+import { Box, Typography } from "@mui/material";
 import { logInfo } from "../utils/logger.js";
 import ItemCardTransfer from "./ItemCardTransfer.jsx";
 
@@ -7,21 +8,49 @@ export default function TransferItemsList({ items }) {
     // Empty State
     if (!items || items.length === 0) {
         return (
-            <div className="flex flex-col items-center justify-center p-8 bg-gray-50 border-2 border-dashed border-gray-200 rounded-lg mt-2">
-                <p className="text-gray-500 font-medium">No items in this transfer.</p>
-                <p className="text-xs text-gray-400 mt-1">This package is currently empty.</p>
-            </div>
+            <Box 
+                sx={{ 
+                    display: 'flex', 
+                    flexDirection: 'column', 
+                    alignItems: 'center', 
+                    justifyContent: 'center', 
+                    p: 4, 
+                    mt: 1,
+                    bgcolor: 'background.default', 
+                    border: '2px dashed', 
+                    borderColor: 'divider', 
+                    borderRadius: 2 
+                }}
+            >
+                <Typography variant="body1" fontWeight="medium" color="text.secondary">
+                    No items in this transfer.
+                </Typography>
+                <Typography variant="caption" color="text.disabled" sx={{ mt: 0.5 }}>
+                    This package is currently empty.
+                </Typography>
+            </Box>
         );
     }
 
     return (
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 sm:gap-4 py-2">
+        <Box 
+            sx={{ 
+                display: 'grid', 
+                gridTemplateColumns: { 
+                    xs: 'repeat(2, 1fr)', 
+                    sm: 'repeat(3, 1fr)', 
+                    md: 'repeat(4, 1fr)' 
+                }, 
+                gap: { xs: 1.5, sm: 2 }, 
+                py: 1 
+            }}
+        >
             {items.map((itm) => (
                 <ItemCardTransfer 
                     key={itm.item?._id || Math.random()} 
                     item={itm} 
                 />
             ))}
-        </div>
+        </Box>
     );
 }

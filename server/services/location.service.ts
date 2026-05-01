@@ -28,8 +28,13 @@ export const removeLocation = async (id: string, user: IUser) => {
     }
 
     logger.info(`Location ${location.name} deleted by ${user.email}`)
-
-
-    
     return location;
 };
+
+export const updateLocation = async (id: string, data: ICreateLocationInput) => {
+    const location = await Location.findByIdAndUpdate(id, data, { new: true });
+    if (!location) throw new AppError('Location not found with that ID', 404);
+    logger.info(`Location ${location?.name} updated`);
+    logger.debug(location);
+    return location;
+}

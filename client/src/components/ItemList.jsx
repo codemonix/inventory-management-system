@@ -8,9 +8,7 @@ import StockActionDialog from "./StockActionDialog.jsx";
 // Hooks
 import { useStockAction } from "../hooks/useStockAction.js";
 
-
 import { logDebug, logInfo } from "../utils/logger.js";
-
 
 const ItemList = ({ items, onDelete, onEdit, onImageUpload, refreshInventory, stockLookup }) => {
 
@@ -33,37 +31,42 @@ const ItemList = ({ items, onDelete, onEdit, onImageUpload, refreshInventory, st
     logDebug('Items', items)
     
     return (
-        <Box 
-            sx={{ 
-                display: 'flex', 
-                flexWrap: 'wrap', 
-                justifyContent: 'center', 
-                gap: 0, 
-                p: 0
-            }}
-        >
+        <Box sx={{ width: '100%' }}>
             {items?.length > 0 ? (
-                items.map((item) => (
-                    <ItemCard 
-                        key={item._id} 
-                        item={item} 
-                        onDelete={onDelete} 
-                        onEdit={onEdit}
-                        onIn={() => openDialog({ itemId: item._id }, 'IN')}
-                        onOut={() => openDialog({ itemId: item._id}, 'OUT')}
-                        onImageUpload={onImageUpload}
-                        totalStock={stockLookup ? stockLookup[item._id] || 0 : 0} 
-                    />
-                ))
-            ) : (
-                <Typography 
-                    variant="body1" 
-                    color="text.secondary" 
-                    align="center" 
-                    sx={{ mt: 2, width: '100%' }}
+                <Box 
+                    sx={{ 
+                        display: 'grid', 
+                        // 👇 Responsive grid guarantees cards align perfectly into columns
+                        gridTemplateColumns: { 
+                            xs: '1fr', 
+                            sm: 'repeat(2, 1fr)', 
+                            md: 'repeat(3, 1fr)',
+                            lg: 'repeat(4, 1fr)'
+                        }, 
+                        gap: 2, // Standardizes the spacing between cards to 16px
+                        p: 1
+                    }}
                 >
-                    No items found.
-                </Typography>
+                    {items.map((item) => (
+                        <Box key={item._id} sx={{ display: 'flex', justifyContent: 'center', width: '100%', height: '100%' }}>
+                            <ItemCard 
+                                item={item} 
+                                onDelete={onDelete} 
+                                onEdit={onEdit}
+                                onIn={() => openDialog({ itemId: item._id }, 'IN')}
+                                onOut={() => openDialog({ itemId: item._id}, 'OUT')}
+                                onImageUpload={onImageUpload}
+                                totalStock={stockLookup ? stockLookup[item._id] || 0 : 0} 
+                            />
+                        </Box>
+                    ))}
+                </Box>
+            ) : (
+                <Box sx={{ py: 8, textAlign: 'center', border: '2px dashed', borderColor: 'divider', borderRadius: 2, bgcolor: 'background.default', mt: 2 }}>
+                    <Typography variant="body1" color="text.secondary" fontWeight="medium">
+                        No items found.
+                    </Typography>
+                </Box>
             )}
 
             <StockActionDialog
@@ -78,7 +81,6 @@ const ItemList = ({ items, onDelete, onEdit, onImageUpload, refreshInventory, st
             />
         </Box>
     );
-
 };
 
 export default ItemList;

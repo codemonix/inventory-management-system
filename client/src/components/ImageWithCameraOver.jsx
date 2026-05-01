@@ -1,24 +1,31 @@
-import { Box, IconButton } from '@mui/material';
+import { Box, IconButton, alpha } from '@mui/material';
 import CameraAltIcon from '@mui/icons-material/CameraAlt';
 import BrokenImageIcon from '@mui/icons-material/BrokenImage';
 import { useEffect, useState } from 'react';
 
-function ImageWithCameraOver ({ imageUrl, onChange, readOnly = false }) {
-    const [ hasError, setHasError ] = useState(false);
+function ImageWithCameraOver({ imageUrl, onChange, readOnly = false }) {
+    const [hasError, setHasError] = useState(false);
 
     useEffect(() => {
         setHasError(false);
-    }, [imageUrl])
+    }, [imageUrl]);
+
+    const isPlaceholder = !imageUrl || hasError;
 
     return (
         <Box 
-            position={'relative'}
-            width="100%"
-            height="100%"
-            sx={{ cursor: 'pointer'}}
-            onClick={(!imageUrl || hasError) ? onChange : undefined}
+            sx={{ 
+                position: 'relative',
+                width: '100%',
+                height: '100%',
+                cursor: isPlaceholder ? 'pointer' : 'default',
+                overflow: 'hidden',
+                borderRadius: 1,
+                bgcolor: 'background.default'
+            }}
+            onClick={isPlaceholder ? onChange : undefined}
         >
-            {(!imageUrl || hasError) ? (
+            {isPlaceholder ? (
                 <Box 
                     sx={{
                         width: '100%',
@@ -26,55 +33,55 @@ function ImageWithCameraOver ({ imageUrl, onChange, readOnly = false }) {
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        backgroundColor: '#f5f5f5',
-                        borderRadius: 1,
+                        backgroundColor: 'action.hover',
                         transition: "background-color 0.2s",
-                        "&:hover": { backgroundColor: "#e0e0e0" }
+                        "&:hover": { backgroundColor: "action.selected" }
                     }}
                     title="Click to upload image"
                 >
                     <BrokenImageIcon color="disabled" fontSize="large" />
                 </Box>
             ) : (
-                <img
+                <Box
+                    component="img"
                     src={imageUrl}
                     alt='Preview'
                     onError={() => setHasError(true)}
-                    style={{
+                    sx={{
                         width: '100%',
                         height: '100%',
                         objectFit: 'cover',
-                        borderRadius: 4,
+                        display: 'block'
                     }}
                 />
             )}
+
             {!readOnly && (
                 <IconButton 
                     size='small'
                     sx={{
                         position: 'absolute',
                         bottom: 8,
-                        right: 15,
-                        backgroundColor: 'rgba(0,0,0,0.2)',
-                        color: 'rgba(255, 255, 255, 0.4)',
+                        right: 8,
+                        backgroundColor: (theme) => alpha(theme.palette.common.black, 0.4),
+                        color: (theme) => theme.palette.common.white,
+                        backdropFilter: 'blur(4px)',
+                        border: '1px solid',
+                        borderColor: (theme) => alpha(theme.palette.common.white, 0.2),
                         "&:hover": {
-                            backgroundColor: 'rgba(0,0,0,0.7)',
-                            color: 'rgba(255,255,255, 0.7)'
+                            backgroundColor: (theme) => alpha(theme.palette.common.black, 0.7),
                         },
-
                     }}
                     onClick={(e) => {
                         e.stopPropagation();
                         onChange();
                     }}
-                    >
+                >
                     <CameraAltIcon fontSize='small'/>
-
                 </IconButton>
             )}
-            
         </Box>
-    )
+    );
 }
 
 export default ImageWithCameraOver;

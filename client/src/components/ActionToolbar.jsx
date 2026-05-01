@@ -1,6 +1,8 @@
-import { Box, Button, Collapse, Divider } from '@mui/material';
-import SearchIcon from '@mui/icons-material/Search';
+import { Box, Button, Collapse, useMediaQuery, useTheme, Stack } from '@mui/material';
+
+// Icons
 import AddIcon from '@mui/icons-material/Add';
+import SearchIcon from '@mui/icons-material/Search';
 import CloseIcon from '@mui/icons-material/Close';
 
 const ActionToolbar = ({
@@ -11,83 +13,96 @@ const ActionToolbar = ({
     searchComponent,
     addComponent
 }) => {
+    const theme = useTheme();
+    const isDesktop = useMediaQuery(theme.breakpoints.up('md'));
+
+    // ==========================================
+    // DESKTOP VIEW
+    // ==========================================
+    if (isDesktop) {
+        return (
+            <Box sx={{ mb: 2 }}>
+                <Stack direction="row" spacing={2} alignItems="stretch" justifyContent="space-between">
+                    
+                    <Box sx={{ flexGrow: 1 }}>
+                        {searchComponent}
+                    </Box>
+
+                    <Button
+                        variant={isAddOpen ? "outlined" : "contained"}
+                        color={isAddOpen ? "error" : "primary"}
+                        startIcon={isAddOpen ? <CloseIcon /> : <AddIcon />}
+                        onClick={onToggleAdd}
+                        sx={{ 
+                            minWidth: '140px',
+                            fontWeight: 'bold',
+                            borderRadius: 2
+                        }}
+                    >
+                        {isAddOpen ? "Cancel" : "Add Item"}
+                    </Button>
+                </Stack>
+
+                <Collapse in={isAddOpen}>
+                    <Box sx={{ mt: 2 }}>
+                        {addComponent}
+                    </Box>
+                </Collapse>
+            </Box>
+        );
+    }
+
+    // ==========================================
+    // MOBILE VIEW
+    // ==========================================
     return (
-        <Box sx={{ width: '100%', mb: 1 }}>
-            
-            {/* 1. Persistent, Responsive Header Buttons */}
-            <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1 }}>
-                
-                {/* Search Toggle Button */}
+        <Box sx={{ mb: 2 }}>
+            <Stack direction="row" spacing={2} sx={{ mb: 2 }}>
                 <Button
-                    variant={isSearchOpen ? "contained" : "outlined"}
-                    color={isSearchOpen ? "inherit" : "primary"}
+                    fullWidth
+                    variant={isSearchOpen ? "outlined" : "contained"}
+                    color={isSearchOpen ? "secondary" : "inherit"}
+                    startIcon={isSearchOpen ? <CloseIcon /> : <SearchIcon />}
                     onClick={onToggleSearch}
-                    disableElevation
                     sx={{ 
-                        borderRadius: 2, 
-                        textTransform: 'none', 
-                        fontWeight: 600,
-                        // Small square on mobile, standard button on tablet/desktop
-                        minWidth: { xs: '48px', sm: '140px' }, 
-                        px: { xs: 0, sm: 2 },
-                        bgcolor: 'grey.300',         
-                        color: 'text.primary',       
+                        flex: 1, 
+                        height: '48px', 
+                        fontWeight: 'bold',
+                        // Dynamic styling for dark/light mode compatibility
+                        bgcolor: isSearchOpen ? 'action.selected' : 'background.paper',
+                        color: 'text.primary',
+                        borderColor: 'divider',
                         '&:hover': {
-                            bgcolor: 'grey.400',     
+                            bgcolor: 'action.hover',
                         }
                     }}
                 >
-                    {isSearchOpen ? <CloseIcon /> : <SearchIcon />}
-                    {/* Hide text on extra-small screens (mobile) */}
-                    <Box component="span" sx={{ display: { xs: 'none', sm: 'inline' }, ml: 1 }}>
-                        {isSearchOpen ? "Close" : "Search & Filter"}
-                    </Box>
+                    {isSearchOpen ? "Close" : "Search"}
                 </Button>
 
-                {/* Add Toggle Button */}
                 <Button
-                    variant={isAddOpen ? "contained" : "contained"}
+                    fullWidth
+                    variant={isAddOpen ? "outlined" : "contained"}
                     color={isAddOpen ? "error" : "primary"}
+                    startIcon={isAddOpen ? <CloseIcon /> : <AddIcon />}
                     onClick={onToggleAdd}
-                    disableElevation
-                    sx={{ 
-                        borderRadius: 2, 
-                        textTransform: 'none', 
-                        fontWeight: 600,
-                        minWidth: { xs: '48px', sm: '140px' },
-                        px: { xs: 0, sm: 2 } 
-                    }}
+                    sx={{ flex: 1, height: '48px', fontWeight: 'bold' }}
                 >
-                    {isAddOpen ? <CloseIcon /> : <AddIcon />}
-                    {/* Hide text on extra-small screens (mobile) */}
-                    <Box component="span" sx={{ display: { xs: 'none', sm: 'inline' }, ml: 1 }}>
-                        {isAddOpen ? "Cancel" : "Add Item"}
-                    </Box>
+                    {isAddOpen ? "Cancel" : "Add Item"}
                 </Button>
-            </Box>
+            </Stack>
 
-            {/* A subtle divider that fades in when a panel is open */}
-            <Divider sx={{ 
-                mt: 1, 
-                mb: 1, 
-                opacity: (isAddOpen || isSearchOpen) ? 1 : 0, 
-                transition: 'opacity 0.3s' 
-            }} />
-
-            {/* 2. Search Panel Slide-in */}
-            <Collapse in={isSearchOpen} unmountOnExit>
-                <Box sx={{ pb: 1 }}>
+            <Collapse in={isSearchOpen && !isAddOpen}>
+                <Box sx={{ mb: 2 }}>
                     {searchComponent}
                 </Box>
             </Collapse>
 
-            {/* 3. Add Panel Slide-in */}
-            <Collapse in={isAddOpen} unmountOnExit>
-                <Box sx={{ display: 'flex', justifyContent: 'center', pb: 1 }}>
+            <Collapse in={isAddOpen}>
+                <Box sx={{ mb: 2 }}>
                     {addComponent}
                 </Box>
-            </Collapse> 
-
+            </Collapse>
         </Box>
     );
 };

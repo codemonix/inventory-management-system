@@ -1,5 +1,4 @@
-
-import { Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField } from '@mui/material';
+import { Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField, Divider } from '@mui/material';
 import { useState, useEffect } from 'react';
 import { logError } from '../utils/logger';
 
@@ -18,7 +17,6 @@ const EditItemDialog = ({ open, onClose, item, onSave }) => {
             });
         }
     }, [open, item]);
-
 
     const handleChange = (e) => {
         setFormData((prevData) => ({
@@ -40,41 +38,65 @@ const EditItemDialog = ({ open, onClose, item, onSave }) => {
     };
 
     return (
-        <Dialog open={open} onClose={onClose}>
-            <DialogTitle>Edit Item</DialogTitle>
+        <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
             <form onSubmit={(e) => {
                 e.preventDefault();
                 handleSubmit();
             }}>
+                
+                {/* 1. Themed Title Bar */}
+                <DialogTitle sx={{ fontWeight: 'bold', bgcolor: 'background.paper', pb: 2 }}>
+                    Edit Item
+                </DialogTitle>
+                
+                <Divider />
 
-            <DialogContent>
-                <TextField autoFocus
-                    margin="dense"
-                    name='name'
-                    label="Item Name"
-                    type="text"
-                    fullWidth
-                    value={formData.name || ''}
-                    onChange={handleChange}
-                />
-                <TextField 
-                    margin="dense"
-                    name='price'
-                    label="Item Price"
-                    type="number"
-                    fullWidth
-                    value={formData.price || ''} 
-                    onChange={handleChange}
-                />
-            </DialogContent>
-                <DialogActions>
-                    <Button onClick={() => onClose()} color='secondary'>Cancel</Button>
+                {/* 2. Themed Content Area */}
+                <DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: 2.5, pt: 3, pb: 4, bgcolor: 'background.default' }}>
+                    <TextField 
+                        autoFocus
+                        name="name"
+                        label="Item Name"
+                        type="text"
+                        fullWidth
+                        value={formData.name || ''}
+                        onChange={handleChange}
+                        sx={{ bgcolor: 'background.paper' }} // Makes input pure white against default background
+                    />
+                    <TextField 
+                        name="price"
+                        label="Item Price (€)"
+                        type="number"
+                        fullWidth
+                        value={formData.price || ''} 
+                        onChange={handleChange}
+                        sx={{ bgcolor: 'background.paper' }}
+                        slotProps={{
+                            input: { min: 0, step: "0.01" } // Sensible defaults for currency
+                        }}
+                    />
+                </DialogContent>
+
+                <Divider />
+
+                {/* 3. Themed Action Bar */}
+                <DialogActions sx={{ px: 3, py: 2, bgcolor: 'background.paper' }}>
                     <Button 
-                        type='submit' 
-                        color='primary' 
+                        onClick={() => onClose()} 
+                        color="inherit" 
                         disabled={isSubmitting}
+                        sx={{ fontWeight: 'bold' }}
                     >
-                        {isSubmitting ? 'Saveing...' : 'Save'}
+                        Cancel
+                    </Button>
+                    <Button 
+                        type="submit" 
+                        variant="contained"
+                        color="primary" 
+                        disabled={isSubmitting || !formData.name.trim()} // Prevents empty name submissions
+                        sx={{ borderRadius: 2, px: 3, fontWeight: 'bold' }}
+                    >
+                        {isSubmitting ? 'Saving...' : 'Save Changes'}
                     </Button>
                 </DialogActions>
             </form>

@@ -4,7 +4,8 @@ import { useDispatch, useSelector } from "react-redux";
 import { setPage, setLimit, setSort, setSearch } from '../redux/slices/dashboardSlice.js';
 import { getDashboardData } from "../redux/thunks/dashboardThunks.js";
 import { selectDashboardPage, selectDashboardLimit } from "../redux/selectors/dashboardSelectors.js";
-import { loadTempTransfer, loadTransfers } from "../redux/thunks/transferThunks.js";
+import { loadTempTransfer } from "../redux/thunks/transferThunks";
+import { getTransfers as loadTransfers } from "../services/transferService.js";
 
 export const useDashboardData = () => {
     const dispatch = useDispatch();
@@ -26,11 +27,6 @@ export const useDashboardData = () => {
         if (!searchParams.get('page') || !searchParams.get('limit')) {
             setSearchParams({ page: pageParam, limit: limitParam, search: searchParam, sort: sortParam }, { replace: true });
         }
-
-        dispatch(setPage(pageParam));
-        dispatch(setLimit(limitParam));
-        dispatch(setSearch(searchParam));
-        dispatch(setSort(sortParam));
     }, [searchParams, dispatch, setSearchParams]);
 
     // Fetch Dashboard Data when params change

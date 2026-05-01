@@ -12,7 +12,8 @@ import {
     Switch
 } from "@mui/material";
 import { useDispatch } from "react-redux";
-import { updateUserDetails } from "../../redux/thunks/userThunks.js";
+// import { updateUserDetails } from "../../redux/thunks/userThunks.js";
+import { updateUser } from "../../services/userService.js";
 import { logInfo } from "../../utils/logger.js";
 
 const EditUserDialog = ({ open, onClose, user }) => {
@@ -54,9 +55,10 @@ const EditUserDialog = ({ open, onClose, user }) => {
         setFormData((prev) => ({ ...prev, isApproved: !prev.isApproved }));
     };
 
-    const handleSubmit = () => {
+    const handleSubmit = async () => {
         logInfo("formData:", formData)
-        dispatch(updateUserDetails({ id: user._id, ...formData }));
+        // dispatch(updateUserDetails({ id: user._id, ...formData }));
+        await updateUser(user._id, formData);
         onClose();
     };
 

@@ -2,6 +2,7 @@ import mongoose, { Document } from "mongoose";
 
 export interface ILocation extends Document {
     name: string;
+    color?: string;
     type?: string;
     createdAt: Date;
     updatedAt: Date;

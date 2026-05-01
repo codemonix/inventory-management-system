@@ -73,3 +73,22 @@ export async function deleteLocation(
         next(error);
     }
 }
+
+export async function updateLocation(
+    req: Request, 
+    res: Response,
+    next: NextFunction
+    ): Promise<void> {
+        logger.debug("location.controller -> updateLocation -> req.body:", req.body);
+        try {
+            const id = req.params.id as string;
+            const location = req.body;
+            const updatedLocation = await locationService.updateLocation(id, location);
+            res.status(200).json({ success: true, message: 'Location updated successfully', location: updatedLocation });
+        } catch (error) {
+            logger.error("location.controller -> updateLocation -> error:");
+            next(error);
+        }
+    
+
+}
