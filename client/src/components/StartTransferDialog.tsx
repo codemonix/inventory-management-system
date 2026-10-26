@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField, MenuItem } from '@mui/material';
-import { useAppSelector } from '../redux/hooks';
+import { useLocations } from '../hooks/useLocations';
 
 interface StartTransferDialogProps {
     open: boolean;
@@ -11,7 +11,7 @@ interface StartTransferDialogProps {
 const StartTransferDialog = ({ open, onClose, onStartNewTransfer }: StartTransferDialogProps) => {
     const [fromLocation, setFromLocation] = useState("");
     const [toLocation, setToLocation] = useState("");
-    const locations = useAppSelector((state) => state.locations.locations);
+    const { locations } = useLocations();
 
     // The button is disabled and the field shows a hint until two different locations are chosen
     const handleStartTransfer = () => {

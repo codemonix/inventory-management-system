@@ -9,7 +9,7 @@ import {
 } from "../redux/thunks/transferThunks";
 import { getItemsByIds } from "../services/itemService";
 import { clearTempTransferState } from "../redux/slices/transferSlice";
-import { fetchLocations } from "../redux/slices/locationsSlice";
+import { useLocations } from "./useLocations";
 import { selectTempTransferLocations } from "../redux/selectors/transferSelector";
 import { logDebug, logError } from "../utils/logger";
 
@@ -55,6 +55,9 @@ export interface UseTransferManagerReturn {
 // The current user's draft transfer. The finalized history lives in useTransferHistory.
 export const useTransferManager = (): UseTransferManagerReturn => {
     const dispatch = useAppDispatch();
+
+    // Location names for the draft card; loads them if no screen has yet
+    useLocations();
 
     // --- Redux State ---
     const tempTransferLocations = useAppSelector(selectTempTransferLocations);
@@ -117,7 +120,6 @@ export const useTransferManager = (): UseTransferManagerReturn => {
     logDebug("useTransferManager -> tempTransferStatus: ", tempTransferStatus);
     useEffect(() => {
         if (tempTransferStatus === 'idle') {
-            dispatch(fetchLocations());
             dispatch(loadTempTransfer());
         }
     }, [dispatch, tempTransferStatus]);

@@ -14,7 +14,9 @@ const VENDOR_CHUNKS: Record<string, RegExp> = {
 export default defineConfig(() => {
 
   return {
-    base: './',
+    // Absolute asset URLs: with './' a reload on a nested route such as /manage/users
+    // requested /manage/assets/*.js and got index.html back, leaving a blank page.
+    base: '/',
     plugins: [react()],
     build: {
       rollupOptions: {

@@ -1,5 +1,4 @@
 import { Box, Typography } from "@mui/material";
-import { useAppSelector } from "../redux/hooks";
 import { IItem } from "../types/item.types";
 
 // Components
@@ -10,6 +9,7 @@ import StockActionDialog from "./StockActionDialog";
 import { useStockAction } from "../hooks/useStockAction";
 
 import { logDebug, logInfo } from "../utils/logger";
+import { useLocations } from '../hooks/useLocations';
 
 interface ItemListProps {
     items: IItem[];
@@ -24,7 +24,7 @@ const ItemList = ({ items, onDelete, onEdit, onImageUpload, refreshInventory, st
 
     logInfo("Loading ItemList ...")
     
-    const locations = useAppSelector((state) => state.locations.locations);
+    const { locations } = useLocations();
 
     const {
         dialogOpen,

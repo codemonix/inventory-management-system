@@ -1,9 +1,7 @@
-import { useEffect, useState } from "react";
 import { useTheme, useMediaQuery, Box, Container, Typography } from "@mui/material";
 
 // Context and Services
 import { useAuth } from "../context/AuthContext";
-import { getLocations } from "../services/locationService"
 
 // Custom Hooks
 import { useDashboardData } from "../hooks/useDashboardData";
@@ -17,16 +15,15 @@ import DesktopInventoryTable from "../components/DesktopInventoryTable";
 import SearchFilterBar from "../components/SearchFilterBar";
 import StockActionDialog from "../components/StockActionDialog";
 
-import { logDebug, logError, logInfo } from "../utils/logger";
-import { getErrorMessage } from "../utils/errorMessage";
+import { logDebug, logInfo } from "../utils/logger";
 import { setLimit, setPage, setSearch, setSort } from "../redux/slices/dashboardSlice";
-import { ILocation } from "../types/location.types";
 import { IInventoryRecord } from "../types/inventory.types";
+import { useLocations } from "../hooks/useLocations";
 
 const DashboardPage = () => {
     logInfo("loading Dashboard Page ...")
     const { isLoggedIn } = useAuth();
-    const [ locations , setLocations ] = useState<ILocation[]>([]);
+    const { locations } = useLocations();
     
     const theme = useTheme();
     const isDesktop = useMediaQuery(theme.breakpoints.up('md'));
@@ -40,14 +37,6 @@ const DashboardPage = () => {
         dialogOpen, actionType, defaultLocation, localError: stockError,
         openDialog, closeDialog, submitAction
     } = useStockAction({ onSuccess: refreshData });
-
-    useEffect(() => {
-        if (isLoggedIn) {
-            getLocations()
-                .then(setLocations)
-                .catch((error: unknown) => logError("DashboardPage -> getLocations -> error:", getErrorMessage(error)))
-        }
-    },[isLoggedIn]);
 
     logDebug("DashboardPage -> inventory", items);
     

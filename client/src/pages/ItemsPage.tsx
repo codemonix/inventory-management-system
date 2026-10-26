@@ -8,7 +8,6 @@ import {
     selectItemsLimit, selectItemsTotalCount, selectItemsSort, selectItemsSearch
 } from '../redux/selectors/itemsSelector';
 import { loadItems, setPage, setLimit, setSearch, setSort, updateItemImageLocal } from '../redux/slices/itemsSlice';
-import { fetchLocations } from '../redux/slices/locationsSlice';
 
 // MUI Materials
 import { Box, Container, Stack, useMediaQuery, useTheme } from '@mui/material';
@@ -33,6 +32,7 @@ import { logError } from '../utils/logger';
 import { useAuth } from '../context/AuthContext';
 import { getErrorMessage } from '../utils/errorMessage';
 import { IItem } from '../types/item.types';
+import { useLocations } from '../hooks/useLocations';
 
 const ItemsPage = () => {
     const dispatch = useAppDispatch();
@@ -55,7 +55,7 @@ const ItemsPage = () => {
     const totalCount = useAppSelector(selectItemsTotalCount);
     const sort = useAppSelector(selectItemsSort);
     const search = useAppSelector(selectItemsSearch);
-    const locations = useAppSelector((state) => state.locations.locations); 
+    const { locations } = useLocations();
 
     // Local State
     const [showConfirm, setShowConfirm] = useState(false);
@@ -110,10 +110,6 @@ const ItemsPage = () => {
         // A newer query cancels the older request so a slow response cannot overwrite it
         return () => request.abort();
     }, [dispatch, isQueryRestored, page, limit, sort, search]);
-
-    useEffect(() => {
-        dispatch(fetchLocations());
-    }, [dispatch]);
 
     // Re-fetch stock totals whenever the visible items change
     useEffect(() => {

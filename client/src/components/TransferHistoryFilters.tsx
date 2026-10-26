@@ -2,10 +2,10 @@ import { ChangeEvent, useEffect, useState } from 'react';
 import { Box, Button, InputAdornment, MenuItem, Stack, TextField } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
 import FilterAltOffIcon from '@mui/icons-material/FilterAltOff';
-import { useAppSelector } from '../redux/hooks';
 import { TransferHistoryFilters as Filters, TransferStatus } from '../types/transfer.types';
 import { useDebouncedValue } from '../hooks/useDebouncedValue';
 import { EMPTY_TRANSFER_FILTERS } from '../utils/transferStatus';
+import { useLocations } from '../hooks/useLocations';
 
 interface TransferHistoryFiltersProps {
     value: Filters;
@@ -14,7 +14,7 @@ interface TransferHistoryFiltersProps {
 
 // Free-text search (debounced) plus status, route and date filters for the transfer history.
 const TransferHistoryFilters = ({ value, onChange }: TransferHistoryFiltersProps) => {
-    const locations = useAppSelector((state) => state.locations.locations);
+    const { locations } = useLocations();
     const [searchText, setSearchText] = useState(value.search ?? '');
     const debouncedSearch = useDebouncedValue(searchText);
 

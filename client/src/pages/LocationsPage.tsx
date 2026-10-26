@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "../context/AuthContext";
 
-// Services (Added updateLocation)
-import { getLocations, deleteLocation, createLocation, updateLocation } from "../services/locationService";
+// Services
+import { deleteLocation, createLocation, updateLocation } from "../services/locationService";
 
 // Components
 import CreateForm from "../components/CreateForm";
@@ -15,28 +15,26 @@ import { Container, Alert, Paper, Box } from "@mui/material";
 import { logError, logDebug, logInfo } from "../utils/logger";
 import { getErrorMessage } from "../utils/errorMessage";
 import { ILocation, LocationResponse } from "../types/location.types";
+import { useLocations } from '../hooks/useLocations';
+import { useAppDispatch } from '../redux/hooks';
+import { locationAdded, locationRemoved, locationUpdated } from '../redux/slices/locationsSlice';
 
 export default function LocationsPage() {
-    const [locations, setLocations] = useState<ILocation[]>([]);
+    const dispatch = useAppDispatch();
+    const { locations, error: loadError } = useLocations();
     const [errorMessage, setErrorMessage] = useState("");
     const { isAdmin, isManager } = useAuth();
 
     const isManagerOrAdmin = isAdmin || isManager;
 
     useEffect(() => {
-        getLocations()
-            .then(setLocations)
-            .catch((error: unknown) => {
-                const message = getErrorMessage(error, "Failed to load locations.");
-                setErrorMessage(message);
-                logError("LocationsPage -> Error fetching locations:", message);
-            });
-    }, []);
+        if (loadError) setErrorMessage(loadError);
+    }, [loadError]);
 
     const handleDelete = async (id: string) => {
         try {
             await deleteLocation(id);
-            setLocations((prevLocations) => prevLocations.filter((location) => location._id !== id));
+            dispatch(locationRemoved(id));
         } catch (error: unknown) {
             // The service surfaces the server's reason (e.g. the location still holds stock)
             const message = getErrorMessage(error, "Failed to delete location.");
@@ -47,16 +45,14 @@ export default function LocationsPage() {
 
     const handleLocationCreated = (response: LocationResponse) => {
         logDebug("LocationsPage -> handleLocationCreated -> response:", response);
-        setLocations((prevLocations) => [...prevLocations, response.location]);
+        dispatch(locationAdded(response.location));
     };
 
     // Updates a location (e.g. its color) and replaces it in the list
     const handleUpdateLocation = async (id: string, updatedData: Partial<ILocation>) => {
         try {
             const updatedLocation = await updateLocation(id, updatedData);
-            setLocations((prevLocations) => 
-                prevLocations.map((loc) => loc._id === id ? updatedLocation.location : loc)
-            );
+            dispatch(locationUpdated(updatedLocation.location));
             logInfo("LocationsPage -> handleUpdateLocation -> Location updated successfully");
         } catch (error: unknown) {
             const message = getErrorMessage(error, "Failed to update location.");

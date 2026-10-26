@@ -1,4 +1,4 @@
-import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
+import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import { getLocations } from '../../services/locationService';
 import { logDebug, logError } from '../../utils/logger';
 import { ILocation } from '../../types/location.types';
@@ -11,10 +11,9 @@ interface LocationsState {
 }
 
 export const fetchLocations = createAsyncThunk<
-
     ILocation[],
     void,
-    { rejectValue: string }>(
+    { rejectValue: string; state: { locations: LocationsState } }>(
     'locations/fetchLocations',
     async (_, { rejectWithValue }) => {
         try {
@@ -26,7 +25,9 @@ export const fetchLocations = createAsyncThunk<
             logError("fetchLocations error: ", message);
             return rejectWithValue(message);
         }
-    }
+    },
+    // Several screens ask for locations at once; only one request is sent
+    { condition: (_, { getState }) => getState().locations.status !== 'loading' },
 );
 
 const initialState: LocationsState = {
@@ -39,7 +40,18 @@ const initialState: LocationsState = {
 const locationsSlice = createSlice({
     name: 'locations',
     initialState,
-    reducers: {},
+    reducers: {
+        // Keep every screen in sync after edits on the Locations page
+        locationAdded: (state, action: PayloadAction<ILocation>) => {
+            state.locations.push(action.payload);
+        },
+        locationUpdated: (state, action: PayloadAction<ILocation>) => {
+            state.locations = state.locations.map((loc) => loc._id === action.payload._id ? action.payload : loc);
+        },
+        locationRemoved: (state, action: PayloadAction<string>) => {
+            state.locations = state.locations.filter((loc) => loc._id !== action.payload);
+        },
+    },
     extraReducers: (builder) => {
         builder
             .addCase(fetchLocations.pending, (state) => {
@@ -58,4 +70,5 @@ const locationsSlice = createSlice({
     },
 });
 
+export const { locationAdded, locationUpdated, locationRemoved } = locationsSlice.actions;
 export default locationsSlice.reducer;
