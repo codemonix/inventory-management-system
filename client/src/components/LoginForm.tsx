@@ -1,8 +1,9 @@
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 import { useAuth } from "../context/AuthContext";
 import { Box, TextField, Button, Alert } from "@mui/material";
 import { logDebug, logError, logInfo } from "../utils/logger";
 import { getErrorMessage } from "../utils/errorMessage";
+import { fetchPublicSettings } from "../services/settingsService";
 
 function LoginForm() {
     const { login } = useAuth(); 
@@ -10,10 +11,17 @@ function LoginForm() {
     const [password, setPassword] = useState("");
     const [error, setError] = useState<string | null>(null); 
 
-    // Runtime config (set per deployment) wins over the build-time default
-    const isDemo = window.env?.IS_DEMO ?? import.meta.env.VITE_IS_DEMO === 'true';
+    // Turned on/off by an admin under Manage → System
+    const [isDemo, setIsDemo] = useState(false);
 
-    logInfo("Demo mode active:", isDemo)
+    useEffect(() => {
+        let cancelled = false;
+        void fetchPublicSettings().then(({ demoMode }) => {
+            if (!cancelled) setIsDemo(demoMode);
+            logInfo("Demo mode active:", demoMode);
+        });
+        return () => { cancelled = true; };
+    }, []);
 
     const handleLogin = async (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault();

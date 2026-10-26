@@ -6,7 +6,8 @@ import {
     getSystemLogs, 
     clearSystemLogs, 
     getSystemSettings, 
-    updateSystemSettings 
+    updateSystemSettings,
+    getPublicSettings,
 } from '../controllers/systemLog.controller.js';
 
 // Import from the Infrastructure Controller
@@ -26,6 +27,8 @@ const router = express.Router();
 // ==========================================
 // TELEMETRY & SETTINGS ROUTES
 // ==========================================
+// Public: the login page needs to know whether to offer the demo account
+router.get('/public-settings', getPublicSettings);
 router.get('/logs', auth, isAdmin, getSystemLogs as unknown as RequestHandler);
 router.delete('/logs', auth, isAdmin, clearSystemLogs as unknown as RequestHandler);
 router.get('/settings', auth, isAdmin, getSystemSettings as unknown as RequestHandler);

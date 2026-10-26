@@ -32,7 +32,7 @@ export async function  registerUser(
         res.status(201).json(result);
 
     } catch (error) {
-        logger.error('auth.controller.js -> registerUser -> Error during registration:', error);
+        logger.error('auth.controller -> registerUser -> Error during registration:', error);
         // Pass to Express global error handler
         next(error);
     }
@@ -45,7 +45,7 @@ export async function loginUser(
 ): Promise<void> {
     const { email, password } = req.body;
     try {
-        logger.info("auth.controller.js -> Attempt login for:", {email});
+        logger.info("auth.controller -> Attempt login for:", {email});
         if (typeof email !== 'string' || typeof password !== 'string' || !email || !password) {
             return next(new AppError("Email and Password are required", 400));
         }
@@ -74,7 +74,7 @@ export async function getCurrentUser(
         const result = await authService.getUserById(req.user._id.toString());
         res.status(200).json(result);
     } catch (error) {
-        logger.error('auth.controller.js -> getCurrentUser:', error);
+        logger.error('auth.controller -> getCurrentUser:', error);
         // Pass to Express global error handler
         next(error);
     }

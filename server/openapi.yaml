@@ -2,8 +2,8 @@ openapi: 3.0.0
 info:
   title: Codemonix Inventory Management System (IMS) API
   description: |
-    Enterprise-grade multi-warehouse stock control solution backend API featuring role-based access control,
-    two-phase commitments for stock transfers, and automated disaster recovery.
+    REST API for multi-warehouse stock control with role-based access control,
+    two-phase stock transfers, an audit log, and backup/restore.
 
     **Roles:** `user` (stock in/out, transfers), `manager` (also items, locations and regular users),
     `admin` (also deletes and system operations). Each operation's description states the role it needs.
@@ -1145,9 +1145,28 @@ paths:
         '403':
           $ref: '#/components/responses/Forbidden'
 
+  /system/public-settings:
+    get:
+      summary: Settings the login page needs before anyone is logged in
+      tags:
+        - System Operations
+      description: Public. Only exposes whether demo mode is on.
+      responses:
+        '200':
+          description: Public settings
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  demoMode:
+                    type: boolean
+
   /system/settings:
     get:
-      summary: View systemic global logging severity rules flags parameters
+      summary: Read the system settings (log level, DB logging, demo mode)
       tags:
         - System Operations
       security:
@@ -1161,7 +1180,7 @@ paths:
         '403':
           $ref: '#/components/responses/Forbidden'
     put:
-      summary: Live modifications adjustments to dynamic logger configurations
+      summary: Update system settings; only the fields sent are changed
       tags:
         - System Operations
       security:
@@ -1178,10 +1197,15 @@ paths:
                   enum: [error, warn, info, http, debug]
                 enableDbLogging:
                   type: boolean
+                demoMode:
+                  type: boolean
+                  description: Shows the demo-account button on the login page
       description: "Requires role: admin."
       responses:
         '200':
-          description: Configuration adjustments persisted directly
+          description: Settings saved
+        '400':
+          $ref: '#/components/responses/BadRequest'
         '401':
           $ref: '#/components/responses/Unauthorized'
         '403':

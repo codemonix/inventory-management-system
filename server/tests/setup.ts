@@ -1,17 +1,15 @@
-// server/test/setup.ts
-// 1. IMPORT REPLSET INSTEAD OF SERVER
+// Shared test setup: an in-memory MongoDB, wiped after every test.
 import { MongoMemoryReplSet } from 'mongodb-memory-server'; 
 import mongoose from 'mongoose';
 import { beforeAll, afterAll, afterEach } from 'vitest';
 
-// 2. CHANGE THE VARIABLE TYPE
 let mongoServer: MongoMemoryReplSet; 
 
 beforeAll(async () => {
     process.env.JWT_SECRET = 'super-secret-test-key';
     process.env.NODE_ENV = 'test';
 
-    // 3. THE ENTERPRISE FIX: Boot a 1-node Replica Set so Transactions work!
+    // A single-node replica set, because the services use MongoDB transactions
     mongoServer = await MongoMemoryReplSet.create({ replSet: { count: 1 } });
     
     const mongoUri = mongoServer.getUri();

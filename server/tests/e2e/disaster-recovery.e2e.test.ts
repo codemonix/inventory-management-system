@@ -70,11 +70,10 @@ describe('E2E Saga: Disaster Recovery & Data Integrity', () => {
         expect([200, 201]).toContain(restoreResponse.status);
 
         // ==========================================
-        // STEP 5: The Ultimate Enterprise Proof
+        // STEP 5: The item is back with its original data
         // ==========================================
         const restoredItem = await Item.findOne({ name: 'E2E Critical Component' });
-        
-        // If these pass, your disaster recovery architecture is mathematically flawless.
+
         expect(restoredItem).toBeDefined();
         expect(restoredItem?.price).toBe(299.99);
     });

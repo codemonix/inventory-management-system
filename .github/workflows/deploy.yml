@@ -81,9 +81,13 @@ jobs:
           BUMP_TYPE="patch"
           if [[ "$COMMIT_MSG" == *"[release:minor]"* ]]; then BUMP_TYPE="minor"; fi
           if [[ "$COMMIT_MSG" == *"[release:major]"* ]]; then BUMP_TYPE="major"; fi
-          # Prefixed tags so backend and frontend releases never collide on the same vX.Y.Z tag
-          npm version $BUMP_TYPE --tag-version-prefix=backend-v -m "chore(backend): bump version to %s [skip ci]"
-          git push origin master --follow-tags
+          # npm only commits/tags when package.json is at the git root, so do it explicitly here.
+          # Prefixed tags keep backend and frontend releases apart (e.g. backend-v3.1.0).
+          NEW_VERSION=$(npm version $BUMP_TYPE --no-git-tag-version)
+          git add package.json package-lock.json
+          git commit -m "chore(backend): bump version to ${NEW_VERSION#v} [skip ci]"
+          git tag -a "backend-$NEW_VERSION" -m "backend $NEW_VERSION"
+          git push origin master "backend-$NEW_VERSION"
 
       - name: Extract Version
         if: ${{ needs.detect-changes.outputs.is_release == 'true' }}
@@ -161,8 +165,13 @@ jobs:
           BUMP_TYPE="patch"
           if [[ "$COMMIT_MSG" == *"[release:minor]"* ]]; then BUMP_TYPE="minor"; fi
           if [[ "$COMMIT_MSG" == *"[release:major]"* ]]; then BUMP_TYPE="major"; fi
-          npm version $BUMP_TYPE --tag-version-prefix=frontend-v -m "chore(frontend): bump version to %s [skip ci]"
-          git push origin master --follow-tags
+          # npm only commits/tags when package.json is at the git root, so do it explicitly here.
+          # Prefixed tags keep backend and frontend releases apart (e.g. frontend-v3.1.0).
+          NEW_VERSION=$(npm version $BUMP_TYPE --no-git-tag-version)
+          git add package.json package-lock.json
+          git commit -m "chore(frontend): bump version to ${NEW_VERSION#v} [skip ci]"
+          git tag -a "frontend-$NEW_VERSION" -m "frontend $NEW_VERSION"
+          git push origin master "frontend-$NEW_VERSION"
 
       - name: Extract Version
         if: ${{ needs.detect-changes.outputs.is_release == 'true' }}

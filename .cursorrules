@@ -2,7 +2,7 @@
 - Always use a Layered Architecture (Routes -> Controllers -> Services).
 - Backend: TypeScript, Express 4, MongoDB via Mongoose (server/).
 - Frontend: React 19 (Vite), Redux Toolkit, Material UI (MUI), custom hooks for logic (client/).
-- The client is mid-migration from .jsx to .ts/.tsx: new files are TypeScript.
+- Both client and server are fully TypeScript (strict); do not add .js/.jsx source files.
 - Folder Structure: keep logic in the existing 'services', 'hooks', 'types', and 'components' folders.
 
 # 2. DATABASE & DATA INTEGRITY

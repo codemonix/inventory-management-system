@@ -195,4 +195,49 @@ describe('Integration: System & Infrastructure Endpoints', () => {
             expect(response.status).toBe(400);
         });
     });
+
+    describe('Demo mode setting', () => {
+        it('should expose demoMode publicly, defaulting to false', async () => {
+            const response = await request(app).get('/api/system/public-settings');
+            expect(response.status).toBe(200);
+            expect(response.body).toEqual({ success: true, demoMode: false });
+        });
+
+        it('should let an admin turn demo mode on without touching other settings', async () => {
+            await request(app).put('/api/system/settings').set('Authorization', `Bearer ${adminToken}`)
+                .send({ logLevel: 'warn', enableDbLogging: false });
+
+            const response = await request(app).put('/api/system/settings')
+                .set('Authorization', `Bearer ${adminToken}`)
+                .send({ demoMode: true });
+
+            expect(response.status).toBe(200);
+            expect(response.body.settings).toMatchObject({ demoMode: true, logLevel: 'warn', enableDbLogging: false });
+            expect((await request(app).get('/api/system/public-settings')).body.demoMode).toBe(true);
+        });
+
+        it('should forbid regular users from changing demo mode', async () => {
+            const response = await request(app).put('/api/system/settings')
+                .set('Authorization', `Bearer ${userToken}`)
+                .send({ demoMode: true });
+            expect(response.status).toBe(403);
+        });
+
+        it('should reject a non-boolean demoMode and an empty update', async () => {
+            const bad = await request(app).put('/api/system/settings')
+                .set('Authorization', `Bearer ${adminToken}`)
+                .send({ demoMode: 'yes' });
+            expect(bad.status).toBe(400);
+
+            const empty = await request(app).put('/api/system/settings')
+                .set('Authorization', `Bearer ${adminToken}`)
+                .send({});
+            expect(empty.status).toBe(400);
+        });
+
+        it('should only reveal demoMode publicly', async () => {
+            const response = await request(app).get('/api/system/public-settings');
+            expect(Object.keys(response.body).sort()).toEqual(['demoMode', 'success']);
+        });
+    });
 });

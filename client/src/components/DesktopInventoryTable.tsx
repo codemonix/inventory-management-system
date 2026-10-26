@@ -50,8 +50,9 @@ const ImageCell = ({ item }: { item: IInventoryRecord }) => {
                             height: 'auto', 
                             borderRadius: 2, 
                             boxShadow: 24, 
-                            border: '2px solid white',
-                            backgroundColor: 'white'
+                            border: '2px solid',
+                            borderColor: 'background.paper',
+                            bgcolor: 'background.paper'
                         }}
                     />
                 ) : ""

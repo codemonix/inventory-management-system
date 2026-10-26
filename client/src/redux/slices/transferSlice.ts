@@ -19,9 +19,7 @@ interface TempTransferState {
 }
 
 
-// In Enterprise React, it is safer to start complex objects as 'null' 
-// rather than an empty object structure. It makes it mathematically 
-// provable whether a cart actually exists in memory.
+// `data` is null when the user has no draft, so "no draft" and "empty draft" stay distinguishable.
 const initialState: TempTransferState = {
     data: null,
     loading: false,

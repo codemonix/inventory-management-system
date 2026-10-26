@@ -55,7 +55,7 @@ export const toggleUserActiveStatus = async ( id: string, isActive: boolean ): P
 
     try {
         const response = await api.patch<UserResponse>(`/users/${id}/toggle-active`, { isActive });
-        logInfo("userService.js -> toggleUserActiveStatus -> id:", id, isActive);
+        logInfo("userService -> toggleUserActiveStatus -> id:", id, isActive);
         return response.data;
     } catch (error) {
         if (isApiError(error)) {

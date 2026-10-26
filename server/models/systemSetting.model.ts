@@ -13,6 +13,10 @@ const systemSettingSchema = new Schema<ISystemSetting>({
     enableDbLogging: { 
         type: Boolean, 
         default: true 
+    },
+    demoMode: {
+        type: Boolean,
+        default: false
     }
 }, { timestamps: true });
 

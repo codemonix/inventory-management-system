@@ -1,5 +1,5 @@
 
-import { Drawer, List, ListItemButton, Divider, ListItem, ListItemText, IconButton, Box, Typography } from "@mui/material";
+import { Drawer, List, ListItemButton, Divider, ListItem, ListItemText, IconButton, Box, Typography, useTheme } from "@mui/material";
 import CloseIcon from '@mui/icons-material/Close';
 import MenuIcon from '@mui/icons-material/Menu';
 import { NavLink } from "react-router-dom";
@@ -16,6 +16,7 @@ interface ManageSideDrawerProps {
 const ManageSideDrawer = ({ open, onClose, toggleSidebar }: ManageSideDrawerProps) => {
 
     const { isAdmin } = useAuth();
+    const theme = useTheme();
 
     // System operations (backup/restore/reset/settings) are admin-only on the server
     const navItems = [
@@ -26,7 +27,7 @@ const ManageSideDrawer = ({ open, onClose, toggleSidebar }: ManageSideDrawerProp
 
 
     const linkStyles = ({ isActive }: { isActive: boolean }) => ({
-    color: isActive ? '#1976d2' : 'inherit',
+    color: isActive ? theme.palette.primary.main : 'inherit',
     fontWeight: isActive ? 'bold' : 'normal',
     textDecoration: 'none',
     });
@@ -58,13 +59,13 @@ const ManageSideDrawer = ({ open, onClose, toggleSidebar }: ManageSideDrawerProp
                         <NavLink to="/dashboard" style={{ textDecoration: 'none', width: '100%' }} >
                             <ListItemButton 
                                 sx={{ 
-                                    backgroundColor: '#3b82f6',
-                                    color: '#fff',
+                                    bgcolor: 'primary.main',
+                                    color: 'primary.contrastText',
                                     borderRadius: 1,
                                     m: 1,
                                     px: 2,
                                     '&:hover': {
-                                        backgroundColor: 'rgba(0, 98, 189, 0.96)',
+                                        bgcolor: 'primary.dark',
                                     },
                                 }}>
                                 <ListItemText primary="Dashboard" sx={{ textAlign: 'center'}}/>
@@ -79,13 +80,13 @@ const ManageSideDrawer = ({ open, onClose, toggleSidebar }: ManageSideDrawerProp
                                 <NavLink to="/logout" style={{ textDecoration: 'none', width: '100%' }} >
                                     <ListItemButton 
                                         sx={{ 
-                                            backgroundColor: '#f87171',
-                                            color: '#fff',
+                                            bgcolor: 'error.main',
+                                            color: 'error.contrastText',
                                             borderRadius: 1,
                                             m: 1,
                                             px: 2,
                                             '&:hover': {
-                                                backgroundColor: '#ef4444',
+                                                bgcolor: 'error.dark',
                                             },
                                         }}>
                                         <ListItemText primary="Logout" sx={{ textAlign: 'center'}}/>

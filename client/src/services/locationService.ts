@@ -66,7 +66,7 @@ export const updateLocation = async (id: string, location: Partial<LocationInput
 export const deleteLocation = async (id: string): Promise<DeleteResponse> => {
     try {
         const response = await api.delete<DeleteResponse>(`/locations/${id}`);
-        logInfo(`locationService -> location id: ${id} has beed deleted`)
+        logInfo(`locationService -> location id: ${id} has been deleted`)
         return response.data;
     } catch (error) {
         if (isApiError(error)) {

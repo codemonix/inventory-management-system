@@ -36,7 +36,7 @@ const ItemList = ({ items, onDelete, onEdit, onImageUpload, refreshInventory, st
         submitAction
     } = useStockAction({ onSuccess: refreshInventory });
 
-    logDebug('ItemList.jsx ->  locations', locations)
+    logDebug('ItemList ->  locations', locations)
     logDebug('Items', items)
     
     return (
@@ -45,7 +45,7 @@ const ItemList = ({ items, onDelete, onEdit, onImageUpload, refreshInventory, st
                 <Box 
                     sx={{ 
                         display: 'grid', 
-                        // 👇 Responsive grid guarantees cards align perfectly into columns
+                        // Responsive grid: 1 to 4 columns depending on screen width
                         gridTemplateColumns: { 
                             xs: '1fr', 
                             sm: 'repeat(2, 1fr)', 

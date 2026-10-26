@@ -20,11 +20,11 @@ export const selectTempTransferLocations = createSelector(
     [selectTempTransfer, selectAllLocations],
     (tempTransfer, allLocations): PopulatedTempTransfer | null => {
         if (!tempTransfer) {
-            logInfo("transferSelector.js -> No tempTransfer");
+            logInfo("transferSelector -> No tempTransfer");
             return null;
         }
-        logDebug("transferSelector.js -> Selector tempTransfer: ", tempTransfer);
-        logDebug("transferSelector.js -> selectAlllLocations: ", allLocations);
+        logDebug("transferSelector -> Selector tempTransfer: ", tempTransfer);
+        logDebug("transferSelector -> selectAlllLocations: ", allLocations);
         const fromLocationDetails = allLocations.find((location) => location._id === tempTransfer.fromLocation);
         const toLocationDetails = allLocations.find((location) => location._id === tempTransfer.toLocation);
 

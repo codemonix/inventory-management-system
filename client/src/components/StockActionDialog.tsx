@@ -36,7 +36,7 @@ const StockActionDialog = ({
     const [quantity, setQuantity] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
 
-    logDebug("StockActionDialog.jsx -> locations:", locations);
+    logDebug("StockActionDialog -> locations:", locations);
 
     useEffect(() => {
         if (open) {

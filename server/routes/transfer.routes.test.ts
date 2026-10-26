@@ -94,7 +94,7 @@ describe('Integration: Transfer Workflow Endpoints', () => {
             
         expect(confirmResponse.status).toBe(200);
 
-        // mathematically prove the database actually moved the stock!
+        // Verify the stock actually moved in the database
         const stockA = await Inventory.findOne({ itemId, locationId: locAId });
         const stockB = await Inventory.findOne({ itemId, locationId: locBId });
 

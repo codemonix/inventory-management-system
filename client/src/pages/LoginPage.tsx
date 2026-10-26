@@ -1,8 +1,9 @@
 import { useEffect } from 'react';
 import { useNavigate, Link as RouterLink } from 'react-router-dom';
-import { Typography, Link, Box } from '@mui/material';
+import { Typography, Link } from '@mui/material';
 import { useAuth } from '../context/AuthContext';
 import LoginForm from '../components/LoginForm';
+import AuthCard from '../components/AuthCard';
 
 const LoginPage = () => {
   const { user } = useAuth();
@@ -15,7 +16,7 @@ const LoginPage = () => {
   return (
     <>
       {!user && (
-        <Box maxWidth="400px" mx="auto" mt={10} bgcolor="white" p={4} borderRadius={4}>
+        <AuthCard>
           <Typography variant="body2" component="span">
             Welcome to Inventory System
           </Typography>
@@ -30,7 +31,7 @@ const LoginPage = () => {
               Register
             </Link>
           </Typography>
-        </Box>
+        </AuthCard>
       )}
     </>
   );

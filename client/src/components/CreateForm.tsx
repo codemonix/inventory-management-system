@@ -38,7 +38,7 @@ export default function CreateForm<T> ({ title, label, placeholder, onCreate, on
             onSuccess(result);
             setName('');
             setStatus({ loading: false, error: '' });
-            logInfo("CreateForm.jsx -> handleSubmit -> create successful")
+            logInfo("CreateForm -> handleSubmit -> create successful")
         } catch (error: unknown) {
             const errorMessage = getErrorMessage(error, "Failed to create entry.");
             logError("CreateForm -> handleSubmit -> error:", errorMessage);

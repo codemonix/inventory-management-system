@@ -41,8 +41,9 @@ export interface ILogQueryParams {
 }
 
 export interface IUpdateSettingsBody {
-    logLevel: unknown;
-    enableDbLogging: unknown;
+    logLevel?: unknown;
+    enableDbLogging?: unknown;
+    demoMode?: unknown;
 }
 
 export interface IFactoryResetBody {

@@ -1,7 +1,6 @@
 import { ChangeEvent, FormEvent, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
-    Container,
     Typography,
     TextField,
     Button,
@@ -13,6 +12,7 @@ import {
 import api from "../../api/api";
 import { logInfo } from "../../utils/logger";
 import { getErrorMessage } from '../../utils/errorMessage';
+import AuthCard from '../../components/AuthCard';
 
 export default function SetupPage() {
     const [ needSetup, setNeedSetup ] = useState(null);
@@ -74,7 +74,7 @@ export default function SetupPage() {
 
 
     return (
-        <Container maxWidth="sm" sx={{ mt: 6, bgcolor: 'white', borderRadius: 4, p: 2 }} >
+        <AuthCard maxWidth={600}>
             <Typography variant="h4" gutterBottom >
                 Initial Setup
             </Typography>
@@ -127,6 +127,6 @@ export default function SetupPage() {
                     Create Admin
                 </Button>
             </form>
-        </Container>
+        </AuthCard>
     )
 }

@@ -2,13 +2,13 @@
 import api, { isApiError } from "../api/api";
 import { getBackendMessage } from "../utils/backendMessage";
 import { logError, logInfo } from "../utils/logger";
-import { ISystemSettings } from "../types/setting.types";
+import { ISystemSettings, PublicSettings } from "../types/setting.types";
 
 export const fetchSystemSettings = async (): Promise<ISystemSettings> => {
     try {
-        const response = await api.get<ISystemSettings>('/system/settings');
+        const response = await api.get<{ settings: ISystemSettings }>('/system/settings');
         logInfo("settingsService -> fetchSystemSettings successful.");
-        return response.data;
+        return response.data.settings;
     } catch (error: unknown) {
         if (isApiError(error)) {
             const backendMessage = getBackendMessage(error);
@@ -20,11 +20,14 @@ export const fetchSystemSettings = async (): Promise<ISystemSettings> => {
     }
 };
 
-export const updateSystemSettings = async (settingsData: Partial<ISystemSettings>): Promise<ISystemSettings> => {
+// Only the fields that are sent are changed
+export const updateSystemSettings = async (
+    settingsData: Partial<Pick<ISystemSettings, 'logLevel' | 'enableDbLogging' | 'demoMode'>>,
+): Promise<ISystemSettings> => {
     try {
-        const response = await api.put<ISystemSettings>('/system/settings', settingsData);
+        const response = await api.put<{ settings: ISystemSettings }>('/system/settings', settingsData);
         logInfo("settingsService -> updateSystemSettings successful.");
-        return response.data;
+        return response.data.settings;
     } catch (error: unknown) {
         if (isApiError(error)) {
             const backendMessage = getBackendMessage(error);
@@ -33,5 +36,16 @@ export const updateSystemSettings = async (settingsData: Partial<ISystemSettings
         }
         if (error instanceof Error) throw error;
         throw new Error("An unknown error occurred while updating settings.");
+    }
+};
+
+// Readable without logging in; used by the login page. Falls back to "off" if unreachable.
+export const fetchPublicSettings = async (): Promise<PublicSettings> => {
+    try {
+        const response = await api.get<PublicSettings>('/system/public-settings');
+        return { demoMode: Boolean(response.data.demoMode) };
+    } catch (error: unknown) {
+        logError("Failed to fetch public settings:", error instanceof Error ? error.message : error);
+        return { demoMode: false };
     }
 };

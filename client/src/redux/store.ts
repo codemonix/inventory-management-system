@@ -3,7 +3,6 @@ import transferReducer from './slices/transferSlice';
 import locationsReducer from './slices/locationsSlice';
 import itemsReducer from './slices/itemsSlice';
 import dashboardReducer from './slices/dashboardSlice'
-import settingReducer from './slices/settingsSlice'
 
 
 const store = configureStore({
@@ -12,7 +11,6 @@ const store = configureStore({
         locations: locationsReducer,
         items: itemsReducer,
         dashboard: dashboardReducer,
-        settings: settingReducer,
     },
 
     middleware: (getDefaultMiddleware) => getDefaultMiddleware({

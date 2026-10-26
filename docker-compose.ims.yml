@@ -82,7 +82,6 @@ services:
       - ims_net
     environment:
       - API_BASE=/api
-      - IS_DEMO=${IS_DEMO:-true}
     ports:
       - "127.0.0.1:3000:80"
     logging:

@@ -60,6 +60,12 @@ export const getLogs = async ({
     };
 };
 
+// The only settings anyone may read without logging in (used by the login page)
+export const getPublicSettings = async (): Promise<{ demoMode: boolean }> => {
+    const settings = await SystemSetting.findById('global_settings').select('demoMode').lean();
+    return { demoMode: Boolean(settings?.demoMode) };
+};
+
 export const clearLogs = async () => {
     logger.info('Clearing system logs');
     return await SystemLog.deleteMany({});
@@ -79,19 +85,33 @@ export const getSettings = async (): Promise<ISystemSetting> => {
     return settings;
 };
 
-export const updateSettings = async (
-    logLevel: unknown, 
-    enableDbLogging: unknown
-): Promise<ISystemSetting | null> => {
-    if (!LOG_LEVELS.includes(logLevel as LogLevel)) {
-        throw new AppError(`logLevel must be one of: ${LOG_LEVELS.join(', ')}`, 400);
+// Partial update: only the fields that are sent are validated and changed.
+export const updateSettings = async (input: {
+    logLevel?: unknown;
+    enableDbLogging?: unknown;
+    demoMode?: unknown;
+}): Promise<ISystemSetting | null> => {
+    const update: Partial<Pick<ISystemSetting, 'logLevel' | 'enableDbLogging' | 'demoMode'>> = {};
+    if (input.logLevel !== undefined) {
+        if (!LOG_LEVELS.includes(input.logLevel as LogLevel)) {
+            throw new AppError(`logLevel must be one of: ${LOG_LEVELS.join(', ')}`, 400);
+        }
+        update.logLevel = input.logLevel as LogLevel;
     }
-    if (typeof enableDbLogging !== 'boolean') {
-        throw new AppError('enableDbLogging must be a boolean', 400);
+    for (const field of ['enableDbLogging', 'demoMode'] as const) {
+        if (input[field] === undefined) continue;
+        if (typeof input[field] !== 'boolean') {
+            throw new AppError(`${field} must be a boolean`, 400);
+        }
+        update[field] = input[field];
     }
+    if (Object.keys(update).length === 0) {
+        throw new AppError('Nothing to update', 400);
+    }
+
     const settings: ISystemSetting | null = await SystemSetting.findByIdAndUpdate(
         'global_settings',
-        { logLevel, enableDbLogging },
+        update,
         { new: true, upsert: true, runValidators: true }
     );
 

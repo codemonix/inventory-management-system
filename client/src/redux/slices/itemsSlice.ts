@@ -76,15 +76,15 @@ const itemsSlice = createSlice({
         },
         setLimit: (state, action: PayloadAction<number>) => {
             state.limit = action.payload;
-            state.page = 1; // 👈 Pagination Trap Fix
+            state.page = 1; // a new filter starts again at page 1
         },
         setSearch: (state, action: PayloadAction<string>) => {
             state.search = action.payload;
-            state.page = 1; // 👈 Pagination Trap Fix
+            state.page = 1; // a new filter starts again at page 1
         },
         setSort: (state, action: PayloadAction<string>) => {
             state.sort = action.payload;
-            state.page = 1; // 👈 Pagination Trap Fix
+            state.page = 1; // a new filter starts again at page 1
         },
         updateItemImageLocal: (state, action: PayloadAction<{ itemId: string; imageUrl: string }>) => {
             const { itemId, imageUrl } = action.payload;

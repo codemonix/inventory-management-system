@@ -3,7 +3,3 @@
 window.__IMS_CONFIG__ = {
   API_URL: "{{API_BASE}}"
 };
-
-window.env = {
-  IS_DEMO: {{IS_DEMO}}
-};

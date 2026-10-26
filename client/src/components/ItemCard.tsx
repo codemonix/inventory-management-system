@@ -8,7 +8,8 @@ import {
     Alert,
     Box,
     Stack,
-    Divider
+    Divider,
+    alpha,
 } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
 import EditIcon from "@mui/icons-material/Edit";
@@ -87,7 +88,7 @@ const ItemCard = ({ item, onIn, onOut, onDelete, onEdit, onImageUpload, totalSto
                     <Box sx={{ 
                         position: 'absolute', inset: 0, 
                         display: 'flex', alignItems: 'center', justifyContent: 'center', 
-                        bgcolor: 'rgba(255,255,255,0.7)', 
+                        bgcolor: (theme) => alpha(theme.palette.background.paper, 0.7), 
                         zIndex: 10, typography: 'caption', fontWeight: 'bold' 
                     }}>
                         Uploading...

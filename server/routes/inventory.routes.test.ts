@@ -23,12 +23,12 @@ describe('Integration: Inventory Endpoints', () => {
         const admin = await User.create({
             name: 'Inventory Admin',
             email: 'admin@ims.com',
-            password: 'hashedpassword', // Doesn't matter, we bypass HTTP login!
+            password: 'hashedpassword', // unused: the test signs its own token
             role: 'admin',
             isApproved: true
         });
 
-        // 2. The Enterprise Auth Bypass: Mint the token locally!
+        // 2. Sign a token directly instead of logging in over HTTP
         token = generateToken(admin.id, admin.role);
 
         // 3. Inject prerequisite data directly into MongoDB

@@ -24,7 +24,7 @@ docker cp ims_mongo:/data/db/pre-auth.archive ./pre-auth.archive
 ```bash
 # Compose variables (passwords must be URL-safe: letters, digits, - _ .)
 cp .env.example .env
-nano .env        # set MONGO_ROOT_*, MONGO_APP_*; IS_DEMO=true for the public demo
+nano .env        # set MONGO_ROOT_*, MONGO_APP_*
 
 # Replica-set keyfile: must be readable only by the mongodb user (uid 999)
 mkdir -p mongo

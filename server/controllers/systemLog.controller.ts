@@ -1,4 +1,4 @@
-import { Response, NextFunction } from 'express';
+import { Request, Response, NextFunction } from 'express';
 import * as systemLogService from '../services/systemLog.service.js';
 import logger from '../utils/logger.js';
 import { AuthenticatedRequest } from '../types/auth.types.js';
@@ -37,6 +37,19 @@ export const clearSystemLogs = async (
     }
 }
 
+export const getPublicSettings = async (
+    _req: Request,
+    res: Response,
+    next: NextFunction
+) => {
+    try {
+        const settings = await systemLogService.getPublicSettings();
+        res.status(200).json({ success: true, ...settings });
+    } catch (error) {
+        next(error);
+    }
+};
+
 export const getSystemSettings = async (
     req: AuthenticatedRequest, 
     res: Response, 
@@ -56,11 +69,11 @@ export const updateSystemSettings = async (
     next: NextFunction
 ) => {
     try {
-        const { logLevel, enableDbLogging } = req.body;
-        const settings = await systemLogService.updateSettings(logLevel, enableDbLogging);
+        const { logLevel, enableDbLogging, demoMode } = req.body ?? {};
+        const settings = await systemLogService.updateSettings({ logLevel, enableDbLogging, demoMode });
 
         logger.info(`System settings updated by ${req.user.email}`, { 
-            type: 'audit', action: 'UPDATE_SETTINGS', userId: req.user._id, newLevel: logLevel
+            type: 'audit', action: 'UPDATE_SETTINGS', userId: req.user._id, logLevel, enableDbLogging, demoMode
         });
 
         res.status(200).json({ success: true, settings });

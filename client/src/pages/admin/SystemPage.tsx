@@ -5,6 +5,7 @@ import {
     FormControl, Alert, CircularProgress, Card, CardContent,
     Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions, 
     TextField, Stack, MenuItem, Select, InputLabel, FormGroup, FormControlLabel, Switch, 
+    alpha,
 } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import SaveIcon from '@mui/icons-material/Save';
@@ -29,15 +30,17 @@ const SettingsPage = () => {
     const [error, setError] = useState<string | null>(null);
     const [localLogLevel, setLocalLogLevel] = useState('info');
     const [localEnableDbLogging, setLocalEnableDbLogging] = useState(true);
+    const [localDemoMode, setLocalDemoMode] = useState(false);
     const [confirmOpen, setConfirmOpen] = useState(false);
     const [resetDialogOpen, setResetDialogOpen] = useState(false);
     const [actionType, setActionType] = useState<PendingAction | null>(null);
     const [restoreFile, setRestoreFile] = useState<File | null>(null);
     const [confirmPhrase, setConfirmPhrase] = useState('');
 
-    const [settings, setSettings] = useState<Pick<ISystemSettings, 'logLevel' | 'enableDbLogging'>>({
+    const [settings, setSettings] = useState<Pick<ISystemSettings, 'logLevel' | 'enableDbLogging' | 'demoMode'>>({
         logLevel: 'info',
-        enableDbLogging: true
+        enableDbLogging: true,
+        demoMode: false,
     });
     const [isLoading, setIsLoading] = useState(false);
 
@@ -64,20 +67,22 @@ const SettingsPage = () => {
         if (settings.enableDbLogging !== undefined) {
             setLocalEnableDbLogging(settings.enableDbLogging);
         }
+        setLocalDemoMode(Boolean(settings.demoMode));
     }, [settings]);
 
     const handleSaveSettings = async () => {
         setIsLoading(true);
         try {
-            await updateSystemSettings({ 
-                ...settings, 
+            const saved = await updateSystemSettings({ 
                 logLevel: localLogLevel,
-                enableDbLogging: localEnableDbLogging
+                enableDbLogging: localEnableDbLogging,
+                demoMode: localDemoMode,
             });
-            setMessage("Logging settings updated successfully.");
+            setSettings(saved);
+            setMessage("Settings updated successfully.");
             setTimeout(() => setMessage(null), 2500);
         } catch (err: unknown) {
-            setError(getErrorMessage(err, "Logging settings update failed."));
+            setError(getErrorMessage(err, "Settings update failed."));
             logError("SystemPage -> handleSaveSettings err:", getErrorMessage(err))
         } finally {
             setIsLoading(false);
@@ -91,7 +96,8 @@ const SettingsPage = () => {
 
     const hasUnsavedChanges = 
         localLogLevel !== settings?.logLevel ||
-        localEnableDbLogging !== settings?.enableDbLogging;
+        localEnableDbLogging !== settings?.enableDbLogging ||
+        localDemoMode !== Boolean(settings?.demoMode);
 
     // 1. BACKUP
     const handleBackup = async () => {
@@ -222,8 +228,24 @@ const SettingsPage = () => {
 
                 {/* System Settings */}
                 <Paper elevation={3} sx={{ p: 2, mb: 3 }}>
-                    <Typography variant="h6" gutterBottom>System Diagnostics & Logging</Typography>
+                    <Typography variant="h6" gutterBottom>System Settings</Typography>
                     <Divider sx={{ mb: 3 }} />
+
+                    <FormGroup sx={{ mb: 3 }}>
+                        <FormControlLabel 
+                            control={
+                                <Switch 
+                                    checked={localDemoMode} 
+                                    onChange={(e) => setLocalDemoMode(e.target.checked)} 
+                                    color="primary" 
+                                />
+                            } 
+                            label="Demo mode" 
+                        />
+                        <Typography variant="caption" color="textSecondary" sx={{ ml: 4, mt: -1, display: 'block' }}>
+                            Shows a button on the login page that fills in the demo account (demo@ims.com).
+                        </Typography>
+                    </FormGroup>
 
                     <FormGroup sx={{ mb: 3 }}>
                         <FormControlLabel 
@@ -243,10 +265,11 @@ const SettingsPage = () => {
                     
                     <Box display="flex" alignItems="center" gap={3} mb={3}>
                         <FormControl sx={{ minWidth: 150 }}>
-                            <InputLabel>Log Level</InputLabel>
+                            <InputLabel id="log-level-label">Log Level</InputLabel>
                             <Select
+                                labelId="log-level-label"
                                 value={localLogLevel}
-                                label="Database Log Level"
+                                label="Log Level"
                                 onChange={(e) => setLocalLogLevel(e.target.value)}
                             >
                                 <MenuItem value="error">Error Only</MenuItem>
@@ -263,7 +286,7 @@ const SettingsPage = () => {
                             onClick={handleSaveSettings}
                             disabled={isLoading || !hasUnsavedChanges}
                         >
-                        Settings
+                            Save Settings
                         </Button>
                     </Box>
 
@@ -287,7 +310,8 @@ const SettingsPage = () => {
                     sx={{ 
                         borderColor: 'error.main', 
                         border: 1, 
-                        bgcolor: '#fff5f5',
+                        // Faint red tint that works in light and dark mode
+                        bgcolor: (theme) => alpha(theme.palette.error.main, 0.06),
                         width: '100%' // Force full width
                     }}
                 >
@@ -296,7 +320,7 @@ const SettingsPage = () => {
                             <WarningAmberIcon color="error" />
                             <Typography variant="h6" color="error">Danger Zone</Typography>
                         </Box>
-                        <Divider sx={{ my: 2, borderColor: '#feb2b2' }} />
+                        <Divider sx={{ my: 2, borderColor: (theme) => alpha(theme.palette.error.main, 0.3) }} />
                         
                         <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
                             <Typography variant="body2">Delete Transfers</Typography>

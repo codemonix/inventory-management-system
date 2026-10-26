@@ -52,7 +52,6 @@ services:
       - ims_net
     environment:
       - API_BASE=/api
-      - IS_DEMO=${IS_DEMO:-false}
     # no ports mapped; host-nginx reaches it by service name
 
   backend:

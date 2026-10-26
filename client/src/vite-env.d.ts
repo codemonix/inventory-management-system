@@ -9,9 +9,6 @@ declare global {
       API_URL?: string;
       API_PORT?: string | number;
     };
-    env?: {
-      IS_DEMO?: boolean;
-    };
   }
 }
 

@@ -207,7 +207,7 @@ export default function LogsPage() {
             {/* TAB 0: TRANSACTIONS */}
             <CustomTabPanel value={activeTab} index={0}>
                 <div>
-                    <Stack direction={"row"} spacing={2} alignItems={"center"} marginY={2} bgcolor={'rgba(255,255,255,0.7)'} p={1} borderRadius={1}>
+                    <Stack direction={"row"} spacing={2} alignItems={"center"} marginY={2} bgcolor="background.paper" p={1} borderRadius={1}>
                         <TextField label="Search by item, user email, location or note" fullWidth value={searchInput} onChange={handleSearchChange} />
                         <Button variant="outlined" onClick={handleResetFilter}>Reset</Button>
                     </Stack>
