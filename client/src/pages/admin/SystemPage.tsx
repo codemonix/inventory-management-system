@@ -263,8 +263,9 @@ const SettingsPage = () => {
                         </Typography>
                     </FormGroup>
                     
-                    <Box display="flex" alignItems="center" gap={3} mb={3}>
-                        <FormControl sx={{ minWidth: 150 }}>
+                    {/* Stacked so the card's narrow column never truncates the level or wraps the button */}
+                    <Box display="flex" flexDirection="column" alignItems="flex-start" gap={2} mb={3}>
+                        <FormControl fullWidth>
                             <InputLabel id="log-level-label">Log Level</InputLabel>
                             <Select
                                 labelId="log-level-label"
@@ -285,6 +286,7 @@ const SettingsPage = () => {
                             startIcon={<SaveIcon />}
                             onClick={handleSaveSettings}
                             disabled={isLoading || !hasUnsavedChanges}
+                            sx={{ whiteSpace: 'nowrap' }}
                         >
                             Save Settings
                         </Button>
@@ -308,8 +310,9 @@ const SettingsPage = () => {
                 {/* 2. DANGER ZONE */}
                 <Card 
                     sx={{ 
+                        // `border` first: it would otherwise reset the color set by borderColor
+                        border: 1,
                         borderColor: 'error.main', 
-                        border: 1, 
                         // Faint red tint that works in light and dark mode
                         bgcolor: (theme) => alpha(theme.palette.error.main, 0.06),
                         width: '100%' // Force full width

@@ -40,6 +40,8 @@ const TempTransferCard = ({ populatedTempTransfer, onFinalize, onRemoveItem, onD
             size="small"
             startIcon={<DeleteOutlineIcon />}
             onClick={() => (items.length > 0 ? setConfirmDiscard(true) : onDiscard())}
+            // Keep icon and label on one line on narrow phones
+            sx={{ whiteSpace: 'nowrap', flexShrink: 0 }}
         >
             Discard draft
         </Button>
@@ -94,7 +96,7 @@ const TempTransferCard = ({ populatedTempTransfer, onFinalize, onRemoveItem, onD
                 '&:hover': { boxShadow: 2 }
             }}
         >
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 1, mb: 2 }}>
                 <Box>
                     <Chip
                         label="DRAFT TRANSFER"

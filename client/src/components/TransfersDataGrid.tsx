@@ -99,7 +99,8 @@ const TransfersDataGrid = ({ transfers, onViewItems, onConfirm, onCancel }: Tran
                 sx={{
                     border: 0,
                     '& .MuiDataGrid-columnHeaders': { backgroundColor: 'action.hover', borderBottom: '1px solid', borderColor: 'divider' },
-                    '& .MuiDataGrid-cell': { borderColor: 'divider' },
+                    // Center every cell vertically (custom cells otherwise sit at the top)
+                    '& .MuiDataGrid-cell': { borderColor: 'divider', display: 'flex', alignItems: 'center' },
                 }}
             />
         </Box>
