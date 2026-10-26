@@ -1,9 +1,8 @@
 
-import express, { Application, Request, Response, NextFunction } from 'express';
-import cors from 'cors';
+import express, { Request, Response, NextFunction } from 'express';
+import cors, { CorsOptions } from 'cors';
 import morgan from 'morgan';
 import helmet from 'helmet';
-import path from 'path';
 
 // Utils & Config
 import errorHandler from './middleware/error.middleware.js';
@@ -14,7 +13,7 @@ import { AppError } from './errors/AppError.js';
 // Routes
 import inventoryRoutes from './routes/inventory.routes.js';
 import transferRoutes from './routes/transfer.routes.js';
-import authRouts from './routes/auth.routes.js';
+import authRoutes from './routes/auth.routes.js';
 import itemRoutes from './routes/item.routes.js';
 import locationRoutes from './routes/location.routes.js';
 import userRoutes from './routes/user.routes.js';
@@ -23,20 +22,30 @@ import transactionRoutes from './routes/transaction.routes.js';
 import systemRoutes from './routes/system.routes.js';
 
 
-const morganFormat = process.env.NODE_ENV === 'production' ? 'combined' : 'dev';
+const isProduction = process.env.NODE_ENV === 'production';
+const morganFormat = isProduction ? 'combined' : 'dev';
+
+// CORS_ORIGIN is a comma-separated allow-list. Without it, production only serves same-origin
+// requests (the frontend is proxied under the same domain) and development allows any origin.
+const corsOrigins = process.env.CORS_ORIGIN?.split(',').map(o => o.trim()).filter(Boolean);
+const corsOptions: CorsOptions = {
+    origin: corsOrigins?.length ? corsOrigins : !isProduction,
+};
+
 
 
 const app = express();
-app.use(cors());
+// Running behind nginx: trust the first proxy so req.ip (used by the rate limiter) is the client IP.
+app.set('trust proxy', 1);
+app.use(cors(corsOptions));
 app.use(express.json({ limit: '20kb' }));
 app.use(helmet());
 app.use(morgan(morganFormat, { stream: logger.stream}));
 
 app.get('/', (req, res) => res.send("backend ok"));
-app.use('/api/auth', authRouts);
+app.use('/api/auth', authRoutes);
 app.use('/api/inventory', inventoryRoutes);
 app.use('/api/transfers', transferRoutes);
-app.use('/uploads', cors(), express.static(path.join(process.cwd(), '/uploads')));
 app.use('/api/items', itemRoutes);
 app.use('/api/locations', locationRoutes);
 app.use('/api/users', userRoutes);

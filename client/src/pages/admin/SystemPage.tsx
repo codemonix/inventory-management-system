@@ -1,6 +1,4 @@
-import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useDispatch, useSelector } from 'react-redux';
+import { ChangeEvent, useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { 
     Box, Typography, Paper, Button, Divider, 
@@ -15,26 +13,29 @@ import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 import WarningAmberIcon from '@mui/icons-material/WarningAmber';
 
-import { downloadBackup, restoreSystem, clearSystemData, performFactoryReset } from '../../services/systemService.js';
-// import { fetchSystemSettings, updateSystemSettings } from '../../redux/thunks/settingsThunks.js';
-import { fetchSystemSettings, updateSystemSettings } from '../../services/settingsService.js';
-import { clearSystemLogs } from '../../services/systemLogService.js';
+import { downloadBackup, restoreSystem, clearSystemData, performFactoryReset } from '../../services/systemService';
+import { fetchSystemSettings, updateSystemSettings } from '../../services/settingsService';
+import { clearSystemLogs } from '../../services/systemLogService';
 import ConfirmModal from '../../components/ConfirmModal';
-import { logError } from '../../utils/logger.js';
+import { logError } from '../../utils/logger';
+import { getErrorMessage } from '../../utils/errorMessage';
+import { ISystemSettings } from '../../types/setting.types';
+
+type PendingAction = 'RESTORE' | 'CLEAR_TRANSFERS' | 'CLEAR_ITEMS' | 'CLEAR_LOGS';
 
 const SettingsPage = () => {
     const [loading, setLoading] = useState(false);
-    const [message, setMessage] = useState(null);
-    const [error, setError] = useState(null);
+    const [message, setMessage] = useState<string | null>(null);
+    const [error, setError] = useState<string | null>(null);
     const [localLogLevel, setLocalLogLevel] = useState('info');
     const [localEnableDbLogging, setLocalEnableDbLogging] = useState(true);
     const [confirmOpen, setConfirmOpen] = useState(false);
     const [resetDialogOpen, setResetDialogOpen] = useState(false);
-    const [actionType, setActionType] = useState(null);
-    const [restoreFile, setRestoreFile] = useState(null);
+    const [actionType, setActionType] = useState<PendingAction | null>(null);
+    const [restoreFile, setRestoreFile] = useState<File | null>(null);
     const [confirmPhrase, setConfirmPhrase] = useState('');
 
-    const [settings, setSettings] = useState({
+    const [settings, setSettings] = useState<Pick<ISystemSettings, 'logLevel' | 'enableDbLogging'>>({
         logLevel: 'info',
         enableDbLogging: true
     });
@@ -42,9 +43,6 @@ const SettingsPage = () => {
 
 
 
-    const dispatch = useDispatch();
-    // const { settings, isLoading } = useSelector((state) => state.system);
-    const navigate = useNavigate();
     const { logout } = useAuth();
 
     useEffect(() => {
@@ -52,8 +50,8 @@ const SettingsPage = () => {
             try {
                 const config = await fetchSystemSettings();
                 setSettings(config);
-            } catch (err) {
-                logError("Systempage.jsx -> loadSettings err:", err.message)
+            } catch (err: unknown) {
+                logError("SystemPage -> loadSettings err:", getErrorMessage(err))
             }
         }
         loadSettings();
@@ -69,6 +67,7 @@ const SettingsPage = () => {
     }, [settings]);
 
     const handleSaveSettings = async () => {
+        setIsLoading(true);
         try {
             await updateSystemSettings({ 
                 ...settings, 
@@ -77,21 +76,17 @@ const SettingsPage = () => {
             });
             setMessage("Logging settings updated successfully.");
             setTimeout(() => setMessage(null), 2500);
-        } catch (err) {
-            setError("Logging settings update failed.");
-            logError("Systempage.jsx -> handleSaveSettings err:", err.message)
+        } catch (err: unknown) {
+            setError(getErrorMessage(err, "Logging settings update failed."));
+            logError("SystemPage -> handleSaveSettings err:", getErrorMessage(err))
+        } finally {
+            setIsLoading(false);
         }
     };
 
-    const handleClearLogs = async () => {
-        if (window.confirm('Are you sure you want to permamently delete all system logs?')) {
-            try {
-                await clearSystemLogs();
-            } catch (err) {
-                setError("Clearing system logs failed.");
-                logError("Systempage.jsx -> handleClearLogs err:", err.message)
-            }
-        }
+    const handleClearLogs = () => {
+        setActionType('CLEAR_LOGS');
+        setConfirmOpen(true);
     };
 
     const hasUnsavedChanges = 
@@ -104,17 +99,17 @@ const SettingsPage = () => {
         try {
             await downloadBackup();
             setMessage("Backup downloaded successfully.");
-        } catch (err) {
-            setError("Backup failed.");
-            logError("Systempage.jsx -> handleBackup err:", err.message)
+        } catch (err: unknown) {
+            setError(getErrorMessage(err, "Backup failed."));
+            logError("SystemPage -> handleBackup err:", getErrorMessage(err))
         } finally {
             setLoading(false);
         }
     };
 
     // 2. FILE SELECTION (For Restore)
-    const handleFileChange = (e) => {
-        const file = e.target.files[0];
+    const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
         if (file) {
             setRestoreFile(file);
             setActionType('RESTORE');
@@ -130,7 +125,7 @@ const SettingsPage = () => {
         setMessage(null);
 
         try {
-            if (actionType === 'RESTORE') {
+            if (actionType === 'RESTORE' && restoreFile) {
                 await restoreSystem(restoreFile);
                 setMessage("System restored successfully. Reloading...");
                 setTimeout(() => { logout(); window.location.reload(); }, 2000);
@@ -143,8 +138,13 @@ const SettingsPage = () => {
                 await clearSystemData('items');
                 setMessage("Items cleared.");
             }
-        } catch (err) {
-            setError(err.response?.data?.error || err.message);
+            else if (actionType === 'CLEAR_LOGS') {
+                await clearSystemLogs();
+                setMessage("System logs cleared.");
+            }
+        } catch (err: unknown) {
+            setError(getErrorMessage(err, "Operation failed."));
+            logError("SystemPage -> executeAction err:", actionType, getErrorMessage(err));
         } finally {
             setLoading(false);
             setRestoreFile(null);
@@ -157,18 +157,20 @@ const SettingsPage = () => {
         setResetDialogOpen(false);
         setLoading(true);
         try {
+            // Admin accounts survive a reset, so the current session stays valid
             await performFactoryReset(confirmPhrase);
-            logout();
-            navigate('/setup', { replace: true });
-        } catch (err) {
-            setError(err.response?.data?.error || "Reset failed");
+            setConfirmPhrase('');
+            setMessage("Factory reset complete. All data was removed; admin accounts were kept.");
+        } catch (err: unknown) {
+            setError(getErrorMessage(err, "Reset failed"));
+        } finally {
             setLoading(false);
         }
     };
 
     return (
         <Box maxWidth="lg" mx="auto" p={1}>
-            <Box px={1} py={0.5} sx={{ bgcolor: 'grey.200', borderRadius: 2 }}>
+            <Box px={1} py={0.5} sx={{ bgcolor: 'action.hover', borderRadius: 2 }}>
                 <Typography variant="body2" color="text.secondary" fontWeight="medium">
                     v{__APP_VERSION__} 
                 </Typography>
@@ -339,7 +341,11 @@ const SettingsPage = () => {
             <ConfirmModal 
                 open={confirmOpen}
                 title="Confirm Action"
-                message={actionType === 'RESTORE' ? "This will overwrite all data. Are you sure?" : "This cannot be undone."}
+                message={
+                    actionType === 'RESTORE' ? "This will overwrite all data. Are you sure?"
+                    : actionType === 'CLEAR_LOGS' ? "All system logs will be permanently deleted. This cannot be undone."
+                    : "This cannot be undone."
+                }
                 onClose={() => setConfirmOpen(false)}
                 onConfirm={executeAction}
             />

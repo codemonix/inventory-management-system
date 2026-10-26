@@ -1,21 +1,12 @@
 import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
-import { getAllItems, getPaginatedItems } from "../../services/itemService"; // Adjust extension if needed
+import { getPaginatedItems } from "../../services/itemService"; // Adjust extension if needed
 import { logInfo, logDebug, logError } from "../../utils/logger";
 import { IItem } from "../../types/item.types";
+import { getErrorMessage } from "../../utils/errorMessage";
 
 // ==========================================
 // 1. TYPES & INTERFACES
 // ==========================================
-// Adjust this interface to match exactly what your backend Item model looks like
-export interface IItemDefinition {
-    _id: string;
-    name: string;
-    code: string;
-    price?: number;
-    imageUrl?: string;
-    category?: string;
-}
-
 export interface FetchItemsParams {
     page: number;
     limit: number;
@@ -28,14 +19,8 @@ export interface PaginatedItemsResponse {
     totalCount: number;
 }
 
-export interface AllItemsResponse {
-    items: IItemDefinition[];
-}
-
 interface ItemsState {
-    fullList: IItemDefinition[];
-    list: IItemDefinition[];
-    statusFull: 'idle' | 'loading' | 'succeeded' | 'failed';
+    list: IItem[];
     status: 'idle' | 'loading' | 'succeeded' | 'failed';
     error: string | null;
     page: number;
@@ -59,27 +44,10 @@ export const loadItems = createAsyncThunk<
             const data = await getPaginatedItems(params);
             logInfo("loadItems response: ", data);
             return data;
-        } catch (error: any) {
-            const message = error.response?.data?.message || error.message || "Failed to load items";
+        } catch (error: unknown) {
+            const message = getErrorMessage(error, "Failed to load items");
             logError("Rejected loadItems with:", message);
             return rejectWithValue(message);
-        }
-    }
-);
-
-export const loadAllItems = createAsyncThunk<
-    AllItemsResponse,       // Expected success payload
-    void,                   // No arguments passed
-    { rejectValue: string } // Expected error type
->(
-    'items/loadAllItems',
-    async (_, { rejectWithValue }) => {
-        try {
-            const response = await getAllItems();
-            logInfo("loadAllItems response: ", response);
-            return response;
-        } catch (error: any) {
-            return rejectWithValue(error.message || "Failed to load all items");
         }
     }
 );
@@ -88,9 +56,7 @@ export const loadAllItems = createAsyncThunk<
 // 3. SLICE & STATE
 // ==========================================
 const initialState: ItemsState = {
-    fullList: [],
     list: [],
-    statusFull: 'idle',
     status: 'idle',
     error: null,
     page: 1,
@@ -129,11 +95,6 @@ const itemsSlice = createSlice({
                 existingItem.imageUrl = imageUrl;
             }
 
-            // Pro-Tip: You might also want to update the fullList if it's currently loaded!
-            const existingFullItem = state.fullList.find((item) => item._id === itemId);
-            if (existingFullItem) {
-                existingFullItem.imageUrl = imageUrl;
-            }
         }
     },
     extraReducers: (builder) => {
@@ -148,26 +109,11 @@ const itemsSlice = createSlice({
                 state.list = action.payload.items;
                 state.totalCount = action.payload.totalCount;
             })
-            .addCase(loadItems.rejected, (state, action: PayloadAction<string | undefined>) => {
+            .addCase(loadItems.rejected, (state, action) => {
+                // Cancelled because a newer query replaced it: that request is now pending
+                if (action.meta.aborted) return;
                 state.status = 'failed';
                 state.error = action.payload || "An unknown error occurred.";
-            });
-
-        // --- All Items ---
-        builder
-            .addCase(loadAllItems.pending, (state) => {
-                state.statusFull = 'loading';
-                state.error = null;
-            })
-            .addCase(loadAllItems.fulfilled, (state, action: PayloadAction<AllItemsResponse>) => {
-                state.statusFull = 'succeeded';
-                state.fullList = action.payload.items;
-            })
-            .addCase(loadAllItems.rejected, (state, action: PayloadAction<string | undefined>) => {
-                state.statusFull = 'failed';
-                // Note: The original code used action.error.message here, but because we use
-                // rejectWithValue in the Thunk, action.payload is the safer typed bet.
-                state.error = action.payload || "Failed to load full list.";
             });
     }
 });

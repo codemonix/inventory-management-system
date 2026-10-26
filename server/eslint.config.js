@@ -1,15 +1,23 @@
 import js from "@eslint/js";
 import globals from "globals";
-import pluginReact from "eslint-plugin-react";
-import { defineConfig } from "eslint/config";
+import tseslint from "typescript-eslint";
+import prettierConfig from "eslint-config-prettier";
 
 
-export default defineConfig([
-  { files: ["**/*.{js,mjs,cjs,jsx}"], plugins: { js }, extends: ["js/recommended"] },
-  { files: ["**/*.{js,mjs,cjs,jsx}"], languageOptions: { globals: {
-    ...globals.node,
-    ...globals.jest,
-    log: "readonly",
-  } } },
-  pluginReact.configs.flat.recommended,
-]);
+export default tseslint.config(
+  { ignores: ["dist/**", "node_modules/**", "coverage/**"] },
+  js.configs.recommended,
+  ...tseslint.configs.recommended,
+  {
+    files: ["**/*.{ts,js}"],
+    languageOptions: {
+      globals: { ...globals.node, ...globals.vitest },
+    },
+    rules: {
+      // The codebase leans on `any` for Mongoose/Express interop; flag it without failing the build
+      "@typescript-eslint/no-explicit-any": "warn",
+      "@typescript-eslint/no-unused-vars": ["error", { argsIgnorePattern: "^_", varsIgnorePattern: "^_" }],
+    },
+  },
+  prettierConfig,
+);

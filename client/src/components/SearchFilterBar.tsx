@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { ChangeEvent, KeyboardEvent, useState, useEffect, useRef } from "react";
 import {
     TextField,
     FormControl,
@@ -14,12 +14,21 @@ import {
 import ClearIcon from '@mui/icons-material/Clear';
 import SearchIcon from '@mui/icons-material/Search';
 
-const SearchFilterBar = ({ search, limit, sort, onSearchChange, onLimitChange, onSortChange }) => {
+interface SearchFilterBarProps {
+    search: string;
+    limit: number;
+    sort: string;
+    onSearchChange: (search: string) => void;
+    onLimitChange: (limit: number) => void;
+    onSortChange: (sort: string) => void;
+}
+
+const SearchFilterBar = ({ search, limit, sort, onSearchChange, onLimitChange, onSortChange }: SearchFilterBarProps) => {
     const [inputValue, setInputValue] = useState(search || '');
-    const debounceTimeoutRef = useRef(null);
+    const debounceTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     useEffect(() => {
-        setInputValue(search);
+        setInputValue(search || '');
     }, [search]);
 
     useEffect(() => {
@@ -28,7 +37,7 @@ const SearchFilterBar = ({ search, limit, sort, onSearchChange, onLimitChange, o
         };
     }, []);
 
-    const handleChange = (e) => {
+    const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
         const value = e.target.value;
         setInputValue(value);
         if (debounceTimeoutRef.current) clearTimeout(debounceTimeoutRef.current);
@@ -42,7 +51,7 @@ const SearchFilterBar = ({ search, limit, sort, onSearchChange, onLimitChange, o
         }, 500);
     };
 
-    const handleKeyDown = (e) => {
+    const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
         if (e.key === 'Enter') {
             if (debounceTimeoutRef.current) clearTimeout(debounceTimeoutRef.current);
             onSearchChange(inputValue);
@@ -90,7 +99,7 @@ const SearchFilterBar = ({ search, limit, sort, onSearchChange, onLimitChange, o
                             ),
                             endAdornment: inputValue ? (
                                 <InputAdornment position="end">
-                                    <IconButton onClick={handleClear} edge="end" size="small">
+                                    <IconButton onClick={handleClear} edge="end" size="small" aria-label="Clear search">
                                         <ClearIcon fontSize="small" />
                                     </IconButton>
                                 </InputAdornment>

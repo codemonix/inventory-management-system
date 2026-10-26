@@ -10,7 +10,7 @@ export interface IInventoryRecord {
     code: string;
     name: string;
     image: string;
-    stocks: IStockEntry[];
+    stock: IStockEntry[];   // one entry per location holding this item
     totalStock: number;
 }
 

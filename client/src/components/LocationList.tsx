@@ -2,8 +2,15 @@ import { useAuth } from "../context/AuthContext";
 import { Box, Typography, IconButton, Tooltip, Stack } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
 import { logDebug } from "../utils/logger";
+import { ILocation } from "../types/location.types";
 
-export default function LocationList({ locations, onDelete, onUpdate }) {
+interface LocationListProps {
+    locations: ILocation[];
+    onDelete: (id: string) => void;
+    onUpdate: (id: string, data: Partial<ILocation>) => void;
+}
+
+export default function LocationList({ locations, onDelete, onUpdate }: LocationListProps) {
     const { isAdmin, isManager } = useAuth();
     const isAdminOrManager = isAdmin || isManager; 
 
@@ -68,12 +75,13 @@ export default function LocationList({ locations, onDelete, onUpdate }) {
                         </Typography>
                     </Box>
                     
-                    <Tooltip title={!isAdminOrManager ? "Admin/Manager access required" : "Delete Location"}>
+                    <Tooltip title={!isAdmin ? "Admin access required" : "Delete Location"}>
                         <span> 
                             <IconButton 
                                 color="error" 
                                 onClick={() => onDelete(location._id)}
-                                disabled={!isAdminOrManager}
+                                aria-label={`Delete ${location.name}`}
+                                disabled={!isAdmin}
                             >
                                 <DeleteIcon />
                             </IconButton>

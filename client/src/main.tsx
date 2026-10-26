@@ -1,19 +1,18 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
-import { CustomThemeProvider } from './context/ThemeContextProvider.jsx'
-import './index.css'
-import App from './App.jsx'
-import './setupGlobalLogger.js'
-import store from './redux/store.js'
+import { CustomThemeProvider } from './context/ThemeContextProvider'
+import App from './App'
+import ErrorBoundary from './components/ErrorBoundary'
+import store from './redux/store'
 import { Provider } from 'react-redux'
-
-document.body.classList.add('bg-gray-100')
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <Provider store={store}>
         <CustomThemeProvider>
-            <App /> 
+            <ErrorBoundary>
+                <App />
+            </ErrorBoundary>
         </CustomThemeProvider>
     </Provider>
   </StrictMode>,

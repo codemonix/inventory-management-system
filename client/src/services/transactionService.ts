@@ -1,4 +1,5 @@
 import api, { isApiError } from "../api/api";
+import { getBackendMessage } from "../utils/backendMessage";
 import { logInfo, logError } from "../utils/logger";
 import { FetchLogsParams, PaginatedLogsResult } from "../types/transaction.types";
 
@@ -12,14 +13,14 @@ export const fetchTransactionLogs = async (params: FetchLogsParams = {}): Promis
     } = params;
 
     try {
-        const response = await api.get<PaginatedLogsResult>(
-            `/transactions/logs?search=${search}&sortBy=${sortBy}&sortOrder=${sortOrder}&skip=${skip}&limit=${limit}`
-        );
+        const response = await api.get<PaginatedLogsResult>('/transactions/logs', {
+            params: { search, sortBy, sortOrder, skip, limit },
+        });
         logInfo('transactionService -> Get logs:', response.data);
         return response.data;
     } catch (error) {
         if (isApiError(error)) {
-            const backendMessage = error.response?.data?.message;
+            const backendMessage = getBackendMessage(error);
             logError("Failed to fetch logs API:", error.message);
             throw new Error(backendMessage || "Failed to fetch transaction logs.");
         }

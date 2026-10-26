@@ -48,11 +48,12 @@ export const upload = multer({
     limits: { fileSize: 1 * 1024 * 1024 }, // 1MB limit
     fileFilter: (req: Request, file: Express.Multer.File, cb: FileFilterCallback) => {
         const allowedExt = ['.png', '.jpg', '.jpeg', '.webp'];
+        const allowedMimeTypes = ['image/png', 'image/jpeg', 'image/webp'];
         const ext = path.extname(file.originalname).toLowerCase();
         
         logger.debug("upload.ts -> upload ext:", ext);
 
-        if (!allowedExt.includes(ext)) {
+        if (!allowedExt.includes(ext) || !allowedMimeTypes.includes(file.mimetype)) {
             logger.warn("upload.ts -> upload -> Invalid file extension");
             
             return cb(new AppError('Only image files (.png, .jpg, .jpeg, .webp) are allowed', 400));

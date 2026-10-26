@@ -15,7 +15,7 @@ export interface IUser {
 
 export interface AuthResponse {
     user: IUser;
-    token: string;
+    token?: string;   // omitted after registration until the account is approved
 }
 
 export interface MeResponse {

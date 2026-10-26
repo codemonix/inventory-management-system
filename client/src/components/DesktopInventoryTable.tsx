@@ -7,22 +7,23 @@ import {
     Tooltip,
     Box
 } from "@mui/material";
-import { DataGrid } from '@mui/x-data-grid';
+import { DataGrid, GridColDef } from '@mui/x-data-grid';
 import InputTwoToneIcon from '@mui/icons-material/InputTwoTone';
 import OutputTwoToneIcon from '@mui/icons-material/OutputTwoTone';
 import SwapHorizonIcon from '@mui/icons-material/SwapHoriz';
 
-import { useManagedImage } from "../hooks/useManagedObjectImage.js";
-import { fetchItemImage } from "../services/itemService.js";
+import { useManagedImage } from "../hooks/useManagedObjectImage";
+import { fetchItemImage } from "../services/itemService";
 import StockDetails from "./StockDetail"; 
+import { DEFAULT_ITEM_IMAGE } from '../constants';
+import { IInventoryRecord } from '../types/inventory.types';
+import { ILocation } from '../types/location.types';
 
-const defaultImage = "/uploads/items/default.jpg";
-
-const ImageCell = ({ item }) => {
+const ImageCell = ({ item }: { item: IInventoryRecord }) => {
     const { displayUrl, isImageLoading } = useManagedImage(
         item.image,
         fetchItemImage,
-        defaultImage
+        DEFAULT_ITEM_IMAGE
     );
 
     return (
@@ -42,7 +43,7 @@ const ImageCell = ({ item }) => {
                 !isImageLoading ? (
                     <Box 
                         component="img"
-                        src={displayUrl} 
+                        src={displayUrl ?? undefined} 
                         alt={item.name} 
                         sx={{ 
                             width: 256, 
@@ -80,7 +81,7 @@ const ImageCell = ({ item }) => {
                 ) : (
                     <Box 
                         component="img"
-                        src={displayUrl} 
+                        src={displayUrl ?? undefined} 
                         alt={item.name} 
                         sx={{ 
                             width: '100%', 
@@ -95,9 +96,17 @@ const ImageCell = ({ item }) => {
     );
 };
 
-const DesktopInventoryTable = ({ items = [], locationColors, onIn, onOut, onAddToTransfer, locations }) => {
+interface DesktopInventoryTableProps {
+    items: IInventoryRecord[];
+    locations: ILocation[];
+    onIn: (item: IInventoryRecord) => void;
+    onOut: (item: IInventoryRecord) => void;
+    onAddToTransfer: (item: IInventoryRecord) => void;
+}
+
+const DesktopInventoryTable = ({ items = [], onIn, onOut, onAddToTransfer, locations }: DesktopInventoryTableProps) => {
     
-    const columns = useMemo(() => [
+    const columns = useMemo<GridColDef<IInventoryRecord>[]>(() => [
         {
             field: 'image',
             headerName: 'Image',
@@ -106,7 +115,7 @@ const DesktopInventoryTable = ({ items = [], locationColors, onIn, onOut, onAddT
             headerAlign: 'center',
             align: 'center',
             disableColumnMenu: true,
-            className: 'image-no-padding',
+            cellClassName: 'image-no-padding',
             renderCell: (params) => <ImageCell item={params.row} />
         },
         {
@@ -135,7 +144,7 @@ const DesktopInventoryTable = ({ items = [], locationColors, onIn, onOut, onAddT
             sortable: false,
             renderCell: (params) => (
                 <Box sx={{ display: 'flex', alignItems: 'center', h: '100%', py: 2 }}>
-                    <StockDetails item={params.row} locationColors={locationColors} direction="row" locations={locations} />
+                    <StockDetails item={params.row} direction="row" locations={locations} />
                 </Box>
             )
         },
@@ -162,7 +171,7 @@ const DesktopInventoryTable = ({ items = [], locationColors, onIn, onOut, onAddT
                 </Box>
             )
         }
-    ], [locationColors, onIn, onOut, onAddToTransfer]);
+    ], [locations, onIn, onOut, onAddToTransfer]);
 
     return (
         <Paper 

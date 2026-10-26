@@ -1,9 +1,20 @@
+import { ReactNode } from 'react';
 import { Box, Button, Collapse, useMediaQuery, useTheme, Stack } from '@mui/material';
 
 // Icons
 import AddIcon from '@mui/icons-material/Add';
 import SearchIcon from '@mui/icons-material/Search';
 import CloseIcon from '@mui/icons-material/Close';
+
+interface ActionToolbarProps {
+    isAddOpen: boolean;
+    isSearchOpen: boolean;
+    onToggleAdd: () => void;
+    onToggleSearch: () => void;
+    searchComponent: ReactNode;
+    // Falsy hides the "Add" button (e.g. for users without permission)
+    addComponent?: ReactNode;
+}
 
 const ActionToolbar = ({
     isAddOpen,
@@ -12,7 +23,7 @@ const ActionToolbar = ({
     onToggleSearch,
     searchComponent,
     addComponent
-}) => {
+}: ActionToolbarProps) => {
     const theme = useTheme();
     const isDesktop = useMediaQuery(theme.breakpoints.up('md'));
 
@@ -28,6 +39,7 @@ const ActionToolbar = ({
                         {searchComponent}
                     </Box>
 
+                    {addComponent && (
                     <Button
                         variant={isAddOpen ? "outlined" : "contained"}
                         color={isAddOpen ? "error" : "primary"}
@@ -41,6 +53,7 @@ const ActionToolbar = ({
                     >
                         {isAddOpen ? "Cancel" : "Add Item"}
                     </Button>
+                    )}
                 </Stack>
 
                 <Collapse in={isAddOpen}>
@@ -80,6 +93,7 @@ const ActionToolbar = ({
                     {isSearchOpen ? "Close" : "Search"}
                 </Button>
 
+                {addComponent && (
                 <Button
                     fullWidth
                     variant={isAddOpen ? "outlined" : "contained"}
@@ -90,6 +104,7 @@ const ActionToolbar = ({
                 >
                     {isAddOpen ? "Cancel" : "Add Item"}
                 </Button>
+                )}
             </Stack>
 
             <Collapse in={isSearchOpen && !isAddOpen}>

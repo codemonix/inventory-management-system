@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { FormEvent, useState } from 'react';
 import { 
     TextField, 
     Button, 
@@ -11,13 +11,21 @@ import {
 } from '@mui/material';
 import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
 import { logInfo, logError } from '../utils/logger';
+import { getErrorMessage } from '../utils/errorMessage';
 
+interface CreateFormProps<T> {
+    title: string;
+    label: string;
+    placeholder?: string;
+    onCreate: (data: { name: string }) => Promise<T>;
+    onSuccess: (result: T) => void;
+}
 
-export default function CreateForm ({ title, label, placeholder, onCreate, onSuccess }) {
+export default function CreateForm<T> ({ title, label, placeholder, onCreate, onSuccess }: CreateFormProps<T>) {
     const [name, setName] = useState('');
     const [status, setStatus] = useState({ loading: false, error: '' });
 
-    const handleSubmit = async (e) => {
+    const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault();
 
         // Prevent submission of empty space
@@ -31,9 +39,9 @@ export default function CreateForm ({ title, label, placeholder, onCreate, onSuc
             setName('');
             setStatus({ loading: false, error: '' });
             logInfo("CreateForm.jsx -> handleSubmit -> create successful")
-        } catch (error) {
-            logError("CreateForm.jsx -> handleSubmit -> error:", error.message);
-            const errorMessage = error.response?.data?.message || error.message || "Failed to create entry." ;
+        } catch (error: unknown) {
+            const errorMessage = getErrorMessage(error, "Failed to create entry.");
+            logError("CreateForm -> handleSubmit -> error:", errorMessage);
             setStatus({ loading: false, error: errorMessage });
         }
     };

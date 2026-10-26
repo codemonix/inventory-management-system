@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 import {
     Dialog,
     DialogTitle,
@@ -14,20 +14,34 @@ import {
 
 import CheckIcon from '@mui/icons-material/Check';
 import { logDebug, logInfo } from "../utils/logger";
+import { ILocation } from "../types/location.types";
+import { StockActionType } from "../hooks/useStockAction";
+
+interface StockActionDialogProps {
+    open: boolean;
+    onClose: () => void;
+    onSubmit: (locationId: string, quantity: number) => void | Promise<unknown>;
+    locations: ILocation[];
+    type: StockActionType | null;
+    errorMessage?: string | null;
+    defaultLocation?: string | null;
+}
 
 const StockActionDialog = ({ 
     open, onClose, onSubmit, 
     locations, type, errorMessage, 
     defaultLocation = null 
-}) => {
+}: StockActionDialogProps) => {
     const [locationId, setLocationId] = useState('');
     const [quantity, setQuantity] = useState('');
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     logDebug("StockActionDialog.jsx -> locations:", locations);
 
     useEffect(() => {
         if (open) {
             setQuantity('');
+            setIsSubmitting(false);
             if (defaultLocation) {
                 setLocationId(defaultLocation);                
             } else if (locations?.length > 0) {
@@ -38,11 +52,16 @@ const StockActionDialog = ({
         }
     }, [open, defaultLocation, locations]);
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault();
-        
-        if (Number(quantity) > 0 && locationId) {
-            onSubmit(locationId, Number(quantity));
+        // A second click/Enter while the request runs would book the stock movement twice
+        if (isSubmitting || !(Number(quantity) > 0) || !locationId) return;
+
+        setIsSubmitting(true);
+        try {
+            await onSubmit(locationId, Number(quantity));
+        } finally {
+            setIsSubmitting(false);
         }
         logInfo("StockAction submitted.");
     };
@@ -104,7 +123,7 @@ const StockActionDialog = ({
                         error={!!errorMessage && Number(quantity) <= 0}
                         sx={{ bgcolor: 'background.paper' }} // Makes input field pure white
                         slotProps={{
-                            input: { min: 1 }
+                            htmlInput: { min: 1, step: 1 }
                         }}
                     />
                 </DialogContent>
@@ -124,7 +143,7 @@ const StockActionDialog = ({
                         type="submit" 
                         variant="contained"
                         color={type === 'OUT' ? 'error' : 'primary'} // Contextual color based on destructive vs additive action
-                        disabled={!locationId || Number(quantity) <= 0}
+                        disabled={isSubmitting || !locationId || Number(quantity) <= 0}
                         startIcon={<CheckIcon />}
                         sx={{ borderRadius: 2, px: 3 }}
                     >

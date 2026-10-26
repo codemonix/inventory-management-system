@@ -8,7 +8,7 @@ export interface ISystemLog {
     message: string;
     meta?: {
         type?: string;
-        [key: string]: any;
+        [key: string]: unknown;
     };
     timestamp: string;
 }
@@ -25,7 +25,8 @@ export interface FetchSystemLogsParams {
     limit?: number;
     level?: string;
     type?: string;
-    sortBy?: string;
+    search?: string;
+    sortBy?: 'timestamp' | 'level' | 'message';
     sortOrder?: 'asc' | 'desc';
 }
 

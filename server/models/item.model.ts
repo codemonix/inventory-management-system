@@ -9,7 +9,7 @@ const itemSchema = new Schema<IItem>(
         code: { type: String, required: true, unique: true },
         imageUrl: { type: String },
         category: { type: String },
-        price: { type: Number},
+        price: { type: Number, min: [0, 'Price cannot be negative'] },
         description: { type: String },
     },
     { timestamps: true },

@@ -6,7 +6,6 @@ export interface RegisterDTO {
     name: string;
     email: string;
     password: string;
-    role?: string;
 }
 
 export interface LoginDTO {
@@ -24,7 +23,7 @@ export interface SafeUser {
 
 export interface AuthResponse {
     user: SafeUser;
-    token: string;
+    token?: string;
 }
 
 export interface UserResponse {

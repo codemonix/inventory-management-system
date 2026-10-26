@@ -10,6 +10,7 @@ export interface ILocation extends Document {
 
 export interface ICreateLocationInput {
     name: string;
+    color?: string;
     type?: string;
 }
 

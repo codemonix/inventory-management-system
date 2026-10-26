@@ -36,7 +36,7 @@ export interface IUpdateInventoryParams {
     itemId: string;
     locationId: string;
     userId: string | mongoose.Types.ObjectId;
-    quantity: number;
+    quantity: unknown;   // validated by the service
     type: 'IN' | 'OUT' | 'TRANSFER';
     note?: string;
 }

@@ -1,5 +1,7 @@
 
 import api, { isApiError } from "../api/api";
+import { getBackendMessage } from "../utils/backendMessage";
+import { logError, logInfo } from "../utils/logger";
 import { SystemActionResponse, ClearTarget } from "../types/system.types";
 
 export const downloadBackup = async (): Promise<void> => {
@@ -48,7 +50,7 @@ export const restoreSystem = async (fileObj: File): Promise<SystemActionResponse
 
     } catch (error) {
         if (isApiError(error)) {
-            const backendMessage = error.response?.data?.message;
+            const backendMessage = getBackendMessage(error);
             logError("Failed to restore system API:", error.message);
             throw new Error(backendMessage || "Failed to restore system from backup.");
         }
@@ -69,7 +71,7 @@ export const clearSystemData = async (target: ClearTarget): Promise<SystemAction
         return response.data; 
     } catch (error) {
         if (isApiError(error)) {
-            const backendMessage = error.response?.data?.message;
+            const backendMessage = getBackendMessage(error);
             logError("Failed to clear system data API:", error.message);
             throw new Error(backendMessage || `Failed to clear system data for ${target}.`);
         }
@@ -89,7 +91,7 @@ export const performFactoryReset = async (confirmationPhrase: string): Promise<S
         return response.data;
     } catch (error) {
         if (isApiError(error)) {
-            const backendMessage = error.response?.data?.message;
+            const backendMessage = getBackendMessage(error);
             logError("Failed to perform factory reset API:", error.message);
             throw new Error(backendMessage || "Failed to perform factory reset. Check your confirmation phrase.");
         }

@@ -10,6 +10,10 @@ import Item from '../models/item.model.js';
 // Import Utility
 import generateToken from '../utils/generateToken.js';
 
+import fs from 'fs';
+import os from 'os';
+import path from 'path';
+
 describe('Integration: System & Infrastructure Endpoints', () => {
 
     let adminToken: string;
@@ -77,7 +81,7 @@ describe('Integration: System & Infrastructure Endpoints', () => {
                 users: [{ name: "Test", 
                     email: "test@ims.com", 
                     password: "hashedpassword123!", 
-                    role: "user",
+                    role: "admin",
                     isApproved: true
                 }], 
                 inventory: [] 
@@ -115,7 +119,7 @@ describe('Integration: System & Infrastructure Endpoints', () => {
 
         it('POST /clear - should successfully wipe application data (Destructive Isolation)', async () => {
             // Verify we currently have 2 users in the database
-            let userCount = await User.countDocuments();
+            const userCount = await User.countDocuments();
             expect(userCount).toBe(2);
 
             // Trigger the clear option for Transfers
@@ -143,6 +147,52 @@ describe('Integration: System & Infrastructure Endpoints', () => {
             const userCountItemClear = await User.countDocuments();
             expect(itemCount).toBe(0);
             expect(userCountItemClear).toBeGreaterThan(0);
+        });
+    });
+
+    describe('Hardening', () => {
+        it('should reject a backup that contains no admin user', async () => {
+            const zip = new AdmZip();
+            zip.addFile('database_dump.json', Buffer.from(JSON.stringify({
+                users: [{ name: 'U', email: 'u@ims.com', password: 'x', role: 'user', isApproved: true }],
+            })));
+
+            const response = await request(app)
+                .post('/api/system/restore')
+                .set('Authorization', `Bearer ${adminToken}`)
+                .attach('backupFile', zip.toBuffer(), 'no-admin.zip');
+
+            expect(response.status).toBe(400);
+            expect(await User.countDocuments()).toBe(2);
+        });
+
+        it('should keep admin accounts on factory reset', async () => {
+            // Point uploads at a throwaway folder so the real uploads directory is untouched
+            const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'ims-reset-'));
+            const cwdSpy = vi.spyOn(process, 'cwd').mockReturnValue(tmpDir);
+            try {
+                const response = await request(app)
+                    .post('/api/system/reset')
+                    .set('Authorization', `Bearer ${adminToken}`)
+                    .send({ confirmation: 'DELETE EVERYTHING' });
+
+                expect(response.status).toBe(200);
+                const remaining = await User.find();
+                expect(remaining).toHaveLength(1);
+                expect(remaining[0].email).toBe('sysadmin@ims.com');
+            } finally {
+                cwdSpy.mockRestore();
+                fs.rmSync(tmpDir, { recursive: true, force: true });
+            }
+        });
+
+        it('should reject an invalid log level', async () => {
+            const response = await request(app)
+                .put('/api/system/settings')
+                .set('Authorization', `Bearer ${adminToken}`)
+                .send({ logLevel: 'everything', enableDbLogging: true });
+
+            expect(response.status).toBe(400);
         });
     });
 });

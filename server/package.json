@@ -1,37 +1,36 @@
 {
   "name": "inventory-management-system",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "type": "module",
-  "main": "server.js",
+  "main": "dist/server.js",
   "scripts": {
     "start": "node dist/server.js",
-    "dev": "tsx watch server.js",
+    "dev": "tsx watch server.ts",
     "build": "tsc -p tsconfig.build.json",
-
     "test": "vitest --exclude '**/*.e2e.test.ts'",
-    "test:run": "vitest run --exclude '**/*.e2e.test.ts'", 
+    "test:run": "vitest run --exclude '**/*.e2e.test.ts'",
     "test:e2e": "vitest run 'e2e.test.ts'",
     "test:all": "vitest run",
-    
     "test:ui": "vitest --ui --exclude '**/*.e2e.test.ts'",
-    "test:coverage": "vitest run --coverage"
+    "test:coverage": "vitest run --coverage",
+    "lint": "eslint .",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
-    "adm-zip": "^0.5.16",
+    "adm-zip": "^0.6.1",
     "archiver": "^7.0.1",
     "bcryptjs": "^3.0.2",
     "cors": "^2.8.5",
     "dotenv": "^16.4.7",
-    "eslint-config-prettier": "^10.1.2",
-    "eslint-plugin-prettier": "^5.2.6",
-    "express": "^4.21.2",
-    "express-validator": "^7.2.1",
+    "express": "^4.22.3",
+    "express-rate-limit": "^8.7.1",
+    "express-validator": "^7.3.2",
     "helmet": "^8.1.0",
-    "jsonwebtoken": "^9.0.2",
-    "mongoose": "^8.13.1",
-    "morgan": "^1.10.0",
+    "jsonwebtoken": "^9.0.3",
+    "mongoose": "^8.24.7",
+    "morgan": "^1.12.1",
     "multer": "^1.4.5-lts.2",
-    "nanoid": "^5.1.5",
+    "nanoid": "^5.1.16",
     "winston": "^3.19.0",
     "winston-mongodb": "^7.0.1"
   },
@@ -40,23 +39,33 @@
     "@types/adm-zip": "^0.5.8",
     "@types/archiver": "^7.0.0",
     "@types/cors": "^2.8.19",
-    "@types/express": "^5.0.6",
+    "@types/express": "^4.17.25",
     "@types/jsonwebtoken": "^9.0.10",
-    "@types/mongoose": "^5.11.96",
     "@types/morgan": "^1.9.10",
     "@types/multer": "^2.1.0",
     "@types/node": "^25.5.2",
     "@types/supertest": "^7.2.0",
-    "@vitest/coverage-v8": "^4.1.4",
-    "eslint": "^9.24.0",
-    "eslint-plugin-react": "^7.37.5",
+    "@vitest/coverage-v8": "^5.0.5",
+    "eslint": "^9.39.5",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-prettier": "^5.5.7",
     "globals": "^16.0.0",
     "mongodb-memory-server": "^10.4.3",
-    "nodemon": "^3.1.9",
     "prettier": "^3.5.3",
     "supertest": "^7.2.2",
     "tsx": "^4.21.0",
     "typescript": "^6.0.2",
-    "vitest": "^4.1.4"
+    "typescript-eslint": "^8.72.0",
+    "vitest": "^5.0.5"
+  },
+  "overrides": {
+    "proxy-addr": "^2.0.8",
+    "brace-expansion": "^2.1.7",
+    "archiver-utils": {
+      "minimatch": "^9.0.9"
+    },
+    "readdir-glob": {
+      "minimatch": "^5.1.9"
+    }
   }
 }

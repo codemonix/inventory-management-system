@@ -7,8 +7,8 @@ const systemSettingSchema = new Schema<ISystemSetting>({
     _id: { type: String, default: 'global_settings' },
     logLevel: { 
         type: String, 
-        enum: ['error', 'warn', 'info', 'debug'], 
-        default: 'debug' 
+        enum: ['error', 'warn', 'info', 'http', 'debug'], 
+        default: 'info' 
     },
     enableDbLogging: { 
         type: Boolean, 

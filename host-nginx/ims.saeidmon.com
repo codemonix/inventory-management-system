@@ -1,6 +1,11 @@
 server {
     server_name ims.saeidmon.com;
 
+    server_tokens off;
+    # Backups can be up to 100MB (see server/utils/upload.ts)
+    client_max_body_size 110m;
+    add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
+
     location /.well-known/acme-challenge/ {
         root /var/www/certbot;
     }
@@ -13,8 +18,10 @@ server {
         proxy_set_header Host $host;
     }
 
+    # Trailing slashes on both sides: /api/items -> http://127.0.0.1:5000/api/items
     location /api/ {
-        proxy_pass http://127.0.0.1:5000/api;
+        proxy_pass http://127.0.0.1:5000/api/;
+        proxy_read_timeout 300s;   # large backup/restore requests
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;

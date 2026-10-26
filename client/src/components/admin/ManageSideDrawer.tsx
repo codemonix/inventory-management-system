@@ -3,19 +3,29 @@ import { Drawer, List, ListItemButton, Divider, ListItem, ListItemText, IconButt
 import CloseIcon from '@mui/icons-material/Close';
 import MenuIcon from '@mui/icons-material/Menu';
 import { NavLink } from "react-router-dom";
+import { useAuth } from "../../context/AuthContext";
 
 const drawerWidth = 240;
 
-const ManageSideDrawer = ({ open, onClose, toggleSidebar }) => {
+interface ManageSideDrawerProps {
+    open: boolean;
+    onClose: () => void;
+    toggleSidebar: () => void;
+}
 
+const ManageSideDrawer = ({ open, onClose, toggleSidebar }: ManageSideDrawerProps) => {
+
+    const { isAdmin } = useAuth();
+
+    // System operations (backup/restore/reset/settings) are admin-only on the server
     const navItems = [
         { to: '/manage/users', label: 'User Management' },
-        { to: '/manage/system', label: 'System' },
+        ...(isAdmin ? [{ to: '/manage/system', label: 'System' }] : []),
         { to: '/manage/logs', label: 'Log Monitoring' },
     ];
 
 
-    const linkStyles = ({ isActive}) => ({
+    const linkStyles = ({ isActive }: { isActive: boolean }) => ({
     color: isActive ? '#1976d2' : 'inherit',
     fontWeight: isActive ? 'bold' : 'normal',
     textDecoration: 'none',
@@ -27,7 +37,7 @@ const ManageSideDrawer = ({ open, onClose, toggleSidebar }) => {
                 <Typography variant="h6" component="div">
                     Admin Dashboard
                 </Typography>
-                <IconButton onClick={onClose} sx={{ color: 'inherit' }}>
+                <IconButton onClick={onClose} aria-label="Close navigation menu" sx={{ color: 'inherit' }}>
                     <CloseIcon />
                 </IconButton>
             </Box>
@@ -93,7 +103,7 @@ const ManageSideDrawer = ({ open, onClose, toggleSidebar }) => {
 
     return (
         <div>
-            <IconButton onClick={toggleSidebar} sx={{ position: 'fixed', top: 0, left: 10, zIndex: 1000 }}>
+            <IconButton onClick={toggleSidebar} aria-label="Open navigation menu" sx={{ position: 'fixed', top: 0, left: 10, zIndex: 1000 }}>
                 <MenuIcon fontSize="large" />
             </IconButton>
             <Drawer open={open} onClose={onClose} >

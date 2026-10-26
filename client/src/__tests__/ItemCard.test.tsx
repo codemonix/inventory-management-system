@@ -1,40 +1,29 @@
 import { render, screen, fireEvent } from "@testing-library/react";
-import ItemCard from '../components/ItemCard.jsx';
 import { describe, expect, it, vi, beforeAll } from "vitest";
+import ItemCard from '../components/ItemCard';
+import { IItem } from "../types/item.types";
 
-const mockItem = {
-    _id: 'item123',
-    name: 'Test Item',
-    imageUrl: '/test.png',
-    totalQuantity: 12,
-    stockByLocation: {
-        locA: 5,
-        locB: 7,
-    },
-};
-
-
-
-// External function simulation
-const totalStockMock = 12;
-vi.mock('../services/itemsService.js', () => ({
-    fetchItems: vi.fn(() => Promise.resolve([
-        { _id: '1' , name: 'Mocked Item One', totalQuantity: 10, imageUrl: 'mock1.jpg' },
-        { _id: '2', name: 'Mocked Item Two', totalQuantity: 4, imageUrl: 'mock2.jpg'},
-    ])),
-    fetchItemImage: vi.fn(() => Promise.resolve('data:image/jpeg;base64,MOCK_IMAGE')),
-    deleteItem: vi.fn().mockResolvedValue({}),
-    updateItem: vi.fn().mockResolvedValue({}),
+vi.mock('../services/itemService', () => ({
+    fetchItemImage: vi.fn(() => Promise.resolve('blob:mock-image')),
 }));
 
+const mockItem: IItem = {
+    _id: 'item123',
+    name: 'Test Item',
+    code: 'CODE-1',
+    imageUrl: '/test.png',
+};
+
+const totalStockMock = 12;
+
 beforeAll(() => {
-  global.URL.createObjectURL = vi.fn(() => 'mock-url');
-  global.URL.revokeObjectURL = vi.fn();
+    globalThis.URL.createObjectURL = vi.fn(() => 'mock-url');
+    globalThis.URL.revokeObjectURL = vi.fn();
 });
 
 describe('ItemCard', () => {
     it('Renders item name and quantity', () => {
-        render(<ItemCard item={mockItem} totalStock={totalStockMock} />);
+        render(<ItemCard item={mockItem} totalStock={totalStockMock} onIn={vi.fn()} onOut={vi.fn()} />);
         expect(screen.getByText('Test Item')).toBeInTheDocument();
         expect(screen.getByText(/12/)).toBeInTheDocument();
     });
@@ -49,5 +38,11 @@ describe('ItemCard', () => {
         fireEvent.click(screen.getByLabelText('stock-out'));
         expect(onIn).toHaveBeenCalled();
         expect(onOut).toHaveBeenCalled();
+    });
+
+    it('hides edit and delete when no handlers are passed', () => {
+        render(<ItemCard item={mockItem} onIn={vi.fn()} onOut={vi.fn()} totalStock={0} />);
+        expect(screen.queryByTitle('Edit Item')).not.toBeInTheDocument();
+        expect(screen.queryByTitle('Delete Item')).not.toBeInTheDocument();
     });
 });

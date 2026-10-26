@@ -1,13 +1,13 @@
 import mongoose from 'mongoose'
-import bcrypt from 'bcryptjs';
 import { IUser } from '../types/user.types.js';
 
 
 const userSchema = new mongoose.Schema<IUser>(
     {
-        name: { type: String, required: true },
-        email: { type: String, required: true, unique: true, lowercase: true }, 
-        password: { type: String, required: true },
+        name: { type: String, required: true, trim: true },
+        email: { type: String, required: true, unique: true, lowercase: true, trim: true }, 
+        // Never returned by queries unless explicitly requested with .select('+password')
+        password: { type: String, required: true, select: false },
         role: { type: String, enum: ['admin', 'manager', 'user'], default: 'user' },
         isActive: {type: Boolean, default: true},
         isApproved: {type: Boolean, default: false},
@@ -16,10 +16,6 @@ const userSchema = new mongoose.Schema<IUser>(
     
     { timestamps: true }
 );
-
-userSchema.methods.comparePassword = function (password: string) {
-    return bcrypt.compare(password, this.password)
-}
 
 const User = mongoose.model<IUser>('User', userSchema);
 export default User;

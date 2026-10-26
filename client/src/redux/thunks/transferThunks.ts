@@ -6,7 +6,8 @@ import {
     createTempTransfer as createTempTransferAPI, 
     addItemToTempTransfer as addItemAPI, 
     finalizeTempTransfer as finalizeTempTransferAPI, 
-    removeItemFromTempTransfer as removeItemAPI 
+    removeItemFromTempTransfer as removeItemAPI,
+    discardTempTransfer as discardTempTransferAPI,
 } from '../../services/transferService';
 
 import { 
@@ -53,7 +54,7 @@ export const createTempTransfer = createAsyncThunk<
 
 export const addItem = createAsyncThunk<
     TempTransferActionResponse,
-    { item: string; quantity: number; sourceLocationId: string;}, 
+    { itemId: string; quantity: number; sourceLocationId: string; }, 
     { rejectValue: string }
 >(
     'tempTransfer/addItem',
@@ -100,6 +101,23 @@ export const finalizeTransfer = createAsyncThunk<
             logError("tempTransferThunks -> finalizeTransfer -> Failed", error instanceof Error ? error.message : "Unknown error");
             if (error instanceof Error) return rejectWithValue(error.message);
             return rejectWithValue('Failed to finalize transfer.');
+        }
+    }
+);
+
+export const discardTransfer = createAsyncThunk<
+    void,
+    void,
+    { rejectValue: string }
+>(
+    'tempTransfer/discard',
+    async (_, { rejectWithValue }) => {
+        try {
+            await discardTempTransferAPI();
+        } catch (error: unknown) {
+            logError("tempTransferThunks -> discardTransfer -> Failed", error instanceof Error ? error.message : "Unknown error");
+            if (error instanceof Error) return rejectWithValue(error.message);
+            return rejectWithValue('Failed to discard transfer.');
         }
     }
 );

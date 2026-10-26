@@ -1,5 +1,6 @@
 
 import api, { isApiError } from "../api/api";
+import { getBackendMessage } from "../utils/backendMessage";
 import { logError, logInfo } from "../utils/logger";
 import { ISystemSettings } from "../types/setting.types";
 
@@ -10,7 +11,7 @@ export const fetchSystemSettings = async (): Promise<ISystemSettings> => {
         return response.data;
     } catch (error: unknown) {
         if (isApiError(error)) {
-            const backendMessage = error.response?.data?.message;
+            const backendMessage = getBackendMessage(error);
             logError("Failed to fetch settings API:", error.message);
             throw new Error(backendMessage || "Failed to fetch system settings.");
         }
@@ -26,7 +27,7 @@ export const updateSystemSettings = async (settingsData: Partial<ISystemSettings
         return response.data;
     } catch (error: unknown) {
         if (isApiError(error)) {
-            const backendMessage = error.response?.data?.message;
+            const backendMessage = getBackendMessage(error);
             logError("Failed to update settings API:", error.message);
             throw new Error(backendMessage || "Failed to update system settings.");
         }

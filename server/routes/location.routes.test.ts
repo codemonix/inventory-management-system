@@ -8,6 +8,9 @@ import Location from '../models/location.model.js';
 // Import Utility
 import generateToken from '../utils/generateToken.js';
 
+import Item from '../models/item.model.js';
+import Inventory from '../models/inventory.model.js';
+
 describe('Integration: Location Endpoints', () => {
 
     let adminToken: string;
@@ -130,6 +133,32 @@ describe('Integration: Location Endpoints', () => {
                 .set('Authorization', `Bearer ${adminToken}`);
 
             expect(response.status).toBe(404);
+        });
+    });
+
+    describe('Hardening', () => {
+        it('should allow a manager to create a location', async () => {
+            const manager = await User.create({
+                name: 'Manager', email: 'manager@ims.com', password: 'hashedpassword', role: 'manager', isApproved: true,
+            });
+            const response = await request(app)
+                .post('/api/locations')
+                .set('Authorization', `Bearer ${generateToken(manager.id, manager.role)}`)
+                .send(mockLocationPayload);
+
+            expect(response.status).toBe(201);
+        });
+
+        it('should refuse to delete a location that still holds stock', async () => {
+            const item = await Item.create({ name: 'Held', nameLower: 'held', code: 'HELD-1' });
+            await Inventory.create({ itemId: item.id, locationId: existingLocationId, quantity: 3 });
+
+            const response = await request(app)
+                .delete(`/api/locations/${existingLocationId}`)
+                .set('Authorization', `Bearer ${adminToken}`);
+
+            expect(response.status).toBe(400);
+            expect(await Location.countDocuments()).toBe(1);
         });
     });
 });

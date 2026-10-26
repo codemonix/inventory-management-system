@@ -1,26 +1,29 @@
 # 1. ARCHITECTURAL STANDARDS (The "No Spaghetti" Rule)
 - Always use a Layered Architecture (Routes -> Controllers -> Services).
-- Backend: Use TypeScript, Express, and Prisma/Drizzle.
-- Frontend: Use React (Vite), Tailwind CSS, and Custom Hooks for logic.
-- Folder Structure: Create dedicated folders for 'services', 'hooks', 'types', and 'components' before writing code.
+- Backend: TypeScript, Express 4, MongoDB via Mongoose (server/).
+- Frontend: React 19 (Vite), Redux Toolkit, Material UI (MUI), custom hooks for logic (client/).
+- The client is mid-migration from .jsx to .ts/.tsx: new files are TypeScript.
+- Folder Structure: keep logic in the existing 'services', 'hooks', 'types', and 'components' folders.
 
 # 2. DATABASE & DATA INTEGRITY
-- Use PostgreSQL via Prisma. 
-- Always use a Singleton pattern for the Prisma Client to prevent connection leaks.
-- Database field names should be camelCase.
-- Never use 'any' type; always define interfaces in a 'shared' or 'types' directory.
+- MongoDB runs as a replica set (rs0) because stock changes use transactions.
+- Any operation that changes stock must run in a session/transaction together with its Transaction (audit) record.
+- Validate all client input in the service layer (server/utils/validation.ts): ObjectIds, positive integer quantities,
+  escaped search regexes, whitelisted sort fields.
+- Database field names are camelCase.
+- Avoid 'any'; define interfaces in the 'types' directories.
 
-# 3. BILINGUAL & MULTILINGUAL CONTEXT
-- The app supports English and Turkish.
-- Variables/Functions: Use English naming.
-- UI Labels: Use a translation-ready structure (e.g., constants or i18next).
-- AI Prompting: When writing prompts for Vision APIs, explicitly request bilingual responses (En/Tr).
+# 3. SECURITY
+- Every route except login/register/setup is behind the `auth` middleware; role checks use `isAdmin` / `isManagerOrAdmin`.
+- Roles: user (stock in/out, transfers), manager (+ catalog and users), admin (+ deletes, system operations).
+- Never return password hashes (the User model hides `password` by default).
+- Error responses always have the shape { success: false, message }.
 
 # 4. DEVOPS & DEPLOYMENT
-- Always include a 'docker-compose.yml' for local development (PostgreSQL + App).
-- Use .env files for sensitive data; never hardcode API keys.
+- docker-compose.yml runs the full stack locally; docker-compose.ims.yml is production (images from GHCR).
+- Use .env files for sensitive data (see .env.example); never hardcode secrets.
 
 # 5. CODING STYLE
 - Use functional components in React.
-- Prefer 'Lucide-React' for icons.
+- Use MUI icons (@mui/icons-material).
 - When refactoring, use the 'Red/Green' diff view to ensure no logic is lost.

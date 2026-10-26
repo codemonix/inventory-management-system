@@ -6,7 +6,7 @@ export interface IFirstAdminInput {
     password: string;
 }
 
-export interface ICreateAdminBody extends IFirstAdminInput {}
+export type ICreateAdminBody = IFirstAdminInput;
 
 export interface ISetupStatusResponse {
     success: boolean;

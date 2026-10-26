@@ -19,9 +19,10 @@ export default defineConfig({
             // Exclude things that shouldn't be tested (like types or config files)
             exclude: [
                 'node_modules/', 
-                'server/types/', 
-                'server/config/db.config.ts',
-                'server/server.ts'
+                'types/', 
+                'scripts/',
+                'config/db.config.ts',
+                'server.ts'
             ]
         },
     },

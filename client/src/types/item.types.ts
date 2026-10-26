@@ -4,10 +4,18 @@ export interface IItem {
     _id: string;
     name: string;
     price?: number;
-    imageUrl: string;
+    imageUrl?: string;
     code: string;
     category?: string;
+    createdAt?: string;
+    updatedAt?: string;
+}
 
+// Fields a client may send when creating or editing an item
+export interface ItemInput {
+    name: string;
+    category?: string;
+    price?: number | string;
 }
 
 export interface PaginatedItemsResult {

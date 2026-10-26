@@ -1,11 +1,21 @@
 import { Box, Typography, Button, Paper } from "@mui/material";
 import AddIcon from '@mui/icons-material/Add';
-import { logDebug } from "../utils/logger.js";
-import TempTransferCard from "./TempTransferCard.jsx";
+import TempTransferCard from "./TempTransferCard";
+import { ITempTransfer } from "../types/transfer.types";
+import { PopulatedDraftTransfer } from "../hooks/useTransferManager";
+import { LoadStatus } from "./StatusHandler";
 
-const ActiveTransferSection = ({ tempTransfer, tempTransferStatus, populatedTempTransfer, onStartNew, onFinalize }) => {
-    logDebug("ActiveTransferSection -> populatedTempTransfer:", populatedTempTransfer);
-    
+interface ActiveTransferSectionProps {
+    tempTransfer: ITempTransfer | null;
+    tempTransferStatus: LoadStatus;
+    populatedTempTransfer: PopulatedDraftTransfer | null;
+    onStartNew: () => void;
+    onFinalize: () => void;
+    onRemoveItem: (itemId: string) => void;
+    onDiscard: () => void;
+}
+
+const ActiveTransferSection = ({ tempTransfer, tempTransferStatus, populatedTempTransfer, onStartNew, onFinalize, onRemoveItem, onDiscard }: ActiveTransferSectionProps) => {
     return (
         <Paper elevation={0} sx={{ p: 3, border: '1px solid', borderColor: 'divider', borderRadius: 2, bgcolor: 'background.paper' }}>
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2, pb: 2, borderBottom: '1px solid', borderColor: 'divider' }}>
@@ -29,6 +39,8 @@ const ActiveTransferSection = ({ tempTransfer, tempTransferStatus, populatedTemp
                 <TempTransferCard 
                     populatedTempTransfer={populatedTempTransfer} 
                     onFinalize={onFinalize}
+                    onRemoveItem={onRemoveItem}
+                    onDiscard={onDiscard}
                 />
             )}
         </Paper>

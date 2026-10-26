@@ -1,128 +1,148 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
+import { useAppDispatch, useAppSelector } from '../redux/hooks';
 import { useSearchParams } from 'react-router-dom';
 
 // Redux
 import {
     selectItemsList, selectItemsStatus, selectItemsError, selectItemsPage, 
     selectItemsLimit, selectItemsTotalCount, selectItemsSort, selectItemsSearch
-} from '../redux/selectors/itemsSelector.js';
-import { loadItems, setPage, setLimit, setSearch, setSort, updateItemImageLocal } from '../redux/slices/itemsSlice.js';
-import { fetchLocations } from '../redux/slices/locationsSlice.js';
+} from '../redux/selectors/itemsSelector';
+import { loadItems, setPage, setLimit, setSearch, setSort, updateItemImageLocal } from '../redux/slices/itemsSlice';
+import { fetchLocations } from '../redux/slices/locationsSlice';
 
 // MUI Materials
 import { Box, Container, Stack, useMediaQuery, useTheme } from '@mui/material';
 
 // Components
-import StatusHandler from '../components/StatusHandler.jsx';
-import PaginationControls from '../components/PaginationControls.jsx';
-import ItemList from '../components/ItemList.jsx';
-import ItemsDataGrid from '../components/ItemsDataGrid.jsx'; // 👈 IMPORT YOUR NEW TABLE
-import CreateForm from '../components/CreateForm.jsx';
-import ConfirmModal from '../components/ConfirmModal.jsx';
-import EditItemDialog from '../components/ItemEditDialog.jsx';
-import SearchFilterBar from '../components/SearchFilterBar.jsx';
-import ActionToolbar from '../components/ActionToolbar.jsx';
-import StockActionDialog from '../components/StockActionDialog.jsx';
+import StatusHandler from '../components/StatusHandler';
+import PaginationControls from '../components/PaginationControls';
+import ItemList from '../components/ItemList';
+import ItemsDataGrid from '../components/ItemsDataGrid';
+import CreateForm from '../components/CreateForm';
+import ConfirmModal from '../components/ConfirmModal';
+import EditItemDialog, { ItemEditFormData } from '../components/ItemEditDialog';
+import SearchFilterBar from '../components/SearchFilterBar';
+import ActionToolbar from '../components/ActionToolbar';
+import StockActionDialog from '../components/StockActionDialog';
 
 // Services, Hooks, and Utils
-import { createItem, deleteItem, updateItem } from '../services/itemService.js';
-import { fetchFullInventory } from '../services/inventoryService.js';
-import { useStockAction } from '../hooks/useStockAction.js';         
-import { logError } from '../utils/logger.js';
+import { createItem, deleteItem, updateItem } from '../services/itemService';
+import { fetchStockTotals } from '../services/inventoryService';
+import { useStockAction } from '../hooks/useStockAction';         
+import { logError } from '../utils/logger';
+import { useAuth } from '../context/AuthContext';
+import { getErrorMessage } from '../utils/errorMessage';
+import { IItem } from '../types/item.types';
 
 const ItemsPage = () => {
-    const dispatch = useDispatch();
+    const dispatch = useAppDispatch();
     const [searchParams, setSearchParams] = useSearchParams();
+
+    // Catalog changes: manager or admin. Deleting: admin only (enforced by the server too)
+    const { isAdmin, isManager } = useAuth();
+    const canManage = isAdmin || isManager;
     
     // Responsive Breakpoints
     const theme = useTheme();
     const isDesktop = useMediaQuery(theme.breakpoints.up('md')); 
 
     // Redux State
-    const items = useSelector(selectItemsList);
-    const status = useSelector(selectItemsStatus);
-    const error = useSelector(selectItemsError);
-    const page = useSelector(selectItemsPage);
-    const limit = useSelector(selectItemsLimit);
-    const totalCount = useSelector(selectItemsTotalCount);
-    const sort = useSelector(selectItemsSort);
-    const search = useSelector(selectItemsSearch);
-    const locations = useSelector((state) => state.locations.locations); 
+    const items = useAppSelector(selectItemsList);
+    const status = useAppSelector(selectItemsStatus);
+    const error = useAppSelector(selectItemsError);
+    const page = useAppSelector(selectItemsPage);
+    const limit = useAppSelector(selectItemsLimit);
+    const totalCount = useAppSelector(selectItemsTotalCount);
+    const sort = useAppSelector(selectItemsSort);
+    const search = useAppSelector(selectItemsSearch);
+    const locations = useAppSelector((state) => state.locations.locations); 
 
     // Local State
     const [showConfirm, setShowConfirm] = useState(false);
-    const [itemToDelete, setItemToDelete] = useState(null);
-    const [itemToEdit, setItemToEdit] = useState(null);
+    const [itemToDelete, setItemToDelete] = useState<IItem | null>(null);
+    const [itemToEdit, setItemToEdit] = useState<IItem | null>(null);
     const [deleteError, setDeleteError] = useState("");
     const [showEditForm, setShowEditForm] = useState(false);
-    const [inventory, setInventory] = useState([]);
+    // itemId -> total quantity over all locations, for the items on this page only
+    const [stockLookup, setStockLookup] = useState<Record<string, number>>({});
     const [isAddOpen, setIsAddOpen] = useState(false);
     const [isSearchOpen, setIsSearchOpen] = useState(false);
+    const [isQueryRestored, setIsQueryRestored] = useState(false);
 
     // ==========================================
     // DATA FETCHING & SYNC
     // ==========================================
+    const pageItemIds = useMemo(() => items.map((item) => item._id).join(','), [items]);
     const refreshInventory = useCallback(async () => {
         try {
-            const updatedInventory = await fetchFullInventory();
-            setInventory(updatedInventory);
-        } catch (error) {
-            logError("ItemsPage.jsx -> Error fetching inventory:", error.message);
+            const totals = await fetchStockTotals(pageItemIds ? pageItemIds.split(',') : []);
+            setStockLookup(totals);
+        } catch (error: unknown) {
+            logError("ItemsPage -> Error fetching inventory:", getErrorMessage(error));
         }
-    }, []);
+    }, [pageItemIds]);
 
     const {
-        dialogOpen: stockDialogOpen, currentItemId: stockItemId, actionType: stockActionType,
+        dialogOpen: stockDialogOpen, actionType: stockActionType,
         defaultLocation: stockDefaultLocation, localError: stockError,
         openDialog: openStockDialog, closeDialog: closeStockDialog, submitAction: submitStockAction
     } = useStockAction({ onSuccess: refreshInventory });
 
     useEffect(() => {
-        // Just reading URL params to sync state
-        const pageParam = parseInt(searchParams.get('page')) || 1;
-        const limitParam = parseInt(searchParams.get('limit')) || 10;
-        const searchParam = searchParams.get('search') || '';
-        const sortParam = searchParams.get('sort') || 'name_asc';
-    }, [searchParams, dispatch]);
+        // On first load, restore list state from the URL so shared/bookmarked links work.
+        // Page goes last because the other setters reset it to 1.
+        const limitParam = parseInt(searchParams.get('limit') ?? '', 10);
+        const searchParam = searchParams.get('search');
+        const sortParam = searchParams.get('sort');
+        const pageParam = parseInt(searchParams.get('page') ?? '', 10);
+        if (limitParam > 0) dispatch(setLimit(limitParam));
+        if (searchParam !== null) dispatch(setSearch(searchParam));
+        if (sortParam) dispatch(setSort(sortParam));
+        if (pageParam > 0) dispatch(setPage(pageParam));
+        setIsQueryRestored(true);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
     useEffect(() => {
-        dispatch(loadItems({ page, limit, sort, search }));
-    }, [dispatch, page, limit, sort, search]);
+        // Wait for the URL state, otherwise the default page is fetched first and then the real one
+        if (!isQueryRestored) return;
+        const request = dispatch(loadItems({ page, limit, sort, search }));
+        // A newer query cancels the older request so a slow response cannot overwrite it
+        return () => request.abort();
+    }, [dispatch, isQueryRestored, page, limit, sort, search]);
 
     useEffect(() => {
-        refreshInventory();
         dispatch(fetchLocations());
-    }, [dispatch, refreshInventory]);
+    }, [dispatch]);
 
-    const stockLookup = useMemo(() => {
-        return inventory.reduce((acc, entry) => {
-            const total = entry.stock?.reduce((sum, s) => sum + s.quantity, 0) || 0;
-            const id = entry.itemId || entry._id; 
-            acc[id] = total;
-            return acc;
-        }, {});
-    }, [inventory]);
+    // Re-fetch stock totals whenever the visible items change
+    useEffect(() => {
+        void refreshInventory();
+    }, [refreshInventory]);
 
     // ==========================================
     // HANDLERS
     // ==========================================
-    const handleImageUpload = (itemId, newImageUrl) => {
+    // Handlers passed to the grid are kept stable, so its column definitions are not rebuilt every render
+    const handleImageUpload = useCallback((itemId: string, newImageUrl: string) => {
         dispatch(updateItemImageLocal({ itemId: itemId, imageUrl: newImageUrl }));
+    }, [dispatch]);
+
+    const handleStockIn = useCallback((itemId: string) => openStockDialog({ itemId }, 'IN'), [openStockDialog]);
+    const handleStockOut = useCallback((itemId: string) => openStockDialog({ itemId }, 'OUT'), [openStockDialog]);
+
+    const updateSearchParams = (newParams: Partial<Record<'page' | 'limit' | 'search' | 'sort', string | number>>) => {
+        const merged = { page, limit, search, sort, ...newParams };
+        setSearchParams(Object.fromEntries(Object.entries(merged).map(([k, v]) => [k, String(v)])));
     };
 
-    const handlePageChange = (newPage) => { 
-        const params = Object.fromEntries(searchParams.entries());
-        setSearchParams({ ...params, page: newPage, limit: limit });
+    const handlePageChange = (newPage: number) => { 
+        updateSearchParams({ page: newPage });
         dispatch(setPage(newPage));
     };
 
-    const updateSearchParams = (newParams) => {
-        setSearchParams({ page, limit, search, sort, ...newParams });
-    };
-
-    const handleDelete = (item) => { setItemToDelete(item); setShowConfirm(true); };
-    const handleEdit = (item) => { setItemToEdit(item); setShowEditForm(true); };
+    const handleDelete = useCallback((item: IItem) => { setItemToDelete(item); setShowConfirm(true); }, []);
+    const handleEdit = useCallback((item: IItem) => { setItemToEdit(item); setShowEditForm(true); }, []);
 
     const handleToggleAdd = () => {
         if (!isAddOpen) setIsSearchOpen(false);
@@ -135,7 +155,6 @@ const ItemsPage = () => {
         setIsSearchOpen((prev) => !prev);
     };
 
-    const handleCloseToolbar = () => { setIsAddOpen(false); setIsSearchOpen(false); };
     
     const confirmDelete = async () => {
         if (itemToDelete) {
@@ -143,37 +162,33 @@ const ItemsPage = () => {
                 await deleteItem(itemToDelete._id);
                 dispatch(loadItems({ page, limit, sort, search }));
                 setShowConfirm(false); setItemToDelete(null); setDeleteError("");
-            } catch (error) {
-                if (error.response && error.response.status === 400) {
-                    setDeleteError(error.response.data.error || "Item is still in use");
-                } else {
-                    alert("Error deleting item.");
-                }
+            } catch (error: unknown) {
+                // itemService rethrows with the server's message (e.g. "Item is used in Inventory")
+                setDeleteError(getErrorMessage(error, "Error deleting item."));
             }
         }
     };
 
-    const handleEditFormSave = async (savedItem) => {
-        try {
-            await updateItem(itemToEdit._id, savedItem);
-            dispatch(loadItems({ page, limit, sort, search }));
-            setShowEditForm(false); setItemToEdit(null); 
-        } catch (error) {
-            alert("Error updating item.");
-        }
+    const handleEditFormSave = async (savedItem: ItemEditFormData) => {
+        if (!itemToEdit) return;
+        // A failure is thrown on to EditItemDialog, which shows it and stays open
+        await updateItem(itemToEdit._id, savedItem);
+        dispatch(loadItems({ page, limit, sort, search }));
+        setShowEditForm(false); setItemToEdit(null);
     };
 
     const handleItemCreated = () => {
-        dispatch(setPage(1));
         updateSearchParams({ page: 1 });
-        dispatch(loadItems({ page: 1, limit, sort, search }));
+        // Changing the page already triggers the fetch effect; on page 1 reload explicitly
+        if (page !== 1) dispatch(setPage(1));
+        else dispatch(loadItems({ page: 1, limit, sort, search }));
     };
 
     return (
         <Container maxWidth="xl" sx={{ py: 1, px: 0 }}>
             <ActionToolbar 
                 isAddOpen={isAddOpen} isSearchOpen={isSearchOpen}
-                onToggleAdd={handleToggleAdd} onToggleSearch={handleToggleSearch} onCloseAll={handleCloseToolbar}
+                onToggleAdd={handleToggleAdd} onToggleSearch={handleToggleSearch}
                 searchComponent={
                     <SearchFilterBar 
                         search={search} limit={limit} sort={sort}
@@ -182,15 +197,14 @@ const ItemsPage = () => {
                         onSortChange={(s) => { dispatch(setSort(s)); updateSearchParams({ sort: s }); }}
                     />
                 }
-                addComponent={
+                addComponent={canManage &&
                     <CreateForm title="Add New Item" label="Item Name" placeholder="e.g., Switch" onCreate={createItem} onSuccess={handleItemCreated} />
                 }
             />
 
-            <StatusHandler status={status} error={error} loadingMessage='Loading Items ...'>
+            <StatusHandler status={status} error={error} loadingMessage='Loading Items ...' keepContentWhileLoading={items.length > 0}>
                 
                 {isDesktop ? (
-                    // 👈 YOUR CLEAN, REUSABLE DATAGRID COMPONENT
                     <ItemsDataGrid 
                         items={items}
                         stockLookup={stockLookup}
@@ -198,17 +212,20 @@ const ItemsPage = () => {
                         limit={limit}
                         totalCount={totalCount}
                         onPageChange={handlePageChange}
-                        onEdit={handleEdit}
-                        onDelete={handleDelete}
-                        onImageUpload={handleImageUpload}
-                        onIn={(id) => openStockDialog({ itemId: id }, 'IN')}
-                        onOut={(id) => openStockDialog({ itemId: id }, 'OUT')}
+                        onEdit={canManage ? handleEdit : undefined}
+                        onDelete={isAdmin ? handleDelete : undefined}
+                        onImageUpload={canManage ? handleImageUpload : undefined}
+                        onIn={handleStockIn}
+                        onOut={handleStockOut}
                     />
                 ) : (
                     <Stack spacing={2}>
                         <ItemList 
-                            items={items} onDelete={handleDelete} onEdit={handleEdit} 
-                            onImageUpload={handleImageUpload} refreshInventory={refreshInventory} stockLookup={stockLookup}
+                            items={items}
+                            onDelete={isAdmin ? handleDelete : undefined}
+                            onEdit={canManage ? handleEdit : undefined}
+                            onImageUpload={canManage ? handleImageUpload : undefined}
+                            refreshInventory={refreshInventory} stockLookup={stockLookup}
                         />
                         <Box sx={{ display: 'flex', justifyContent: 'center', pb: 4 }}>
                             <PaginationControls page={page} totalCount={totalCount} limit={limit} onChange={handlePageChange} />
@@ -232,7 +249,6 @@ const ItemsPage = () => {
                     open={stockDialogOpen}
                     onClose={closeStockDialog}
                     onSubmit={submitStockAction}
-                    itemId={stockItemId}
                     locations={locations}
                     type={stockActionType}
                     errorMessage={stockError}

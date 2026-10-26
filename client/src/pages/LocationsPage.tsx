@@ -1,21 +1,23 @@
 import { useEffect, useState } from "react";
-import { useAuth } from "../context/AuthContext.jsx";
+import { useAuth } from "../context/AuthContext";
 
 // Services (Added updateLocation)
-import { getLocations, deleteLocation, createLocation, updateLocation } from "../services/locationService.js";
+import { getLocations, deleteLocation, createLocation, updateLocation } from "../services/locationService";
 
 // Components
-import CreateForm from "../components/CreateForm.jsx";
-import LocationList from "../components/LocationList.jsx";
+import CreateForm from "../components/CreateForm";
+import LocationList from "../components/LocationList";
 
 // MUI components
 import { Container, Alert, Paper, Box } from "@mui/material";
 
 // Utility
-import { logError, logDebug } from "../utils/logger.js";
+import { logError, logDebug, logInfo } from "../utils/logger";
+import { getErrorMessage } from "../utils/errorMessage";
+import { ILocation, LocationResponse } from "../types/location.types";
 
 export default function LocationsPage() {
-    const [locations, setLocations] = useState([]);
+    const [locations, setLocations] = useState<ILocation[]>([]);
     const [errorMessage, setErrorMessage] = useState("");
     const { isAdmin, isManager } = useAuth();
 
@@ -24,41 +26,42 @@ export default function LocationsPage() {
     useEffect(() => {
         getLocations()
             .then(setLocations)
-            .catch((error) => {
-                setErrorMessage(error.message);
-                logError("LocationsPage.jsx -> Error fetching locations:", error.message);
+            .catch((error: unknown) => {
+                const message = getErrorMessage(error, "Failed to load locations.");
+                setErrorMessage(message);
+                logError("LocationsPage -> Error fetching locations:", message);
             });
     }, []);
 
-    const handleDelete = async (id) => {
+    const handleDelete = async (id: string) => {
         try {
             await deleteLocation(id);
             setLocations((prevLocations) => prevLocations.filter((location) => location._id !== id));
-        } catch (error) {
-            logError("LocationsPage.jsx -> Error deleting location:", error.message);
-            setErrorMessage("Failed to delete location.");
+        } catch (error: unknown) {
+            // The service surfaces the server's reason (e.g. the location still holds stock)
+            const message = getErrorMessage(error, "Failed to delete location.");
+            logError("LocationsPage -> Error deleting location:", message);
+            setErrorMessage(message);
         }
     };
 
-    const handleLocationCreated = (response) => {
-        logDebug("LocationsPage.jsx -> handleLocationCreated -> response:", response);
-        const newLocation = response.location || response;
-        setLocations((prevLocations) => [...prevLocations, newLocation]);
+    const handleLocationCreated = (response: LocationResponse) => {
+        logDebug("LocationsPage -> handleLocationCreated -> response:", response);
+        setLocations((prevLocations) => [...prevLocations, response.location]);
     };
 
-    // NEW: Handler for updating the color
-    const handleUpdateLocation = async (id, updatedData) => {
+    // Updates a location (e.g. its color) and replaces it in the list
+    const handleUpdateLocation = async (id: string, updatedData: Partial<ILocation>) => {
         try {
             const updatedLocation = await updateLocation(id, updatedData);
             setLocations((prevLocations) => 
                 prevLocations.map((loc) => loc._id === id ? updatedLocation.location : loc)
             );
-            logInfo("LocationsPage.jsx -> handleUpdateLocation -> Location updated successfully");
-            logDebug("LocationsPage.jsx -> handleUpdateLocation -> updatedLocation:", updatedLocation);
-            logDebug("LocationsPage.jsx -> handleUpdateLocation -> locations:", locations);
-        } catch (error) {
-            logError("LocationsPage.jsx -> Error updating location:", error.message);
-            setErrorMessage("Failed to update location color.");
+            logInfo("LocationsPage -> handleUpdateLocation -> Location updated successfully");
+        } catch (error: unknown) {
+            const message = getErrorMessage(error, "Failed to update location.");
+            logError("LocationsPage -> Error updating location:", message);
+            setErrorMessage(message);
         }
     };
 

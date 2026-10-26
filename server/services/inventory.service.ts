@@ -10,12 +10,15 @@ import {
 } from "../types/inventory.types.js";
 import { AppError } from "../errors/AppError.js";
 import logger from "../utils/logger.js";
+import { assertObjectId, parsePositiveInt, parseSort, searchRegex } from "../utils/validation.js";
 
 
-export const createInventoryRecord = async (itemId: string, locationId: string, quantity: number) => {
-    if (!mongoose.Types.ObjectId.isValid(itemId) || !mongoose.Types.ObjectId.isValid(locationId)) {
-        throw new Error('INVALID_ID');
-    }
+const INVENTORY_SORT_FIELDS = ['name', 'code', 'totalStock'] as const;
+
+export const createInventoryRecord = async (itemId: unknown, locationId: unknown, quantity: unknown) => {
+    assertObjectId(itemId, 'item ID');
+    assertObjectId(locationId, 'location ID');
+    const qty = quantity === undefined || quantity === 0 || quantity === '0' ? 0 : parsePositiveInt(quantity);
 
     const [isExistItem, isExistLocation] = await Promise.all([
         Item.findById(itemId),
@@ -31,21 +34,29 @@ export const createInventoryRecord = async (itemId: string, locationId: string, 
         throw new AppError('Inventory already exists for this item and location.', 409);
     }
 
-    const newInventory = new Inventory({ itemId, locationId, quantity });
+    const newInventory = new Inventory({ itemId, locationId, quantity: qty });
     return await newInventory.save();
 }
 
 export const getPagedInventory = async (params: IGetInventoryParams) => {
     const page = Math.max(params.page || 1, 1);
-    const limit = Math.max(params.limit || 10, 1);
+    const limit = Math.min(Math.max(params.limit || 10, 1), 100);
 
-    let sortStage: Record<string, 1 | -1> = { "name": 1 };
-    if (params.sort) {
-        const [field, order] = params.sort.split('_');
-        sortStage = { [field]: order === 'desc' ? -1 : 1 };
+    const sortStage = parseSort(params.sort, INVENTORY_SORT_FIELDS, { name: 1 });
+
+    const matchPipeline: any[] = [
+        { $lookup: { from: "items", localField: "itemId", foreignField: "_id", as: "item" } },
+        { $unwind: "$item" }
+    ];
+
+    const nameRegex = searchRegex(params.search);
+    if (nameRegex) {
+        matchPipeline.push({ $match: { "item.name": nameRegex } });
     }
 
+    // Count with the same filter as the page query, so totals reflect the search
     const countResult = await Inventory.aggregate([
+        ...matchPipeline,
         { $group: { _id: "$itemId"} },
         { $count: "count" }
     ]);
@@ -55,17 +66,7 @@ export const getPagedInventory = async (params: IGetInventoryParams) => {
     const currentPage = page > totalPages && totalPages > 0 ? totalPages : page;
     const skip = (currentPage - 1) * limit;
 
-    const pipeline: any[] = [
-        { $lookup: { from: "items", localField: "itemId", foreignField: "_id", as: "item" } },
-        { $unwind: "$item" }
-    ];
-
-    if (params.search) {
-        const escapeRegex = (str: string) => str.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&');
-        pipeline.push({
-            $match: { "item.name": { $regex: escapeRegex(params.search), $options: 'i' } }
-        });
-    }
+    const pipeline: any[] = [...matchPipeline];
 
     pipeline.push(
         { $lookup: { from: "locations", localField: "locationId", foreignField: "_id", as: "location" } },
@@ -97,7 +98,7 @@ export const getPagedInventory = async (params: IGetInventoryParams) => {
                 totalStock: 1
             }
         },
-        { $sort: sortStage },
+        { $sort: { ...sortStage, itemId: 1 } },
         { $skip: skip },
         { $limit: limit }
     );
@@ -145,70 +146,75 @@ export const getAllInventory = async (): Promise<IAggregatedInventory[]> => {
         },
         { $sort: { name: 1 } }
     ];
-    const dashboardInventory = await Inventory.aggregate(pipeline) as IAggregatedInventory[];
-    
     return await Inventory.aggregate(pipeline) as IAggregatedInventory[];
 };
 
+// Total quantity per item over all locations, only for the requested items.
+// Items without stock are returned with 0 so the client never has to guess.
+export const getStockTotals = async (itemIds: string[]): Promise<Record<string, number>> => {
+    const totals: Record<string, number> = Object.fromEntries(itemIds.map(id => [id, 0]));
+    if (itemIds.length === 0) return totals;
+
+    const rows = await Inventory.aggregate<{ _id: mongoose.Types.ObjectId; total: number }>([
+        { $match: { itemId: { $in: itemIds.map(id => new mongoose.Types.ObjectId(id)) } } },
+        { $group: { _id: '$itemId', total: { $sum: '$quantity' } } },
+    ]);
+    for (const row of rows) totals[row._id.toString()] = row.total;
+    return totals;
+};
+
 export const adjustInventory = async (params: IUpdateInventoryParams & { allowNegative?: boolean }) => {
-    const { itemId, locationId, quantity, type, note, userId, allowNegative = false } = params;
-    const qty = Math.abs(quantity);
+    const { type, note, userId, allowNegative = false } = params;
+    const itemId = assertObjectId(params.itemId, 'item ID');
+    const locationId = assertObjectId(params.locationId, 'location ID');
+    const qty = parsePositiveInt(params.quantity);
 
-    let updatedItem;
-
-    if (type === 'IN') {
-        // IN: upsert, If the shelf is new, create the record.
-        updatedItem = await Inventory.findOneAndUpdate(
-            { itemId, locationId },
-            { $inc: { quantity: qty } },
-            { upsert: true, new: true }
-        );
-    } else {
-        // OUT: CANNOT upsert. 
-        const query: any = { itemId, locationId };
-
-        // If negative stock is NOT allowed, strictly enforce it at the database level!
-        if (!allowNegative) {
-            query.quantity = { $gte: qty }; 
-        }
-
-        // IN: upsert. If the shelf is new, create the record.
-        updatedItem = await Inventory.findOneAndUpdate(
-            query,
-            { $inc: { quantity: -qty } },
-            { new: true } // Notice: upsert is completely removed here!
-        );
-
-        // If updatedItem is null, we need to know the reson
-        if (!updatedItem) {
-            const existingRecord = await Inventory.findOne({ itemId, locationId });
-            
-            if (!existingRecord) {
-                throw new AppError("Cannot remove stock: Item does not exist at this location.", 404);
+    const session = await mongoose.startSession();
+    try {
+        let updatedItem;
+        await session.withTransaction(async () => {
+            if (type === 'IN') {
+                const [item, location] = await Promise.all([
+                    Item.exists({ _id: itemId }).session(session),
+                    Location.exists({ _id: locationId }).session(session),
+                ]);
+                if (!item || !location) {
+                    throw new AppError('Item or Location not found.', 404);
+                }
+                // IN: upsert. If the shelf is new, create the record.
+                updatedItem = await Inventory.findOneAndUpdate(
+                    { itemId, locationId },
+                    { $inc: { quantity: qty } },
+                    { upsert: true, new: true, session }
+                );
             } else {
-                throw new AppError(`Insufficient stock. Available: ${existingRecord.quantity}, Requested: ${qty}`, 400);
+                // OUT: cannot upsert. Unless negative stock is allowed, enforce it at the database level.
+                const query: Record<string, unknown> = { itemId, locationId };
+                if (!allowNegative) {
+                    query.quantity = { $gte: qty }; 
+                }
+
+                updatedItem = await Inventory.findOneAndUpdate(
+                    query,
+                    { $inc: { quantity: -qty } },
+                    { new: true, session }
+                );
+
+                // If updatedItem is null, we need to know the reason
+                if (!updatedItem) {
+                    const existingRecord = await Inventory.findOne({ itemId, locationId }).session(session);
+                    if (!existingRecord) {
+                        throw new AppError("Cannot remove stock: Item does not exist at this location.", 404);
+                    }
+                    throw new AppError(`Insufficient stock. Available: ${existingRecord.quantity}, Requested: ${qty}`, 400);
+                }
             }
-        }
+
+            // Stock change and its audit record commit together or not at all
+            await logTransaction({ itemId, userId, locationId, type, quantity: qty, note }, session);
+        });
+        return updatedItem;
+    } finally {
+        await session.endSession();
     }
-
-    // Log the transaction
-    await logTransaction({
-        itemId,
-        userId,
-        locationId,
-        updatedItem,
-        type,
-        quantity: qty,
-        note
-    });
-
-    return updatedItem;
 };
-
-
-export const removeInventoryRecord = async (id: string) => {
-    const deletedItem = await Inventory.findByIdAndDelete(id);
-    if (!deletedItem) throw new Error("NOT_FOUND");
-    return deletedItem;
-};
-

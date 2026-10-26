@@ -21,7 +21,6 @@ export interface ILogTransactionParams {
     itemId: mongoose.Types.ObjectId | string;
     userId: mongoose.Types.ObjectId | string;
     locationId: mongoose.Types.ObjectId | string;
-    updatedItem?: any; 
     type: 'IN' | 'OUT' | 'TRANSFER';
     quantity: number;
     note?: string;

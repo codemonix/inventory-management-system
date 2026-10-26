@@ -1,18 +1,25 @@
 
 import api, { isApiError } from "../api/api";
+import { getBackendMessage } from "../utils/backendMessage";
 import { logInfo, logError } from "../utils/logger";
-import { IUser } from "../types/auth.types";
-import { GetUsersResponse, UserResponse } from "../types/user.types";
+import { GetUsersResponse, UserResponse, UserUpdate } from "../types/user.types";
 
+export interface GetUsersParams {
+    page?: number;
+    limit?: number;
+    search?: string;
+    sort?: string;
+}
 
-export const getUsers = async (): Promise<IUser[]> => {
+// One page of users (managers and admins only)
+export const getUsers = async (params: GetUsersParams = {}): Promise<GetUsersResponse> => {
     try {
-        const response = await api.get<GetUsersResponse>('/users');
-        logInfo("userService.js -> getUsers -> fetched successfully");
-        return response.data.users;
+        const response = await api.get<GetUsersResponse>('/users', { params: { ...params, search: params.search || undefined } });
+        logInfo("userService -> getUsers -> fetched successfully");
+        return response.data;
     } catch (error) {
         if (isApiError(error)) {
-            const backendMessage = error.response?.data?.message;
+            const backendMessage = getBackendMessage(error);
             logError("Failed to fetch users API:", error.message);
             throw new Error(backendMessage || "Failed to fetch users.");
         }
@@ -25,14 +32,14 @@ export const getUsers = async (): Promise<IUser[]> => {
     
 }
 
-export const updateUser = async ( id: string, data: Partial<IUser>): Promise<UserResponse> => {
+export const updateUser = async ( id: string, data: UserUpdate): Promise<UserResponse> => {
     try {
-        const response = await api.put(`/users/${id}`, data);
+        const response = await api.put<UserResponse>(`/users/${id}`, data);
         logInfo(`userService -> updateUser for ${id} successful.`);
         return response.data;
     } catch (error) {
         if (isApiError(error)) {
-            const backendMessage = error.response?.data?.message;
+            const backendMessage = getBackendMessage(error);
             logError("Failed to update user API:", error.message);
             throw new Error(backendMessage || "Failed to update user.");
         }
@@ -47,12 +54,12 @@ export const updateUser = async ( id: string, data: Partial<IUser>): Promise<Use
 export const toggleUserActiveStatus = async ( id: string, isActive: boolean ): Promise<UserResponse> => {
 
     try {
-        const response = await api.patch(`/users/${id}/toggle-active`, { isActive });
+        const response = await api.patch<UserResponse>(`/users/${id}/toggle-active`, { isActive });
         logInfo("userService.js -> toggleUserActiveStatus -> id:", id, isActive);
         return response.data;
     } catch (error) {
         if (isApiError(error)) {
-            const backendMessage = error.response?.data?.message;
+            const backendMessage = getBackendMessage(error);
             logError("Failed to toggle active status API:", error.message);
             throw new Error(backendMessage || "Failed to update user active status.");
         }
@@ -64,14 +71,14 @@ export const toggleUserActiveStatus = async ( id: string, isActive: boolean ): P
     }
 } 
 
-export const toggleUserApprovedStatus = async ( id: string, isApproved: boolean ) => {
+export const toggleUserApprovedStatus = async ( id: string, isApproved: boolean ): Promise<UserResponse> => {
     try {
-        const resposne = await api.patch(`/users/${id}/toggle-approved`, { isApproved});
-        logInfo("userService.js -> toggleUserApprovedStatus -> id:", id, isApproved);
-        return resposne.data;
+        const response = await api.patch<UserResponse>(`/users/${id}/toggle-approved`, { isApproved});
+        logInfo("userService -> toggleUserApprovedStatus -> id:", id, isApproved);
+        return response.data;
     } catch (error) {
         if (isApiError(error)) {
-            const backendMessage = error.response?.data?.message;
+            const backendMessage = getBackendMessage(error);
             logError("Failed to toggle approved status API:", error.message);
             throw new Error(backendMessage || "Failed to update user approval status.");
         }

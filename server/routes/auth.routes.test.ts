@@ -1,6 +1,7 @@
 import request from 'supertest';
 import app from '../app.js';
 import User from '../models/users.model.js'; 
+import generateToken from '../utils/generateToken.js';
 
 describe('Integration: Auth Endpoints', () => {
 
@@ -13,14 +14,48 @@ describe('Integration: Auth Endpoints', () => {
 
     describe('POST /api/auth/register', () => {
         
-        it('should successfully register a new user', async () => {
+        afterEach(() => {
+            delete process.env.DEFAULT_USER_APPROVED;
+        });
+
+        it('should register a new user without a token until approved', async () => {
+            const response = await request(app)
+                .post('/api/auth/register')
+                .send(mockUser);
+
+            expect(response.status).toBe(201);
+            expect(response.body.token).toBeUndefined();
+            expect(response.body.user.email).toBe(mockUser.email);
+            expect(response.body.user.isApproved).toBe(false);
+        });
+
+        it('should return a token when new users are auto-approved', async () => {
+            process.env.DEFAULT_USER_APPROVED = 'true';
             const response = await request(app)
                 .post('/api/auth/register')
                 .send(mockUser);
 
             expect(response.status).toBe(201);
             expect(response.body).toHaveProperty('token');
-            expect(response.body.user.email).toBe(mockUser.email);
+        });
+
+        it('should ignore a role sent by the client (no self-promotion to admin)', async () => {
+            const response = await request(app)
+                .post('/api/auth/register')
+                .send({ ...mockUser, role: 'admin' });
+
+            expect(response.status).toBe(201);
+            expect(response.body.user.role).toBe('user');
+            const saved = await User.findOne({ email: mockUser.email });
+            expect(saved?.role).toBe('user');
+        });
+
+        it('should reject a short password', async () => {
+            const response = await request(app)
+                .post('/api/auth/register')
+                .send({ ...mockUser, password: 'short' });
+
+            expect(response.status).toBe(400);
         });
 
         it('should reject registration with an existing email', async () => {
@@ -77,6 +112,42 @@ describe('Integration: Auth Endpoints', () => {
             expect(response.body.success).toBe(false);
             const errorMessage = response.body.error || response.body.message;
             expect(errorMessage).toBe('Invalid credentials');
+        });
+    });
+
+    describe('GET /api/auth/me (token checks)', () => {
+
+        const createUserToken = async (overrides: Record<string, unknown>) => {
+            const user = await User.create({
+                name: 'Token User', email: 'token@ims.com', password: 'hashedpassword',
+                role: 'user', isApproved: true, ...overrides,
+            });
+            return generateToken(user.id, user.role);
+        };
+
+        it('should accept a valid token for an active, approved user', async () => {
+            const token = await createUserToken({});
+            const response = await request(app).get('/api/auth/me').set('Authorization', `Bearer ${token}`);
+            expect(response.status).toBe(200);
+            expect(response.body.user).not.toHaveProperty('password');
+        });
+
+        it('should reject a deactivated user even with a valid token', async () => {
+            const token = await createUserToken({ isActive: false });
+            const response = await request(app).get('/api/auth/me').set('Authorization', `Bearer ${token}`);
+            expect(response.status).toBe(401);
+        });
+
+        it('should reject an unapproved user even with a valid token', async () => {
+            const token = await createUserToken({ isApproved: false });
+            const response = await request(app).get('/api/auth/me').set('Authorization', `Bearer ${token}`);
+            expect(response.status).toBe(401);
+        });
+
+        it('should reject a malformed token with a single 401 response', async () => {
+            const response = await request(app).get('/api/auth/me').set('Authorization', 'Bearer not-a-jwt');
+            expect(response.status).toBe(401);
+            expect(response.body).toEqual({ success: false, message: 'Invalid token provided' });
         });
     });
 });

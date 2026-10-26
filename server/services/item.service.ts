@@ -1,18 +1,37 @@
 
 import Item from "../models/item.model.js";
 import Inventory from "../models/inventory.model.js";
+import Transfer from "../models/transfer.model.js";
+import TempTransfer from "../models/tempTransfer.model.js";
 import { AppError } from "../errors/AppError.js";
 import { nanoid } from "nanoid";
 import logger from "../utils/logger.js";
 import path from 'path';
 import fs from 'fs/promises';
 import { CreateItemDTO, UpdateItemDTO, QueryItemsDTO } from "../types/item.types.js";
+import { parseSort, searchRegex } from "../utils/validation.js";
+
+const ITEM_SORT_FIELDS = ['name', 'code', 'category', 'price', 'createdAt', 'updatedAt'] as const;
+
+// Deletes an item's image from disk unless it is the shared default. Never throws:
+// the DB change already succeeded, a leftover file is only logged.
+const removeImageFile = async (imageUrl: string | undefined, itemId: string) => {
+    if (!imageUrl || imageUrl.includes('default.jpg')) return;
+    const filename = path.basename(imageUrl);
+    try {
+        const filePath = path.join(process.cwd(), 'uploads', 'items', filename);
+        await fs.unlink(filePath);
+        logger.debug(`Deleted image: ${filePath}`);
+    } catch (fsError: any) {
+        logger.error(`Failed to delete image for item ${itemId}: ${fsError.message}`);
+    }
+};
 
 export const createItem = async (data: CreateItemDTO) => {
-    const { name, category, price, filename } = data;
+    const { name, category, price } = data;
     
     const itemCode = nanoid(10);
-    const imageUrl = filename ? `/uploads/items/${filename}` : '/uploads/items/default.jpg';
+    const imageUrl = '/uploads/items/default.jpg';
     const nameLower = name.toLowerCase();
 
     try {
@@ -39,20 +58,12 @@ export const getItems = async (queryData: QueryItemsDTO) => {
     const limit = Math.max(1, queryData.limit || 20);
     const skip = (page - 1) * limit;
 
-    const filter: any = {};
+    const filter: Record<string, unknown> = {};
+    const nameRegex = searchRegex(queryData.search);
+    if (nameRegex) filter.name = nameRegex;
+    if (queryData.ids?.length) filter._id = { $in: queryData.ids };
 
-    // Sanitize search input for safe case-insensitive regex matching
-    if (queryData.search) {
-        const searchTrimmed = queryData.search.trim();
-        const escapeRegex = (str: string) => str.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&');
-        filter.name = { $regex: escapeRegex(searchTrimmed), $options: 'i' };
-    }
-
-    const sortOptions: any = {};
-    if (queryData.sort) {
-        const [sortField, sortDirection] = queryData.sort.split('_');
-        sortOptions[sortField] = sortDirection === 'desc' ? -1 : 1;
-    }
+    const sortOptions = parseSort(queryData.sort, ITEM_SORT_FIELDS, { createdAt: -1 });
 
     const items = await Item.find(filter)
         .sort(sortOptions)
@@ -66,11 +77,7 @@ export const getItems = async (queryData: QueryItemsDTO) => {
 };
 
 export const getAllItems = async () => {
-    const items = await Item.find({}).sort({ createdAt: -1 }).lean();
-    if (!items || items.length === 0) {
-        throw new AppError('No items found', 404);
-    }
-    return items;
+    return await Item.find({}).sort({ createdAt: -1 }).lean();
 };
 
 export const deleteItem = async (itemId: string) => {
@@ -78,12 +85,18 @@ export const deleteItem = async (itemId: string) => {
     if (isReferenced) {
         throw new AppError('Item is used in Inventory, cannot be deleted', 400);
     }
+    const inTransfer = await Transfer.exists({ 'items.item': itemId, status: 'in_transit' })
+        || await TempTransfer.exists({ 'items.itemId': itemId });
+    if (inTransfer) {
+        throw new AppError('Item is part of an open transfer, cannot be deleted', 400);
+    }
 
     const item = await Item.findByIdAndDelete(itemId);
     if (!item) {
         throw new AppError('Item not found', 404);
     }
-    
+
+    await removeImageFile(item.imageUrl, itemId);
     return item;
 };
 
@@ -100,21 +113,7 @@ export const updateItemImage = async (itemId: string, filename: string) => {
     itemToUpdate.imageUrl = newImageUrl;
     const updatedItem = await itemToUpdate.save();
 
-    // Safely delete the old image if it's not the default
-    if (oldImageUrl && !oldImageUrl.includes('default.jpg')) {
-        try {
-            const oldFilename = oldImageUrl.split('/').pop();
-            if (oldFilename) {
-                const oldPath = path.join(process.cwd(), 'uploads', 'items', oldFilename);
-                await fs.unlink(oldPath);
-                logger.debug(`Deleted old image: ${oldPath}`);
-            }
-        } catch (fsError: any) {
-            logger.error(`Failed to delete old image for item ${itemId}: ${fsError.message}`);
-            // We don't throw an error here because the DB update was successful.
-        }
-    }
-
+    await removeImageFile(oldImageUrl, itemId);
     return updatedItem;
 };
 

@@ -1,15 +1,16 @@
-import api from "../api/api.js";
-import { logError } from "../utils/logger.js";
-import { AuthResponse, MeResponse } from "../types/auth.types.js";
+import api from "../api/api";
+import { logError } from "../utils/logger";
+import { AuthResponse, MeResponse } from "../types/auth.types";
 
 
 export const loginApi = async ( email: string, password: string ): Promise<AuthResponse> => {
     try {
         const res = await api.post<AuthResponse>("/auth/login", { email, password });
         return res.data; // { token, user }
-    } catch (error: any) {
-        logError("loginApi:", error.message)
-        throw error
+    } catch (error) {
+        const message = error instanceof Error ? error.message : "Unknown error";
+        logError("loginApi:", message);
+        throw error;
     }
     
     

@@ -3,6 +3,7 @@ import logger from "../utils/logger.js";
 import { AppError } from '../errors/AppError.js';
 import { AuthenticatedRequest } from '../types/auth.types.js';
 import * as userService from '../services/user.service.js'; // The Service Import
+import { assertObjectId, parsePagination } from '../utils/validation.js';
 import { 
     IUserQuery, 
     IUpdateUserBody, 
@@ -16,8 +17,7 @@ export const getUsers = async (
     next: NextFunction
 ): Promise<void> => {
     try {
-        const page = Math.max(1, parseInt(req.query.page || '1', 10));
-        const limit = Math.max(1, parseInt(req.query.limit || '10', 10));
+        const { page, limit } = parsePagination(req.query.page, req.query.limit, 10);
         const search = req.query.search || '';
         const sortParam = req.query.sort || 'name_asc';
 
@@ -36,15 +36,15 @@ export const toggleUserActive = async (
     next: NextFunction
 ): Promise<void> => {
     try {
-        const { id } = req.params;
+        const id = assertObjectId(req.params.id, 'user ID');
         const { isActive } = req.body;
 
-        if (isActive === undefined) {
+        if (typeof isActive !== 'boolean') {
             logger.warn("isActive boolean missing")
             throw new AppError("isActive boolean is required", 400);
         } 
 
-        const user = await userService.toggleUserActive(id, isActive);
+        const user = await userService.toggleUserActive(req.user, id, isActive);
         
         res.status(200).json({ success: true, user });
     } catch (error) {
@@ -58,9 +58,9 @@ export const updateUser = async (
     next: NextFunction
 ): Promise<void> => {
     try {
-        const { id } = req.params;
+        const id = assertObjectId(req.params.id, 'user ID');
         const { name, email, role, isActive, isApproved } = req.body;
-        const user = await userService.updateUser(id, { name, email, role, isActive, isApproved });
+        const user = await userService.updateUser(req.user, id, { name, email, role, isActive, isApproved });
 
         logger.info(`User updated: ${user.email}`);
         res.status(200).json({ success: true, user });
@@ -76,15 +76,15 @@ export const toggleUserApproved = async (
     next: NextFunction
 ): Promise<void> => {
     try {
-        const { id } = req.params;
+        const id = assertObjectId(req.params.id, 'user ID');
         const { isApproved } = req.body;
 
-        if (isApproved === undefined) {
+        if (typeof isApproved !== 'boolean') {
             logger.warn("isApproved boolean is required.")
             throw new AppError("isApproved boolean is required", 400);
         } 
 
-        const user = await userService.toggleUserApproved(id, isApproved);
+        const user = await userService.toggleUserApproved(req.user, id, isApproved);
 
         logger.info(`User approved status updated: ${user.email}`);
         res.status(200).json({ success: true, user });

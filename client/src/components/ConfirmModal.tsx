@@ -1,3 +1,4 @@
+import { ReactNode } from "react";
 import {
     Dialog,
     DialogTitle,
@@ -7,10 +8,27 @@ import {
     Button,
     Divider,
     Alert,
-    Box
+    Box,
+    ButtonProps,
 } from "@mui/material";
 
-const ConfirmModal = ({ open, title, message, onConfirm, onClose, error }) => {
+interface ConfirmModalProps {
+    open: boolean;
+    title: ReactNode;
+    message: ReactNode;
+    onConfirm: () => void;
+    onClose: () => void;
+    error?: string | null;
+    confirmLabel?: string;
+    // Red by default, because this modal is mostly used for deletions
+    confirmColor?: ButtonProps['color'];
+    isSubmitting?: boolean;
+}
+
+const ConfirmModal = ({
+    open, title, message, onConfirm, onClose, error,
+    confirmLabel = 'Confirm', confirmColor = 'error', isSubmitting = false,
+}: ConfirmModalProps) => {
     return (
         <Dialog 
             open={open} 
@@ -57,16 +75,17 @@ const ConfirmModal = ({ open, title, message, onConfirm, onClose, error }) => {
                 <Button 
                     onClick={onConfirm} 
                     variant="contained"
-                    color="error" // Stays red because this modal is usually for deletions/confirmations
+                    color={confirmColor}
+                    disabled={isSubmitting}
                     sx={{ 
                         borderRadius: 2, 
                         px: 3, 
                         fontWeight: 'bold',
                         boxShadow: 'none',
-                        '&:hover': { boxShadow: 'none', bgcolor: 'error.dark' }
+                        '&:hover': { boxShadow: 'none' }
                     }}
                 >
-                    Confirm
+                    {confirmLabel}
                 </Button>
             </DialogActions>
         </Dialog>

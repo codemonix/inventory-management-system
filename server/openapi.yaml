@@ -1,0 +1,1437 @@
+openapi: 3.0.0
+info:
+  title: Codemonix Inventory Management System (IMS) API
+  description: |
+    Enterprise-grade multi-warehouse stock control solution backend API featuring role-based access control,
+    two-phase commitments for stock transfers, and automated disaster recovery.
+
+    **Roles:** `user` (stock in/out, transfers), `manager` (also items, locations and regular users),
+    `admin` (also deletes and system operations). Each operation's description states the role it needs.
+
+    **Errors:** every error response has the shape `{ "success": false, "message": "..." }`
+    (see `ErrorResponse`). Login, register and setup are rate limited (HTTP 429).
+  version: 2.1.0
+servers:
+  - url: /api
+    description: Base API Environment Path
+paths:
+  # ==========================================
+  # AUTHENTICATION ENDPOINTS
+  # ==========================================
+  /auth/register:
+    post:
+      summary: Register a new user account
+      tags:
+        - Authentication
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+                - email
+                - password
+              properties:
+                name:
+                  type: string
+                  example: Jane Doe
+                email:
+                  type: string
+                  format: email
+                  example: jane@example.com
+                password:
+                  type: string
+                  format: password
+                  minLength: 8
+                  example: SecurePassword123!
+      description: >
+        Self-registration always creates a `user` account (any `role` sent is ignored).
+        The response includes a `token` only when the account is auto-approved
+        (`DEFAULT_USER_APPROVED=true`); otherwise an admin or manager must approve it first.
+      responses:
+        '201':
+          description: User registered successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '409':
+          description: Email already registered
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+
+  /auth/login:
+    post:
+      summary: Authenticate credentials and receive JWT session token
+      tags:
+        - Authentication
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - password
+              properties:
+                email:
+                  type: string
+                  format: email
+                  example: demo@ims.com
+                password:
+                  type: string
+                  format: password
+                  example: demo123
+      responses:
+        '200':
+          description: Authentication successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          description: Invalid credentials or inactive account
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Account not approved yet
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+
+  /auth/me:
+    get:
+      summary: Retrieve the currently logged-in user profile
+      tags:
+        - Authentication
+      security:
+        - BearerAuth: []
+      description: "Requires authentication (any role)."
+      responses:
+        '200':
+          description: Current user payload
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  user:
+                    $ref: '#/components/schemas/User'
+        '401':
+          description: Unauthorized session token
+
+  # ==========================================
+  # ITEM CATALOG ENDPOINTS
+  # ==========================================
+  /items:
+    get:
+      summary: Retrieve paginated item catalog definitions
+      tags:
+        - Items
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+        - name: search
+          in: query
+          schema:
+            type: string
+        - name: ids
+          in: query
+          description: Comma-separated item ids; returns only these items (max 100)
+          schema:
+            type: string
+        - name: sort
+          in: query
+          schema:
+            type: string
+            example: name_asc
+      security:
+        - BearerAuth: []
+      description: "Requires authentication (any role)."
+      responses:
+        '200':
+          description: Catalog list retrieved successfully
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+    post:
+      summary: Create a new catalog item
+      tags:
+        - Items
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+              properties:
+                name:
+                  type: string
+                category:
+                  type: string
+                price:
+                  type: number
+                  format: float
+                  minimum: 0
+      description: "Requires role: manager or admin."
+      responses:
+        '201':
+          description: Item created successfully
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /items/all:
+    get:
+      summary: Retrieve the entire list of items without pagination
+      tags:
+        - Items
+      security:
+        - BearerAuth: []
+      description: "Requires authentication (any role)."
+      responses:
+        '200':
+          description: Success
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /items/{id}:
+    put:
+      summary: Update basic details of an existing item definition
+      tags:
+        - Items
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+              properties:
+                name:
+                  type: string
+                category:
+                  type: string
+                price:
+                  type: number
+      description: "Requires role: manager or admin."
+      responses:
+        '200':
+          description: Item details updated successfully
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+    delete:
+      summary: Delete an item definition from the system catalog
+      tags:
+        - Items
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      description: "Requires role: admin."
+      responses:
+        '200':
+          description: Item deleted successfully
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /items/{itemId}/update-image:
+    post:
+      summary: Upload or replace an image attachment for a specific item
+      tags:
+        - Items
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: itemId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                itemCode:
+                  type: string
+                image:
+                  type: string
+                  format: binary
+      description: "Requires role: manager or admin."
+      responses:
+        '200':
+          description: Image replacement successful
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /items/image/{filename}:
+    get:
+      summary: Stream an item image thumbnail asset directly
+      tags:
+        - Items
+      parameters:
+        - name: filename
+          in: path
+          required: true
+          schema:
+            type: string
+      security:
+        - BearerAuth: []
+      description: "Requires authentication (any role)."
+      responses:
+        '200':
+          description: File stream returned
+          content:
+            image/*:
+              schema:
+                type: string
+                format: binary
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  # ==========================================
+  # INVENTORY MANAGEMENT ENDPOINTS
+  # ==========================================
+  /inventory:
+    get:
+      summary: Query consolidated multi-warehouse inventory analytics
+      tags:
+        - Inventory
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+        - name: limit
+          in: query
+          schema:
+            type: integer
+        - name: search
+          in: query
+          schema:
+            type: string
+        - name: sort
+          in: query
+          schema:
+            type: string
+      security:
+        - BearerAuth: []
+      description: "Requires authentication (any role)."
+      responses:
+        '200':
+          description: Paginated inventory data list mapping stock across warehouses
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+    post:
+      summary: Create an inventory record for an item at a location
+      tags:
+        - Inventory
+      security:
+        - BearerAuth: []
+      description: "Requires role: manager or admin."
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - itemId
+                - locationId
+              properties:
+                itemId:
+                  type: string
+                locationId:
+                  type: string
+                quantity:
+                  type: integer
+                  minimum: 0
+                  default: 0
+      responses:
+        '201':
+          description: Inventory record created
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          description: Item or location not found
+        '409':
+          description: A record for this item and location already exists
+
+  /inventory/{id}:
+    delete:
+      summary: Delete an empty inventory record (quantity must be 0)
+      tags:
+        - Inventory
+      security:
+        - BearerAuth: []
+      description: "Requires role: admin."
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Inventory record deleted
+        '400':
+          description: The record still holds stock
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          description: Inventory record not found
+
+  /inventory/totals:
+    get:
+      summary: Total stock per item over all locations, for the given items only
+      tags:
+        - Inventory
+      security:
+        - BearerAuth: []
+      description: "Requires authentication (any role)."
+      parameters:
+        - name: itemIds
+          in: query
+          required: true
+          description: Comma-separated item ids (max 100)
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Map of itemId to total quantity (0 for items without stock)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  totals:
+                    type: object
+                    additionalProperties:
+                      type: integer
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /inventory/full:
+    get:
+      summary: Retrieve raw warehouse allocations for all items
+      tags:
+        - Inventory
+      security:
+        - BearerAuth: []
+      description: "Requires authentication (any role)."
+      responses:
+        '200':
+          description: Complete raw list schema mapping
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /inventory/{itemId}/in:
+    post:
+      summary: Record an inbound warehouse stock adjustment operation (Stock In)
+      tags:
+        - Inventory
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: itemId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - locationId
+                - quantity
+              properties:
+                locationId:
+                  type: string
+                quantity:
+                  type: integer
+                note:
+                  type: string
+      description: "Requires authentication (any role)."
+      responses:
+        '200':
+          description: Stock accurately increments
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /inventory/{itemId}/out:
+    post:
+      summary: Record an outbound warehouse stock deduction adjustment operation (Stock Out)
+      tags:
+        - Inventory
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: itemId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - locationId
+                - quantity
+              properties:
+                locationId:
+                  type: string
+                quantity:
+                  type: integer
+                note:
+                  type: string
+      description: "Requires authentication (any role)."
+      responses:
+        '200':
+          description: Stock accurately decrements
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  # ==========================================
+  # LOCATION ENDPOINTS
+  # ==========================================
+  /locations:
+    get:
+      summary: Retrieve all warehouse/storage locations
+      tags:
+        - Locations
+      security:
+        - BearerAuth: []
+      description: "Requires authentication (any role)."
+      responses:
+        '200':
+          description: List of warehouse locations
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+    post:
+      summary: Provision a brand-new physical location entity
+      tags:
+        - Locations
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+              properties:
+                name:
+                  type: string
+                color:
+                  type: string
+                  default: "#fff"
+                type:
+                  type: string
+      description: "Requires role: manager or admin."
+      responses:
+        '201':
+          description: Location provisioned successfully
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /locations/{id}:
+    put:
+      summary: Modify metadata characteristics of a specific location profile
+      tags:
+        - Locations
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                color:
+                  type: string
+                type:
+                  type: string
+      description: "Requires role: manager or admin."
+      responses:
+        '200':
+          description: Parameter modifications persisted
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+    delete:
+      summary: Permanently decommission a location entity
+      tags:
+        - Locations
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      description: "Requires role: admin."
+      responses:
+        '200':
+          description: Location deleted successfully
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  # ==========================================
+  # WAREHOUSE TRANSFERS (TWO-PHASE LOGIC)
+  # ==========================================
+  /transfers:
+    get:
+      summary: Transfer history, newest first, one page at a time (used for lazy loading)
+      tags:
+        - Transfers
+      security:
+        - BearerAuth: []
+      description: "Requires authentication (any role). `search` matches item names/codes, location names and the creator's email."
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: search
+          in: query
+          schema:
+            type: string
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [all, in_transit, confirmed, cancelled]
+        - name: fromLocation
+          in: query
+          schema:
+            type: string
+        - name: toLocation
+          in: query
+          schema:
+            type: string
+        - name: dateFrom
+          in: query
+          description: Created on or after this date (YYYY-MM-DD or ISO date-time)
+          schema:
+            type: string
+        - name: dateTo
+          in: query
+          description: Created on or before this date; a bare YYYY-MM-DD includes the whole day
+          schema:
+            type: string
+      responses:
+        '200':
+          description: One page of transfers
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  transfers:
+                    type: array
+                    items:
+                      type: object
+                  total:
+                    type: integer
+                  page:
+                    type: integer
+                  limit:
+                    type: integer
+                  hasMore:
+                    type: boolean
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+    post:
+      summary: Initialize an uncommitted manual transfer manifest package bypass route
+      tags:
+        - Transfers
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - fromLocation
+                - toLocation
+                - items
+              properties:
+                fromLocation:
+                  type: string
+                toLocation:
+                  type: string
+                items:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      item:
+                        type: string
+                      quantity:
+                        type: integer
+      description: "Requires authentication (any role)."
+      responses:
+        '201':
+          description: Inter-warehouse micro-transfer initiated
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /transfers/temp:
+    get:
+      summary: Retrieve current active staging basket manifest configuration
+      tags:
+        - Transfers
+      security:
+        - BearerAuth: []
+      description: "Requires authentication (any role)."
+      responses:
+        '200':
+          description: Temporary staging object model payload returned
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+    delete:
+      summary: Discard your draft transfer; its reserved stock returns to the source location
+      tags:
+        - Transfers
+      security:
+        - BearerAuth: []
+      description: "Requires authentication (any role). Only affects the caller's own draft."
+      responses:
+        '200':
+          description: Draft discarded and stock returned
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          description: No draft to discard
+
+  /transfers/temp/init:
+    post:
+      summary: Setup temporary transfer holding channels between nodes
+      tags:
+        - Transfers
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - fromLocation
+                - toLocation
+              properties:
+                fromLocation:
+                  type: string
+                toLocation:
+                  type: string
+      description: "Requires authentication (any role)."
+      responses:
+        '201':
+          description: Holding space initialized successfully
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /transfers/temp/add:
+    post:
+      summary: Stage specific units into uncommitted holding transfer basket
+      tags:
+        - Transfers
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - itemId
+                - quantity
+                - sourceLocationId
+              properties:
+                itemId:
+                  type: string
+                quantity:
+                  type: integer
+                sourceLocationId:
+                  type: string
+      description: "Requires authentication (any role)."
+      responses:
+        '201':
+          description: Units successfully staged in holding state
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /transfers/temp/remove/{itemId}:
+    delete:
+      summary: Unstage a target line item out of uncommitted transfer cart
+      tags:
+        - Transfers
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: itemId
+          in: path
+          required: true
+          schema:
+            type: string
+      description: "Requires authentication (any role)."
+      responses:
+        '200':
+          description: Line item removed from active staging instance
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /transfers/temp/finalize:
+    post:
+      summary: Convert uncommitted draft items list into strict immutable manifest
+      tags:
+        - Transfers
+      security:
+        - BearerAuth: []
+      description: "Requires authentication (any role)."
+      responses:
+        '201':
+          description: Micro-commit locks source inventory into "In Transit" status
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /transfers/{id}/cancel:
+    put:
+      summary: Cancel an in-transit transfer; its stock returns to the source location
+      tags:
+        - Transfers
+      security:
+        - BearerAuth: []
+      description: "Requires role: admin. Records who cancelled and when, and logs TRANSFER transactions."
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Transfer cancelled
+        '400':
+          description: The transfer is not in transit (already confirmed or cancelled)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          description: Transfer not found
+
+  /transfers/{id}/confirm:
+    put:
+      summary: Destination warehouse acknowledgement confirmation (Phase-2 Commitment)
+      tags:
+        - Transfers
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      description: "Requires role: manager or admin. Records who confirmed and when."
+      responses:
+        '200':
+          description: Manifest closed. Stocks accurately append to destination warehouse nodes.
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  # ==========================================
+  # SYSTEM ADMINISTRATIVE ENDPOINTS
+  # ==========================================
+  /setup:
+    get:
+      summary: Verify if database deployment requires an initialization setup wizard
+      tags:
+        - System Operations
+      responses:
+        '200':
+          description: Query response flag
+    post:
+      summary: Seed initial root administrative access credentials
+      tags:
+        - System Operations
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+                - email
+                - password
+              properties:
+                name:
+                  type: string
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+                  format: password
+                  minLength: 8
+      description: Only allowed while no user exists; afterwards it returns 400.
+      responses:
+        '201':
+          description: Initial admin user successfully provisioned
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+
+  /system/backup:
+    get:
+      summary: Compile and stream compressed runtime archive containing DB dumps and raw asset folders
+      tags:
+        - System Operations
+      security:
+        - BearerAuth: []
+      description: "Requires role: admin."
+      responses:
+        '200':
+          description: Downloadable zipped file stream returned
+          content:
+            application/zip:
+              schema:
+                type: string
+                format: binary
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /system/restore:
+    post:
+      summary: Restore a backup zip in one transaction. Rejected (400) if the backup contains no active admin user.
+      tags:
+        - System Operations
+      security:
+        - BearerAuth: []
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                backupFile:
+                  type: string
+                  format: binary
+      description: "Requires role: admin."
+      responses:
+        '200':
+          description: Full state rollbacks executed smoothly
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /system/clear:
+    post:
+      summary: Purge transfers or items. Stock reserved in drafts or in transit is returned to its source first; items can only be cleared when no stock exists.
+      tags:
+        - System Operations
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - target
+              properties:
+                target:
+                  type: string
+                  enum: [transfers, items]
+      description: "Requires role: admin."
+      responses:
+        '200':
+          description: Targets cleared successfully
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /system/reset:
+    post:
+      summary: Factory reset. Wipes all data and uploaded images but keeps every admin account (including the caller).
+      tags:
+        - System Operations
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - confirmation
+              properties:
+                confirmation:
+                  type: string
+                  example: DELETE EVERYTHING
+      description: "Requires role: admin."
+      responses:
+        '200':
+          description: Full reset completed
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /system/logs:
+    get:
+      summary: Retrieve operational internal logger traces with multi-level severity indexing
+      tags:
+        - System Operations
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: string
+        - name: limit
+          in: query
+          schema:
+            type: string
+        - name: level
+          in: query
+          schema:
+            type: string
+        - name: type
+          in: query
+          schema:
+            type: string
+      description: "Requires role: admin."
+      responses:
+        '200':
+          description: Log tracking traces mapped out successfully
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+    delete:
+      summary: Purge tracking system logs tables manually
+      tags:
+        - System Operations
+      security:
+        - BearerAuth: []
+      description: "Requires role: admin."
+      responses:
+        '200':
+          description: Logs collection clean successfully
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /system/settings:
+    get:
+      summary: View systemic global logging severity rules flags parameters
+      tags:
+        - System Operations
+      security:
+        - BearerAuth: []
+      description: "Requires role: admin."
+      responses:
+        '200':
+          description: Active configuration state tracking returned
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+    put:
+      summary: Live modifications adjustments to dynamic logger configurations
+      tags:
+        - System Operations
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                logLevel:
+                  type: string
+                  enum: [error, warn, info, http, debug]
+                enableDbLogging:
+                  type: boolean
+      description: "Requires role: admin."
+      responses:
+        '200':
+          description: Configuration adjustments persisted directly
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /transactions/logs:
+    get:
+      summary: Trace immutable historical inventory alterations ledger
+      tags:
+        - System Operations
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: search
+          in: query
+          schema:
+            type: string
+        - name: sortBy
+          in: query
+          schema:
+            type: string
+        - name: sortOrder
+          in: query
+          schema:
+            type: string
+        - name: skip
+          in: query
+          schema:
+            type: string
+        - name: limit
+          in: query
+          schema:
+            type: string
+      description: "Requires role: manager or admin."
+      responses:
+        '200':
+          description: Ledger transactions trace history returned
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  # ==========================================
+  # USER ADMINISTRATION ENDPOINTS
+  # ==========================================
+  /users:
+    get:
+      summary: Query registered system users list with filters
+      tags:
+        - User Administration
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: string
+        - name: limit
+          in: query
+          schema:
+            type: string
+        - name: search
+          in: query
+          schema:
+            type: string
+        - name: sort
+          in: query
+          schema:
+            type: string
+      description: "Requires role: manager or admin."
+      responses:
+        '200':
+          description: List of system users mapped out successfully
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /users/{id}:
+    put:
+      summary: Update system authorization details for an existing user account
+      tags:
+        - User Administration
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                email:
+                  type: string
+                role:
+                  type: string
+                  enum: [admin, manager, user]
+                isActive:
+                  type: boolean
+                isApproved:
+                  type: boolean
+      description: "Requires role: admin. An admin cannot deactivate, unapprove or demote themselves (400)."
+      responses:
+        '200':
+          description: Profile modifications updated successfully
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /users/{id}/toggle-active:
+    patch:
+      summary: Flip activity security access privileges block parameters
+      tags:
+        - User Administration
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - isActive
+              properties:
+                isActive:
+                  type: boolean
+      description: "Requires role: manager or admin. Managers may only change regular users; nobody can deactivate or unapprove themselves (400)."
+      responses:
+        '200':
+          description: Activity state modified successfully
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /users/{id}/toggle-approved:
+    patch:
+      summary: Grant registration access approval to unverified accounts
+      tags:
+        - User Administration
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - isApproved
+              properties:
+                isApproved:
+                  type: boolean
+      description: "Requires role: manager or admin. Managers may only change regular users; nobody can deactivate or unapprove themselves (400)."
+      responses:
+        '200':
+          description: Verification approval state updated successfully
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    User:
+      type: object
+      properties:
+        _id:
+          type: string
+        name:
+          type: string
+        email:
+          type: string
+        role:
+          type: string
+          enum: [admin, manager, user]
+        isActive:
+          type: boolean
+        isApproved:
+          type: boolean
+        lastLogin:
+          type: string
+          format: date-time
+    AuthResponse:
+      type: object
+      properties:
+        token:
+          type: string
+          description: Omitted after registration when the account still needs approval.
+        user:
+          $ref: '#/components/schemas/User'
+    ErrorResponse:
+      type: object
+      required: [success, message]
+      properties:
+        success:
+          type: boolean
+          example: false
+        message:
+          type: string
+          example: Invalid item ID
+  responses:
+    BadRequest:
+      description: Invalid input (missing fields, malformed IDs, non-positive quantities, ...)
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    Unauthorized:
+      description: Missing, invalid or expired token, or the account is inactive / not approved
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    Forbidden:
+      description: The caller's role is not allowed to perform this operation
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    TooManyRequests:
+      description: Rate limit exceeded (20 attempts per 15 minutes per IP)
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'

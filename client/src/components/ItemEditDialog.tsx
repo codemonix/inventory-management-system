@@ -1,24 +1,40 @@
-import { Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField, Divider } from '@mui/material';
-import { useState, useEffect } from 'react';
+import { Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField, Divider, Alert } from '@mui/material';
+import { ChangeEvent, useState, useEffect } from 'react';
 import { logError } from '../utils/logger';
+import { getErrorMessage } from '../utils/errorMessage';
+import { IItem } from '../types/item.types';
 
-const EditItemDialog = ({ open, onClose, item, onSave }) => {
-    const [formData, setFormData] = useState({
+export interface ItemEditFormData {
+    name: string;
+    price: string | number;
+}
+
+interface EditItemDialogProps {
+    open: boolean;
+    onClose: () => void;
+    item: IItem | null;
+    onSave: (data: ItemEditFormData) => Promise<void>;
+}
+
+const EditItemDialog = ({ open, onClose, item, onSave }: EditItemDialogProps) => {
+    const [formData, setFormData] = useState<ItemEditFormData>({
         name: '',
         price: '',
     });
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [saveError, setSaveError] = useState<string | null>(null);
 
     useEffect(() => {
         if (open && item) {
             setFormData({
                 name: item.name,
-                price: item.price,
+                price: item.price ?? '',
             });
+            setSaveError(null);
         }
     }, [open, item]);
 
-    const handleChange = (e) => {
+    const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
         setFormData((prevData) => ({
             ...prevData,
             [e.target.name]: e.target.value,
@@ -27,11 +43,14 @@ const EditItemDialog = ({ open, onClose, item, onSave }) => {
 
     const handleSubmit = async () => {
         setIsSubmitting(true);
+        setSaveError(null);
         try {
             await onSave(formData);
             onClose();
-        } catch (error) {
-            logError(error.message);
+        } catch (error: unknown) {
+            // Stay open so the user can correct the input (e.g. a duplicate name from the server)
+            logError(getErrorMessage(error));
+            setSaveError(getErrorMessage(error, "Error updating item."));
         } finally {
             setIsSubmitting(false);
         }
@@ -53,7 +72,8 @@ const EditItemDialog = ({ open, onClose, item, onSave }) => {
 
                 {/* 2. Themed Content Area */}
                 <DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: 2.5, pt: 3, pb: 4, bgcolor: 'background.default' }}>
-                    <TextField 
+                    {saveError && <Alert severity="error" sx={{ borderRadius: 1.5 }}>{saveError}</Alert>}
+                    <TextField
                         autoFocus
                         name="name"
                         label="Item Name"
@@ -72,7 +92,7 @@ const EditItemDialog = ({ open, onClose, item, onSave }) => {
                         onChange={handleChange}
                         sx={{ bgcolor: 'background.paper' }}
                         slotProps={{
-                            input: { min: 0, step: "0.01" } // Sensible defaults for currency
+                            htmlInput: { min: 0, step: "0.01" } // Sensible defaults for currency
                         }}
                     />
                 </DialogContent>

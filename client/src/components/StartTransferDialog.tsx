@@ -1,22 +1,23 @@
 import { useState } from 'react';
-import { useSelector } from 'react-redux';
-import { Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField, MenuItem, Typography } from '@mui/material';
-import { logDebug } from '../utils/logger';
+import { Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField, MenuItem } from '@mui/material';
+import { useAppSelector } from '../redux/hooks';
 
-const StartTransferDialog = ({ open, onClose, onStartNewTransfer }) => {
+interface StartTransferDialogProps {
+    open: boolean;
+    onClose: () => void;
+    onStartNewTransfer: (fromLocation: string, toLocation: string) => void;
+}
+
+const StartTransferDialog = ({ open, onClose, onStartNewTransfer }: StartTransferDialogProps) => {
     const [fromLocation, setFromLocation] = useState("");
     const [toLocation, setToLocation] = useState("");
-    const locations = useSelector((state) => state.locations.locations);
-    
-    logDebug("StartTransferDialog locations: ", locations);
+    const locations = useAppSelector((state) => state.locations.locations);
 
+    // The button is disabled and the field shows a hint until two different locations are chosen
     const handleStartTransfer = () => {
-        if (fromLocation && toLocation && fromLocation !== toLocation) {
-            onStartNewTransfer(fromLocation, toLocation);
-            onClose();
-        } else {
-            alert("Please select different locations for the transfer.");
-        }
+        if (!fromLocation || !toLocation || fromLocation === toLocation) return;
+        onStartNewTransfer(fromLocation, toLocation);
+        onClose();
     };
 
     return (

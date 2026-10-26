@@ -1,7 +1,6 @@
 import request from 'supertest';
 import app from '../app.js';
 import User from '../models/users.model.js';
-import Item from '../models/item.model.js';
 import generateToken from '../utils/generateToken.js';
 
 describe('Integration: Item Endpoints', () => {
@@ -85,6 +84,62 @@ describe('Integration: Item Endpoints', () => {
             expect(itemsArray.length).toBe(2);
             expect(itemsArray[0].name).toBeDefined();
             expect(itemsArray[0].code).toBeDefined();
+        });
+    });
+
+    describe('Hardening', () => {
+        it('should not allow path traversal through the image route', async () => {
+            const response = await request(app)
+                .get('/api/items/image/..%2F..%2F.env')
+                .set('Authorization', `Bearer ${adminToken}`);
+
+            expect(response.status).toBe(404);
+            expect(response.text).not.toContain('JWT_SECRET');
+        });
+
+        it('should require authentication for item images', async () => {
+            const response = await request(app).get('/api/items/image/default.jpg');
+            expect(response.status).toBe(401);
+        });
+
+        it('should forbid regular users from creating items', async () => {
+            const worker = await User.create({
+                name: 'Worker', email: 'worker@ims.com', password: 'hashedpassword', role: 'user', isApproved: true,
+            });
+            const response = await request(app)
+                .post('/api/items')
+                .set('Authorization', `Bearer ${generateToken(worker.id, worker.role)}`)
+                .send(mockItem);
+
+            expect(response.status).toBe(403);
+        });
+
+        it('should reject a negative price on create and update', async () => {
+            const created = await request(app)
+                .post('/api/items')
+                .set('Authorization', `Bearer ${adminToken}`)
+                .send({ ...mockItem, price: -5 });
+            expect(created.status).toBe(400);
+            expect(created.body.message).toContain('Price cannot be negative');
+
+            const ok = await request(app)
+                .post('/api/items')
+                .set('Authorization', `Bearer ${adminToken}`)
+                .send(mockItem);
+            const updated = await request(app)
+                .put(`/api/items/${ok.body.item._id}`)
+                .set('Authorization', `Bearer ${adminToken}`)
+                .send({ name: mockItem.name, price: -1 });
+            expect(updated.status).toBe(400);
+        });
+
+        it('should return an empty list instead of 404 when there are no items', async () => {
+            const response = await request(app)
+                .get('/api/items/all')
+                .set('Authorization', `Bearer ${adminToken}`);
+
+            expect(response.status).toBe(200);
+            expect(response.body.items).toEqual([]);
         });
     });
 });

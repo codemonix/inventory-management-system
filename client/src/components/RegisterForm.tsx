@@ -1,25 +1,32 @@
 import { useNavigate } from 'react-router-dom';
-import { useContext, useState } from 'react';
+import { ChangeEvent, FormEvent, useState } from 'react';
 import { TextField, Button } from '@mui/material';
-import { AuthContext } from '../context/AuthContext';
+import { useAuth } from '../context/AuthContext';
+import { getErrorMessage } from '../utils/errorMessage';
 
+interface RegisterFormProps {
+    onError?: (message: string) => void;
+    // Called when the account was created but must be approved before logging in
+    onPendingApproval?: () => void;
+}
 
-const RegisterForm = ({ onError }) => {
+const RegisterForm = ({ onError, onPendingApproval }: RegisterFormProps) => {
     const navigate = useNavigate();
-    const { register } = useContext(AuthContext);
+    const { register } = useAuth();
     const [ formData, setFormData ] = useState({ name: '', email: '', password: '' });
 
-    const handleChange = (e) => {
+    const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
     };
 
-    const handleSubmit = async (e) => {
+    const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         try {
-            await register(formData );
-            navigate('/');
-        } catch (error) {
-            onError?.(error.response?.data?.message || "Registration failed");
+            const loggedIn = await register(formData);
+            if (loggedIn) navigate('/');
+            else onPendingApproval?.();
+        } catch (error: unknown) {
+            onError?.(getErrorMessage(error, "Registration failed"));
         }
     };
 
@@ -52,7 +59,7 @@ const RegisterForm = ({ onError }) => {
                 margin="normal"
                 required
             />
-            <Button variant="contained" color="primary" fullWidth type="submit" className='mt-4' >
+            <Button variant="contained" color="primary" fullWidth type="submit" sx={{ mt: 2 }}>
                 Register
             </Button>
         </form>

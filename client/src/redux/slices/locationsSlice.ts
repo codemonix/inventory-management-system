@@ -1,7 +1,8 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import { getLocations } from '../../services/locationService.js';
-import { logDebug } from '../../utils/logger.js';
-import { ILocation } from '../../types/location.types.js';
+import { getLocations } from '../../services/locationService';
+import { logDebug, logError } from '../../utils/logger';
+import { ILocation } from '../../types/location.types';
+import { getErrorMessage } from '../../utils/errorMessage';
 
 interface LocationsState {
     locations: ILocation[];
@@ -20,8 +21,8 @@ export const fetchLocations = createAsyncThunk<
             const response = await getLocations();
             logDebug("fetchLocations response: ", response);
             return response;
-        } catch (error: any) {
-            const message = error.response?.data?.message || error.message || "Failed to fetch locations";
+        } catch (error: unknown) {
+            const message = getErrorMessage(error, "Failed to fetch locations");
             logError("fetchLocations error: ", message);
             return rejectWithValue(message);
         }

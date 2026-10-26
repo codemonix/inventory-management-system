@@ -10,11 +10,11 @@ export const getSystemLogs = async (
     next: NextFunction
 ) => {
     try {
-        const page = parseInt(req.query.page || '1');
-        const limit = parseInt(req.query.limit || '50');
-        const { level, type } = req.query;
+        const page = parseInt(req.query.page || '1', 10) || 1;
+        const limit = parseInt(req.query.limit || '50', 10) || 50;
+        const { level, type, search } = req.query;
 
-        const result = await systemLogService.getLogs({ page, limit, level, type });
+        const result = await systemLogService.getLogs({ page, limit, level, type, search });
         res.status(200).json(result);
     } catch (error) {
         next(error);

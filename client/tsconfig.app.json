@@ -14,8 +14,8 @@
         "noEmit": true,
         "jsx": "react-jsx",
 
-        /* Migration Support */
-        "allowJs": true, 
+        /* The client is fully TypeScript */
+        "allowJs": false,
 
         /* Linting */
         "strict": true,

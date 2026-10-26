@@ -3,7 +3,13 @@ import CloseIcon from '@mui/icons-material/Close';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import { useState } from 'react';
 
-export default function LogDetailsDialog({ open, onClose, logData }) {
+interface LogDetailsDialogProps {
+    open: boolean;
+    onClose: () => void;
+    logData: unknown;   // any log entry (system or transaction), shown as JSON
+}
+
+export default function LogDetailsDialog({ open, onClose, logData }: LogDetailsDialogProps) {
     const [copied, setCopied] = useState(false);
 
     const handleCopy = () => {

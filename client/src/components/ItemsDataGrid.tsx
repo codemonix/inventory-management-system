@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { Paper, Tooltip, IconButton, Skeleton, Typography, Box } from '@mui/material';
-import { DataGrid } from '@mui/x-data-grid';
+import { DataGrid, GridColDef } from '@mui/x-data-grid';
 
 // Icons
 import EditIcon from '@mui/icons-material/Edit';
@@ -10,21 +10,24 @@ import InputTwoToneIcon from '@mui/icons-material/InputTwoTone';
 import OutputTwoTone from '@mui/icons-material/OutputTwoTone';
 
 // Custom Hooks & Components
-import { useManagedImage } from '../hooks/useManagedObjectImage.js';
-import { useImageUpload } from '../hooks/useImageUpload.js';
-import { fetchItemImage } from '../services/itemService.js';
-import PaginationControls from './PaginationControls.jsx';
+import { useManagedImage } from '../hooks/useManagedObjectImage';
+import { useImageUpload } from '../hooks/useImageUpload';
+import { fetchItemImage } from '../services/itemService';
+import PaginationControls from './PaginationControls';
+import { DEFAULT_ITEM_IMAGE } from '../constants';
+import { IItem } from '../types/item.types';
 
-const defaultImage = "/uploads/items/default.jpg";
+const getRowId = (row: IItem) => row._id;
+const getRowHeight = () => 'auto' as const;
 
 // ==========================================
 // CUSTOM CELL: Image
 // ==========================================
-const GridImageCell = ({ row }) => {
+const GridImageCell = ({ row }: { row: IItem }) => {
     const { displayUrl, isImageLoading } = useManagedImage(
         row.imageUrl,
         fetchItemImage,
-        defaultImage
+        DEFAULT_ITEM_IMAGE
     );
 
     return (
@@ -44,7 +47,7 @@ const GridImageCell = ({ row }) => {
                 !isImageLoading ? (
                     <Box 
                         component="img"
-                        src={displayUrl} 
+                        src={displayUrl ?? undefined} 
                         alt={row.name} 
                         sx={{ 
                             width: 256, 
@@ -63,7 +66,7 @@ const GridImageCell = ({ row }) => {
                 {isImageLoading ? (
                     <Skeleton variant="rectangular" sx={{ width: '100%', height: '100%', position: 'absolute', inset: 0, borderRadius: 1 }} />
                 ) : (
-                    <Box component="img" src={displayUrl} alt={row.name} sx={{ width: '100%', height: '100%', objectFit: 'cover', position: 'absolute', inset: 0, borderRadius: 1 }} />
+                    <Box component="img" src={displayUrl ?? undefined} alt={row.name} sx={{ width: '100%', height: '100%', objectFit: 'cover', position: 'absolute', inset: 0, borderRadius: 1 }} />
                 )}
             </Box>
         </Tooltip>
@@ -73,7 +76,16 @@ const GridImageCell = ({ row }) => {
 // ==========================================
 // CUSTOM CELL: Actions
 // ==========================================
-const GridActionCell = ({ row, onEdit, onDelete, onImageUpload, onIn, onOut, iconSize = 'small' }) => {
+interface ItemActionHandlers {
+    // Edit/delete/image actions are shown only when their handler is passed (role-gated by the page)
+    onEdit?: (item: IItem) => void;
+    onDelete?: (item: IItem) => void;
+    onImageUpload?: (itemId: string, imageUrl: string) => void;
+    onIn: (itemId: string) => void;
+    onOut: (itemId: string) => void;
+}
+
+const GridActionCell = ({ row, onEdit, onDelete, onImageUpload, onIn, onOut, iconSize = 'small' }: ItemActionHandlers & { row: IItem; iconSize?: 'small' | 'medium' }) => {
     const { isUploading, triggerImageUpload } = useImageUpload({
         onSuccess: onImageUpload,
         setLocalPreview: () => {} 
@@ -90,15 +102,21 @@ const GridActionCell = ({ row, onEdit, onDelete, onImageUpload, onIn, onOut, ico
                 <IconButton size={iconSize} color="error" onClick={() => onOut(row._id)} title='Stock Out'>
                     <OutputTwoTone fontSize={iconSize} />
                 </IconButton>
-                <IconButton size={iconSize} color="secondary" disabled={isUploading} onClick={() => triggerImageUpload(row.code, row._id, row.imageUrl)} title={isUploading ? "Uploading..." : "Upload Image"}>
-                    <PhotoCameraIcon fontSize={iconSize} />
-                </IconButton>
-                <IconButton size={iconSize} color="primary" onClick={() => onEdit(row)} title='Edit Item'>
-                    <EditIcon fontSize={iconSize} />
-                </IconButton>
-                <IconButton size={iconSize} color="error" onClick={() => onDelete(row)} title='Delete Item'>
-                    <DeleteIcon fontSize={iconSize} />
-                </IconButton>
+                {onImageUpload && (
+                    <IconButton size={iconSize} color="secondary" disabled={isUploading} onClick={() => triggerImageUpload(row.code, row._id)} title={isUploading ? "Uploading..." : "Upload Image"}>
+                        <PhotoCameraIcon fontSize={iconSize} />
+                    </IconButton>
+                )}
+                {onEdit && (
+                    <IconButton size={iconSize} color="primary" onClick={() => onEdit(row)} title='Edit Item'>
+                        <EditIcon fontSize={iconSize} />
+                    </IconButton>
+                )}
+                {onDelete && (
+                    <IconButton size={iconSize} color="error" onClick={() => onDelete(row)} title='Delete Item'>
+                        <DeleteIcon fontSize={iconSize} />
+                    </IconButton>
+                )}
         </Box>
     );
 };
@@ -106,12 +124,21 @@ const GridActionCell = ({ row, onEdit, onDelete, onImageUpload, onIn, onOut, ico
 // ==========================================
 // MAIN GRID COMPONENT
 // ==========================================
+interface ItemsDataGridProps extends ItemActionHandlers {
+    items: IItem[];
+    stockLookup: Record<string, number>;
+    page: number;
+    limit: number;
+    totalCount: number;
+    onPageChange: (page: number) => void;
+}
+
 const ItemsDataGrid = ({ 
     items, stockLookup, page, limit, totalCount, 
     onPageChange, onEdit, onDelete, onImageUpload, onIn, onOut 
-}) => {
+}: ItemsDataGridProps) => {
     
-    const columns = useMemo(() => [
+    const columns = useMemo<GridColDef<IItem>[]>(() => [
         {
             field: 'image',
             headerName: 'Image',
@@ -187,15 +214,15 @@ const ItemsDataGrid = ({
         }
     ], [stockLookup, onEdit, onDelete, onImageUpload, onIn, onOut]);
 
-    const gridRows = useMemo(() => items.map(item => ({ ...item, id: item._id })), [items]);
 
     return (
         <Paper elevation={0} sx={{ width: '100%', border: '1px solid', borderColor: 'divider', borderRadius: 2, overflow: 'hidden', bgcolor: 'background.paper', mb: 2 }}>
             <DataGrid
-                rows={gridRows}
+                rows={items}
+                getRowId={getRowId}
                 columns={columns}
                 disableRowSelectionOnClick
-                getRowHeight={() => 'auto'}
+                getRowHeight={getRowHeight}
                 hideFooter={true} 
                 sx={{
                     border: 0,

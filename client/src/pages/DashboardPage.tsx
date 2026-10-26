@@ -1,34 +1,32 @@
 import { useEffect, useState } from "react";
-import { useTheme, useMediaQuery, Box, Container, Alert, Typography } from "@mui/material";
+import { useTheme, useMediaQuery, Box, Container, Typography } from "@mui/material";
 
 // Context and Services
-import { useAuth } from "../context/AuthContext.jsx";
-import { getLocations } from "../services/locationService.js"
+import { useAuth } from "../context/AuthContext";
+import { getLocations } from "../services/locationService"
 
 // Custom Hooks
-import { useDashboardData } from "../hooks/useDashboardData.js";
-import { useStockAction } from "../hooks/useStockAction.js";
+import { useDashboardData } from "../hooks/useDashboardData";
+import { useStockAction } from "../hooks/useStockAction";
 
 // Components
-import StatusHandler from "../components/StatusHandler.jsx";
-import PaginationControls from "../components/PaginationControls.jsx";
-import ItemCardDashboard from "../components/ItemCardDashboard.jsx";
-import DesktopInventoryTable from "../components/DesktopInventoryTable.jsx"; 
-import SearchFilterBar from "../components/SearchFilterBar.jsx";
-import StockActionDialog from "../components/StockActionDialog.jsx";
+import StatusHandler from "../components/StatusHandler";
+import PaginationControls from "../components/PaginationControls";
+import ItemCardDashboard from "../components/ItemCardDashboard";
+import DesktopInventoryTable from "../components/DesktopInventoryTable"; 
+import SearchFilterBar from "../components/SearchFilterBar";
+import StockActionDialog from "../components/StockActionDialog";
 
-import { logDebug, logError, logInfo } from "../utils/logger.js";
-
-const locationColors = {
-    "Istanbul": "#BC1063",
-    "RTM": "#10BC5A",
-    "Dubai": "blue"
-}
+import { logDebug, logError, logInfo } from "../utils/logger";
+import { getErrorMessage } from "../utils/errorMessage";
+import { setLimit, setPage, setSearch, setSort } from "../redux/slices/dashboardSlice";
+import { ILocation } from "../types/location.types";
+import { IInventoryRecord } from "../types/inventory.types";
 
 const DashboardPage = () => {
     logInfo("loading Dashboard Page ...")
     const { isLoggedIn } = useAuth();
-    const [ locations , setLocations ] = useState([]);
+    const [ locations , setLocations ] = useState<ILocation[]>([]);
     
     const theme = useTheme();
     const isDesktop = useMediaQuery(theme.breakpoints.up('md'));
@@ -39,7 +37,7 @@ const DashboardPage = () => {
     } = useDashboardData();
     
     const {
-        dialogOpen, currentItemId, actionType, defaultLocation, localError: stockError,
+        dialogOpen, actionType, defaultLocation, localError: stockError,
         openDialog, closeDialog, submitAction
     } = useStockAction({ onSuccess: refreshData });
 
@@ -47,7 +45,7 @@ const DashboardPage = () => {
         if (isLoggedIn) {
             getLocations()
                 .then(setLocations)
-                .catch((error) => logError("DashboardPage -> getLocations -> error:", error.message))
+                .catch((error: unknown) => logError("DashboardPage -> getLocations -> error:", getErrorMessage(error)))
         }
     },[isLoggedIn]);
 
@@ -63,55 +61,46 @@ const DashboardPage = () => {
         );
     }
 
-    const handlePageChange = ( newPage ) => {
+    // The stock dialog works with item ids
+    const openFor = (item: IInventoryRecord, type: 'IN' | 'OUT' | 'TRANSFER') => openDialog({ itemId: item.itemId }, type);
+
+    const handlePageChange = ( newPage: number ) => {
         logDebug("DashboardPage -> handlePageChange -> newPage:", newPage);
-        dispatch({ type: 'dashboard/setPage', payload: newPage });
+        dispatch(setPage(newPage));
         updateSearchParams({ page: newPage });
     };
 
     return (
-        // 👇 1. Tightened outer padding (px is now 8px on mobile, 16px on desktop)
         <Box sx={{ pt: { xs: 0.5, md: 1 }, pb: { xs: 2, md: 3 }, px: { xs: 1, md: 2 } }}>
-            {stockError && (
-                // 👇 2. Added disableGutters to stop the double-padding
-                <Container maxWidth="xl" disableGutters sx={{ mb: 2 }}>
-                    <Alert severity="error" sx={{ borderRadius: 2 }}>
-                        {stockError}
-                    </Alert>
-                </Container>
-            )}
-            
-            {/* 👇 3. Added disableGutters here as well */}
+            {/* Stock action errors are shown inside StockActionDialog */}
             <Container maxWidth="xl" disableGutters sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                 <SearchFilterBar 
                     search={search}
                     limit={limit}
-                    page={page}
                     sort={sort}
                     onSearchChange={(newSearch) => {
-                        dispatch({ type: 'dashboard/setSearch', payload: newSearch });
+                        dispatch(setSearch(newSearch));
                         updateSearchParams({ search: newSearch, page: 1 });
                     }}
                     onLimitChange={(newLimit) => {
-                        dispatch({ type: 'dashboard/setLimit', payload: newLimit });
+                        dispatch(setLimit(newLimit));
                         updateSearchParams({ limit: newLimit, page: 1 });
                     }}
                     onSortChange={(newSort) => {
-                        dispatch({ type: 'dashboard/setSort', payload: newSort });
+                        dispatch(setSort(newSort));
                         updateSearchParams({ sort: newSort, page: 1 });
                     }}
                 />
                 
-                <StatusHandler status={loading ? 'loading' : ""} error={error}>
+                <StatusHandler status={loading ? 'loading' : error ? 'failed' : 'succeeded'} error={error} keepContentWhileLoading={items.length > 0}>
                     <Box>
                         {isDesktop ? (
                             <DesktopInventoryTable 
                                 items={items}
                                 locations={locations}
-                                locationColors={locationColors}
-                                onIn={(item) => openDialog(item, 'IN')}
-                                onOut={(item) => openDialog(item, 'OUT')}
-                                onAddToTransfer={(item) => openDialog(item, 'TRANSFER')}
+                                onIn={(item) => openFor(item, 'IN')}
+                                onOut={(item) => openFor(item, 'OUT')}
+                                onAddToTransfer={(item) => openFor(item, 'TRANSFER')}
                             />
                         ) : (
                             <Box 
@@ -125,11 +114,10 @@ const DashboardPage = () => {
                                     <Box key={item.itemId} sx={{ display: 'flex', justifyContent: 'center', height: '100%', width: '100%' }}>
                                         <ItemCardDashboard 
                                             item={item} 
-                                            locationColors={locationColors} 
                                             locations={locations}
-                                            onIn={() => openDialog(item, 'IN')}
-                                            onOut={() => openDialog(item, 'OUT')}
-                                            onAddToTransfer={() => openDialog(item, 'TRANSFER')}
+                                            onIn={() => openFor(item, 'IN')}
+                                            onOut={() => openFor(item, 'OUT')}
+                                            onAddToTransfer={() => openFor(item, 'TRANSFER')}
                                         />
                                     </Box>
                                 ))}
@@ -142,7 +130,6 @@ const DashboardPage = () => {
                     open={dialogOpen}
                     onClose={closeDialog}
                     onSubmit={submitAction}
-                    itemId={currentItemId}
                     locations={locations}
                     type={actionType}
                     errorMessage={stockError}

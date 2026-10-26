@@ -20,7 +20,7 @@ jobs:
       frontend: ${{ steps.filter.outputs.frontend }}
       is_release: ${{ contains(github.event.head_commit.message, '[release') }}
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: dorny/paths-filter@v3
         id: filter
         with:
@@ -35,16 +35,22 @@ jobs:
     if: ${{ needs.detect-changes.outputs.backend == 'true' || needs.detect-changes.outputs.is_release == 'true' }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0 
-      - uses: actions/setup-node@v3
+      - uses: actions/setup-node@v4
         with:
           node-version: '22'
+          cache: npm
+          cache-dependency-path: server/package-lock.json
 
       - name: Install dependencies
         working-directory: ./server
         run: npm ci
+
+      - name: Lint
+        working-directory: ./server
+        run: npm run lint
 
       - name: Build TypeScript
         working-directory: ./server
@@ -75,7 +81,8 @@ jobs:
           BUMP_TYPE="patch"
           if [[ "$COMMIT_MSG" == *"[release:minor]"* ]]; then BUMP_TYPE="minor"; fi
           if [[ "$COMMIT_MSG" == *"[release:major]"* ]]; then BUMP_TYPE="major"; fi
-          npm version $BUMP_TYPE -m "chore(backend): bump version to %s [skip ci]"
+          # Prefixed tags so backend and frontend releases never collide on the same vX.Y.Z tag
+          npm version $BUMP_TYPE --tag-version-prefix=backend-v -m "chore(backend): bump version to %s [skip ci]"
           git push origin master --follow-tags
 
       - name: Extract Version
@@ -112,20 +119,30 @@ jobs:
       (needs.backend.result == 'success' || needs.backend.result == 'skipped')
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0 
-      - uses: actions/setup-node@v3
+      - uses: actions/setup-node@v4
         with:
           node-version: '22'
+          cache: npm
+          cache-dependency-path: client/package-lock.json
 
       - name: Install frontend
         working-directory: ./client
         run: npm ci
 
+      - name: Lint frontend
+        working-directory: ./client
+        run: npm run lint
+
+      - name: Type-check frontend
+        working-directory: ./client
+        run: npm run typecheck
+
       - name: Test frontend
         working-directory: ./client
-        run: npm run test
+        run: npm run test -- --run
           
       - name: Bump Version
         if: ${{ needs.detect-changes.outputs.is_release == 'true' }}
@@ -144,7 +161,7 @@ jobs:
           BUMP_TYPE="patch"
           if [[ "$COMMIT_MSG" == *"[release:minor]"* ]]; then BUMP_TYPE="minor"; fi
           if [[ "$COMMIT_MSG" == *"[release:major]"* ]]; then BUMP_TYPE="major"; fi
-          npm version $BUMP_TYPE -m "chore(frontend): bump version to %s [skip ci]"
+          npm version $BUMP_TYPE --tag-version-prefix=frontend-v -m "chore(frontend): bump version to %s [skip ci]"
           git push origin master --follow-tags
 
       - name: Extract Version

@@ -26,7 +26,7 @@ const consoleFormat = format.combine(
     format.timestamp({ format: 'HH:mm:ss' }),
     format.printf((info) => {
         // Pluck out core fields so they don't print twice
-        const { timestamp, level, message, service, ...meta } = info as any;
+        const { timestamp, level, message, service: _service, ...meta } = info as any;
         const cleanMeta = { ...meta };
         
         // Remove Winston's internal splat symbol
@@ -66,10 +66,12 @@ logger.stream = {
     },
 };
 
+const findMongoTransport = () => logger.transports.find((t: any) => t.name === 'mongodb');
+
 // Initialize MongoDB dynamically after the DB connects
 export const initializeDbLogger = (dbUri: string): void => {
     currentConfig.dbUri = dbUri;
-    const hasMongoTransport = logger.transports.some((t: any) => t.name === 'mongodb');
+    const hasMongoTransport = !!findMongoTransport();
     
     if (!hasMongoTransport && dbUri && currentConfig.enableDbLogging) {
         logger.add(new transports.MongoDB({
@@ -93,9 +95,14 @@ export const updateLoggerSettings = (newConfig: Partial<ILoggerConfig>) => {
     // Update the master logger level
     logger.level = currentConfig.level;
 
-    // Dynamically update the MongoDB transport level if it exists
-    const mongoTransport = logger.transports.find((t: any) => t.name === 'mongodb');
-    if (mongoTransport) {
+    // Add or remove the MongoDB transport to match enableDbLogging, then sync its level
+    const mongoTransport = findMongoTransport();
+    if (!currentConfig.enableDbLogging && mongoTransport) {
+        logger.remove(mongoTransport);
+        logger.info("MongoDB logging transport disabled.");
+    } else if (currentConfig.enableDbLogging && !mongoTransport && currentConfig.dbUri) {
+        initializeDbLogger(currentConfig.dbUri);
+    } else if (mongoTransport) {
         mongoTransport.level = currentConfig.level;
     }
 

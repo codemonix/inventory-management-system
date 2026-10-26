@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { useAuth } from "../../context/AuthContext.jsx";
+import { ChangeEvent, useEffect, useState } from "react";
+import { useAuth } from "../../context/AuthContext";
 import { 
     Dialog,
     DialogTitle,
@@ -9,19 +9,25 @@ import {
     TextField,
     MenuItem,
     FormControlLabel,
-    Switch
+    Switch,
+    Alert
 } from "@mui/material";
-import { useDispatch } from "react-redux";
-// import { updateUserDetails } from "../../redux/thunks/userThunks.js";
-import { updateUser } from "../../services/userService.js";
-import { logInfo } from "../../utils/logger.js";
+import { updateUser } from "../../services/userService";
+import { logInfo } from "../../utils/logger";
+import { getErrorMessage } from "../../utils/errorMessage";
+import { IUserRecord, UserUpdate } from "../../types/user.types";
 
-const EditUserDialog = ({ open, onClose, user }) => {
-    const dispatch = useDispatch();
+interface EditUserDialogProps {
+    open: boolean;
+    onClose: () => void;
+    user: IUserRecord;
+}
+
+const EditUserDialog = ({ open, onClose, user }: EditUserDialogProps) => {
     const { isAdmin, isManager } = useAuth();
     const isAdminOrManager = isAdmin || isManager;
 
-    const [formData, setFormData] = useState({
+    const [formData, setFormData] = useState<UserUpdate>({
         name: user.name || "",
         email: user.email || "",
         role: user.role || "user",
@@ -29,7 +35,11 @@ const EditUserDialog = ({ open, onClose, user }) => {
         isActive: user.isActive || false,
     });
 
+    const [saveError, setSaveError] = useState<string | null>(null);
+    const [isSubmitting, setIsSubmitting] = useState(false);
+
     useEffect(() => {
+        setSaveError(null);
         if (user) {
             setFormData({
                 name: user.name,
@@ -42,7 +52,7 @@ const EditUserDialog = ({ open, onClose, user }) => {
     },[user]);
 
 
-    const handleChange = (e) => {
+    const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
         setFormData( (prev) => ({ ...prev, [name]: value}));
     };
@@ -57,9 +67,17 @@ const EditUserDialog = ({ open, onClose, user }) => {
 
     const handleSubmit = async () => {
         logInfo("formData:", formData)
-        // dispatch(updateUserDetails({ id: user._id, ...formData }));
-        await updateUser(user._id, formData);
-        onClose();
+        setSaveError(null);
+        setIsSubmitting(true);
+        try {
+            await updateUser(user._id, formData);
+            onClose();
+        } catch (error: unknown) {
+            // e.g. a manager trying to edit an admin, or an admin demoting themselves
+            setSaveError(getErrorMessage(error, "Failed to update user."));
+        } finally {
+            setIsSubmitting(false);
+        }
     };
 
     if (!user) return null;
@@ -68,7 +86,8 @@ const EditUserDialog = ({ open, onClose, user }) => {
         <Dialog open={open} onClose={onClose} fullWidth >
             <DialogTitle >Edit User</DialogTitle>
             <DialogContent>
-                <TextField 
+                {saveError && <Alert severity="error" sx={{ mb: 1 }}>{saveError}</Alert>}
+                <TextField
                     margin="dense"
                     label="Name"
                     name="name"
@@ -126,7 +145,7 @@ const EditUserDialog = ({ open, onClose, user }) => {
             </DialogContent>
             <DialogActions>
                 <Button onClick={onClose} >Cancel</Button>
-                <Button onClick={handleSubmit} variant="contained">Save</Button>
+                <Button onClick={handleSubmit} variant="contained" disabled={isSubmitting}>Save</Button>
             </DialogActions>
         </Dialog>
     );

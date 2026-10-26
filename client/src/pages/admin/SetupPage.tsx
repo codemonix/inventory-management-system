@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { ChangeEvent, FormEvent, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
     Container,
@@ -12,6 +12,7 @@ import {
 
 import api from "../../api/api";
 import { logInfo } from "../../utils/logger";
+import { getErrorMessage } from '../../utils/errorMessage';
 
 export default function SetupPage() {
     const [ needSetup, setNeedSetup ] = useState(null);
@@ -39,11 +40,11 @@ export default function SetupPage() {
 
     logInfo("Setup page, needSetup:", needSetup)
 
-    const handleChange = (e) => {
+    const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
     };
 
-    const handleSubmit = async (e) => {
+    const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         setError('');
         setSuccess('');
@@ -55,8 +56,8 @@ export default function SetupPage() {
             await api.post( '/setup', formData );
             setSuccess('Admin account created. Redirecting to login...');
             setTimeout(() => navigate('/login'), 2000);
-        } catch (error) {
-            setError(error.response?.data?.message || 'Failed to create admin account.');
+        } catch (error: unknown) {
+            setError(getErrorMessage(error, 'Failed to create admin account.'));
         }
     };
 

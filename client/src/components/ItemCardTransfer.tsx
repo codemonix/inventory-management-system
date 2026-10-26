@@ -1,13 +1,12 @@
 import { Box, Typography, Card, CardContent, Divider, Chip } from "@mui/material";
-import { logDebug } from "../utils/logger";
-import { fetchItemImage } from "../services/itemService.js";
-import { useManagedImage } from "../hooks/useManagedObjectImage.js";
+import { fetchItemImage } from "../services/itemService";
+import { useManagedImage } from "../hooks/useManagedObjectImage";
+import { ITransferLine } from "../types/transfer.types";
+import { DEFAULT_ITEM_IMAGE } from "../constants";
 
-export default function ItemCardTransfer({ item: transferItem }) {
-    const { item, quantity } = transferItem;
-
-    logDebug("ItemCardTransfer.jsx -> imageUrl:", item?.imageUrl);
-    const { displayUrl, isImageLoading } = useManagedImage(item?.imageUrl, fetchItemImage);
+export default function ItemCardTransfer({ line }: { line: ITransferLine }) {
+    const { item, quantity } = line;
+    const { displayUrl } = useManagedImage(item?.imageUrl, fetchItemImage, DEFAULT_ITEM_IMAGE);
 
     return (
         <Card 
@@ -109,7 +108,7 @@ export default function ItemCardTransfer({ item: transferItem }) {
                     }}
                     title={item?.name}
                 >
-                    {item?.name || 'Unknown Item'}
+                    {item?.name || 'Deleted item'}
                 </Typography>
             </CardContent>
         </Card>

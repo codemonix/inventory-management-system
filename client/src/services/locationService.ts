@@ -1,6 +1,7 @@
-import api, { isApiError } from "../api/api.js";
-import { logDebug, logError, logInfo } from "../utils/logger.js";
-import { ILocation, LocationResponse, DeleteResponse } from "../types/location.types.js";
+import api, { isApiError } from "../api/api";
+import { getBackendMessage } from "../utils/backendMessage";
+import { logDebug, logError, logInfo } from "../utils/logger";
+import { ILocation, LocationInput, LocationResponse, DeleteResponse } from "../types/location.types";
 
 
 
@@ -11,7 +12,7 @@ export const getLocations = async (): Promise<ILocation[]> => {
         return response.data.locations;
     } catch (error) {
         if (isApiError(error)) {
-            const backendMessage = error.response?.data?.message;
+            const backendMessage = getBackendMessage(error);
             logError("Failed to fetch locations API:", error.message);
             throw new Error(backendMessage || "Failed to fetch locations.");
         }
@@ -24,14 +25,14 @@ export const getLocations = async (): Promise<ILocation[]> => {
     }
 } 
 
-export const createLocation = async (location: Omit<ILocation, "id">): Promise<LocationResponse> => {
+export const createLocation = async (location: LocationInput): Promise<LocationResponse> => {
     try {
         const response = await api.post<LocationResponse>("/locations", location);
         logInfo("locationService -> createLocation response:", response.data)
         return response.data;
     } catch (error) {
         if (isApiError(error)) {
-            const backendMessage = error.response?.data?.message;
+            const backendMessage = getBackendMessage(error);
             logError("Failed to create location API:", error.message);
             throw new Error(backendMessage || "Failed to create location.");
         }
@@ -43,14 +44,14 @@ export const createLocation = async (location: Omit<ILocation, "id">): Promise<L
     }
 } 
 
-export const updateLocation = async (id: string, location: Partial<ILocation>) => {
+export const updateLocation = async (id: string, location: Partial<LocationInput>): Promise<LocationResponse> => {
     try {
-        const response = await api.put<{location: ILocation}>(`/locations/${id}`, location);
+        const response = await api.put<LocationResponse>(`/locations/${id}`, location);
         logDebug("locationService -> updateLocation response:", response.data.location);
         return response.data;
     } catch (error) {
         if (isApiError(error)) {
-            const backendMessage = error.response?.data?.message;
+            const backendMessage = getBackendMessage(error);
             logError("Failed to update location API:", error.message);
             throw new Error(backendMessage || "Failed to update location.");
         }
@@ -69,7 +70,7 @@ export const deleteLocation = async (id: string): Promise<DeleteResponse> => {
         return response.data;
     } catch (error) {
         if (isApiError(error)) {
-            const backendMessage = error.response?.data?.message;
+            const backendMessage = getBackendMessage(error);
             logError("Failed to delete location API:", error.message);
             
             // This is critical if the backend prevents deleting a location that currently holds stock

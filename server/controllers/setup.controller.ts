@@ -31,8 +31,15 @@ export const createFirstAdmin = async (
         const { email, name, password } = req.body;
 
         // Validation gatekeeper
-        if (!email || !name || !password) {
+        if (typeof email !== 'string' || typeof name !== 'string' || typeof password !== 'string'
+            || !email || !name.trim() || !password) {
             return next(new AppError('Name, email, and password are required parameters.', 400));
+        }
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+            return next(new AppError('Invalid email address', 400));
+        }
+        if (password.length < 8) {
+            return next(new AppError('Password must be at least 8 characters', 400));
         }
 
         // Hand off to the service

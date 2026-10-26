@@ -159,4 +159,47 @@ describe('Integration: User Management Endpoints', () => {
             expect(survivingUser?.role).toBe('user');
         });
     });
+
+    describe('Hardening', () => {
+        it('should never return password hashes', async () => {
+            const response = await request(app)
+                .get('/api/users')
+                .set('Authorization', `Bearer ${adminToken}`);
+
+            expect(response.status).toBe(200);
+            for (const user of response.body.users) {
+                expect(user).not.toHaveProperty('password');
+            }
+        });
+
+        it('should not let a manager deactivate an admin', async () => {
+            const admin = await User.findOne({ role: 'admin' });
+            const response = await request(app)
+                .patch(`/api/users/${admin?.id}/toggle-active`)
+                .set('Authorization', `Bearer ${managerToken}`)
+                .send({ isActive: false });
+
+            expect(response.status).toBe(403);
+            expect((await User.findById(admin?.id))?.isActive).toBe(true);
+        });
+
+        it('should not let an admin deactivate themselves', async () => {
+            const admin = await User.findOne({ role: 'admin' });
+            const response = await request(app)
+                .patch(`/api/users/${admin?.id}/toggle-active`)
+                .set('Authorization', `Bearer ${adminToken}`)
+                .send({ isActive: false });
+
+            expect(response.status).toBe(400);
+        });
+
+        it('should treat regex characters in search as plain text', async () => {
+            const response = await request(app)
+                .get('/api/users?search=(a%2B)%2B%24')
+                .set('Authorization', `Bearer ${adminToken}`);
+
+            expect(response.status).toBe(200);
+            expect(response.body.users).toHaveLength(0);
+        });
+    });
 });

@@ -1,94 +1,105 @@
-import { useCallback, useEffect, useState, useMemo } from "react";
-// 1. Using your Typed Hooks!
-import { useAppDispatch, useAppSelector } from "../redux/hooks"; 
-import { 
-    loadTempTransfer, 
-    createTempTransfer, 
-    finalizeTransfer 
+import { useEffect, useState, useMemo } from "react";
+import { useAppDispatch, useAppSelector } from "../redux/hooks";
+import {
+    loadTempTransfer,
+    createTempTransfer,
+    finalizeTransfer,
+    removeItem,
+    discardTransfer,
 } from "../redux/thunks/transferThunks";
-import { 
-    getTransfers as loadTransfers, 
-    confirmTransfer 
-} from "../services/transferService";
-import { getAllItems } from "../services/itemService";
+import { getItemsByIds } from "../services/itemService";
 import { clearTempTransferState } from "../redux/slices/transferSlice";
 import { fetchLocations } from "../redux/slices/locationsSlice";
-// Imports removed .js extensions!
-import { selectTempTransferLocations, PopulatedTempTransfer } from "../redux/selectors/transferSelector";
+import { selectTempTransferLocations } from "../redux/selectors/transferSelector";
 import { logDebug, logError } from "../utils/logger";
 
 // Types
 import { IItem } from "../types/item.types";
-import { ITransfer, ITempTransfer } from "../types/transfer.types";
+import { ILocation } from "../types/location.types";
+import { ITempTransfer } from "../types/transfer.types";
+
+export interface DraftTransferLine {
+    itemId: string;
+    quantity: number;
+    name: string;
+    image: string | null;
+}
+
+export interface PopulatedDraftTransfer {
+    fromLocation: ILocation | undefined;
+    toLocation: ILocation | undefined;
+    items: DraftTransferLine[];
+}
+
+type LoadStatus = 'idle' | 'loading' | 'succeeded' | 'failed';
 
 // ==========================================
 // THE CONTRACT: What this hook returns
 // ==========================================
 export interface UseTransferManagerReturn {
-    transfers: ITransfer[];
     tempTransfer: ITempTransfer | null;
-    transferStatus: 'idle' | 'loading' | 'succeeded' | 'failed';
-    tempTransferStatus: 'idle' | 'loading' | 'succeeded' | 'failed';
-    populatedTempTransfer: PopulatedTempTransfer | null;
+    tempTransferStatus: LoadStatus;
+    populatedTempTransfer: PopulatedDraftTransfer | null;
     isItemsLoading: boolean;
     startNewTransfer: (fromLocation: string, toLocation: string) => Promise<void>;
-    finalizeCurrentTransfer: () => Promise<void>;
-    confirmPastTransfer: (transferId: string) => Promise<void>;
+    // Resolves true when the draft became a real transfer
+    finalizeCurrentTransfer: () => Promise<boolean>;
+    // Both return the reserved stock to the source shelf
+    removeDraftItem: (itemId: string) => Promise<void>;
+    discardDraft: () => Promise<void>;
+    // Last failed user action (start/finalize/remove/discard), shown by the UI
+    actionError: string | null;
+    setActionError: (message: string | null) => void;
 }
 
+// The current user's draft transfer. The finalized history lives in useTransferHistory.
 export const useTransferManager = (): UseTransferManagerReturn => {
     const dispatch = useAppDispatch();
-    
+
     // --- Redux State ---
     const tempTransferLocations = useAppSelector(selectTempTransferLocations);
-    // Notice we don't need (state: RootState) anymore because useAppSelector handles it!
     const { data: tempTransfer, tempTransferStatus } = useAppSelector((state) => state.transfer);
-    
+
     // --- Local State ---
-    const [allItems, setAllItems] = useState<IItem[]>([]);
+    const [draftItems, setDraftItems] = useState<IItem[]>([]);
     const [isItemsLoading, setIsItemsLoading] = useState(false);
-    const [transfers, setTransfers] = useState<ITransfer[]>([]);
-    const [transferStatus, setTransferStatus] = useState<'idle' | 'loading' | 'succeeded' | 'failed'>('idle');
+    const [actionError, setActionError] = useState<string | null>(null);
 
     // ==========================================
-    // 1. EXTERNAL CATALOG FETCH
+    // 1. ITEM DETAILS (names and images for the draft lines only)
     // ==========================================
+    // Stable key so the request only repeats when the set of draft items changes
+    const draftItemIdsKey = (tempTransfer?.items ?? []).map((line) => line.itemId).sort().join(',');
     useEffect(() => {
-        // Renamed to fetchCatalog to avoid colliding with imported thunks
-        const fetchCatalog = async () => {
+        const ids = draftItemIdsKey ? draftItemIdsKey.split(',') : [];
+        let cancelled = false;
+        const fetchDraftItems = async () => {
             setIsItemsLoading(true);
             try {
-                const response = await getAllItems();
-                // Ensure this matches your service return structure (e.g., response.items vs response)
-                setAllItems(response.items || response); 
-            } catch (error: any) {
-                logError("useTransferManager -> loading items failed", error.message);
+                const items = await getItemsByIds(ids);
+                if (!cancelled) setDraftItems(items);
+            } catch (error: unknown) {
+                logError("useTransferManager -> loading items failed", error instanceof Error ? error.message : error);
             } finally {
-                setIsItemsLoading(false);                
+                if (!cancelled) setIsItemsLoading(false);
             }
         };
-        fetchCatalog();
-    }, []);
+        void fetchDraftItems();
+        return () => { cancelled = true; };
+    }, [draftItemIdsKey]);
 
     // ==========================================
     // 2. THE DATA MERGE (Redux + API)
     // ==========================================
-    logDebug("useTransferManager -> allItems: ", allItems);
-    const fullyPopulatedTempTransfer = useMemo(() => {
+    const fullyPopulatedTempTransfer = useMemo<PopulatedDraftTransfer | null>(() => {
         if (!tempTransferLocations) return null;
 
-        if (allItems.length === 0) {
-            return { ...tempTransferLocations, items: [] };
-        }
-        
         const itemsWithDetails = tempTransferLocations.items.map(({ itemId, quantity }) => {
-            // FIX: Using _id instead of id to match MongoDB schema!
-            const item = allItems.find((i) => i._id === itemId); 
-            logDebug("useTransferManager -> item: ", item);
+            const item = draftItems.find((i) => i._id === itemId);
             return {
                 itemId,
                 quantity,
-                name: item ? item.name : "Unknown Item",
+                name: item ? item.name : (isItemsLoading ? "Loading..." : "Unknown Item"),
                 image: item?.imageUrl || null,
             };
         });
@@ -98,80 +109,66 @@ export const useTransferManager = (): UseTransferManagerReturn => {
             toLocation: tempTransferLocations.toLocation,
             items: itemsWithDetails,
         };
-    }, [tempTransferLocations, allItems]);
+    }, [tempTransferLocations, draftItems, isItemsLoading]);
 
     // ==========================================
-    // 3. HISTORICAL TRANSFERS
-    // ==========================================
-    const loadHistoricalTransfers = useCallback(async () => {
-        setTransferStatus('loading');
-        try {
-            const response = await loadTransfers();
-            setTransfers(response);
-            setTransferStatus('succeeded');
-        } catch (error: any) {
-            logError("useTransferManager -> loading transfers failed", error.message);
-            setTransferStatus('failed');
-        }
-    }, []);
-
-    // ==========================================
-    // 4. INITIALIZATION EFFECT
+    // 3. INITIALIZATION EFFECT
     // ==========================================
     logDebug("useTransferManager -> tempTransferStatus: ", tempTransferStatus);
-    logDebug("useTransferManager -> transferStatus: ", transferStatus);
     useEffect(() => {
-        if (transferStatus === 'idle') {
-            loadHistoricalTransfers();
-        }
         if (tempTransferStatus === 'idle') {
             dispatch(fetchLocations());
             dispatch(loadTempTransfer());
         }
-    }, [dispatch, transferStatus, tempTransferStatus, loadHistoricalTransfers]);
+    }, [dispatch, tempTransferStatus]);
 
     // ==========================================
-    // 5. MUTATIONS & ACTIONS
+    // 4. MUTATIONS & ACTIONS
     // ==========================================
     const startNewTransfer = async (fromLocation: string, toLocation: string) => {
-        await dispatch(createTempTransfer({ fromLocation, toLocation }));
+        const result = await dispatch(createTempTransfer({ fromLocation, toLocation }));
+        if (createTempTransfer.rejected.match(result)) {
+            setActionError(result.payload ?? "Failed to start transfer.");
+        }
         dispatch(loadTempTransfer());
     };
 
-    const finalizeCurrentTransfer = async () => {
-        if (tempTransfer?.items && tempTransfer.items.length > 0) {
-            const result = await dispatch(finalizeTransfer());
-            // Optional chaining protects against unhandled rejected promises
-            if (finalizeTransfer.fulfilled.match(result)) {
-                dispatch(clearTempTransferState());
-                dispatch(loadTempTransfer());
-                loadHistoricalTransfers();
-            }
+    const finalizeCurrentTransfer = async (): Promise<boolean> => {
+        if (!tempTransfer?.items || tempTransfer.items.length === 0) return false;
+        const result = await dispatch(finalizeTransfer());
+        if (finalizeTransfer.fulfilled.match(result)) {
+            dispatch(clearTempTransferState());
+            dispatch(loadTempTransfer());
+            return true;
+        }
+        setActionError(result.payload ?? "Failed to finalize transfer.");
+        return false;
+    };
+
+    const removeDraftItem = async (itemId: string) => {
+        const result = await dispatch(removeItem(itemId));
+        if (removeItem.rejected.match(result)) {
+            setActionError(result.payload ?? "Failed to remove item from transfer.");
         }
     };
 
-    // FIX: Typed transferId as string
-    const confirmPastTransfer = async (transferId: string) => {
-        try {
-            // FIX: Removed `dispatch()`. This is a raw API service call, not a Redux thunk!
-            await confirmTransfer(transferId); 
-            loadHistoricalTransfers();
-        } catch (error: any) {
-            logError("Failed to confirm transfer", error.message);
+    const discardDraft = async () => {
+        const result = await dispatch(discardTransfer());
+        if (discardTransfer.rejected.match(result)) {
+            setActionError(result.payload ?? "Failed to discard transfer.");
         }
     };
-
-    logInfo("useTransferManager -> populatedTempTransfer: ", fullyPopulatedTempTransfer)
 
     return {
-        transfers,
         tempTransfer,
-        transferStatus,
         tempTransferStatus,
         populatedTempTransfer: fullyPopulatedTempTransfer,
-        isItemsLoading, // Added this so your UI can display a spinner while the catalog loads!
+        isItemsLoading,
         startNewTransfer,
         finalizeCurrentTransfer,
-        confirmPastTransfer
+        removeDraftItem,
+        discardDraft,
+        actionError,
+        setActionError,
     };
 };

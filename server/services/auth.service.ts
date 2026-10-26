@@ -15,21 +15,23 @@ import logger from '../utils/logger.js';
 
 
 export async function registerUser( userData: RegisterDTO ): Promise<AuthResponse> {
-    const { name, email, password, role = 'user' } = userData;
+    const { name, email, password } = userData;
 
-    const existing = await User.findOne({ email });
+    const existing = await User.findOne({ email: email.toLowerCase() });
     if (existing) {
         logger.error('Email already registered');
         throw new AppError('Email already registered', 409);
     } 
 
     const hashed = await bcrypt.hash(password, 10);
-    const isApproved = process.env.DEFAULT_USER_APPROVED;
-    const newUser = new User({ name, email, password: hashed, role, isApproved });
+    // Self-registration always creates a regular user; roles are granted by an admin.
+    const isApproved = process.env.DEFAULT_USER_APPROVED === 'true';
+    const newUser = new User({ name, email, password: hashed, role: 'user', isApproved });
     
     await newUser.save();
 
-    const token = generateToken(newUser._id.toString(), newUser.role);
+    // Unapproved accounts get no token until an admin/manager approves them.
+    const token = newUser.isApproved ? generateToken(newUser._id.toString(), newUser.role) : undefined;
 
     return { 
         user: {
@@ -46,7 +48,7 @@ export async function registerUser( userData: RegisterDTO ): Promise<AuthRespons
 export async function loginUser(credentials: LoginDTO): Promise<AuthResponse> {
     const { email, password } = credentials;
     
-    const user = await User.findOne({ email });
+    const user = await User.findOne({ email: email.toLowerCase() }).select('+password');
     if (!user || !user.isActive) {
         logger.warn('Invalid credentials or inactive account');
         throw new AppError('Invalid credentials or inactive account', 401);

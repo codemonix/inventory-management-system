@@ -6,6 +6,10 @@ import logger from '../utils/logger.js';
 import path from 'path';
 import fs from 'fs';
 import { AuthenticatedRequest } from '../types/auth.types.js';
+import { assertObjectId, parseIdList, parsePagination } from '../utils/validation.js';
+
+const IMAGE_DIR = path.join(process.cwd(), 'uploads', 'items');
+const SAFE_IMAGE_NAME = /^[\w-]+\.(png|jpe?g|webp|gif)$/i;
 
 
 export const createItem = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
@@ -17,12 +21,7 @@ export const createItem = async (req: Request, res: Response, next: NextFunction
             throw new AppError('Name is required!', 400);
         }
 
-        const savedItem = await ItemService.createItem({
-            name,
-            category,
-            price,
-            filename: req.file?.filename 
-        });
+        const savedItem = await ItemService.createItem({ name, category, price });
 
         res.status(201).json({ success: true, message: 'Item created successfully', item: savedItem });
     } catch (error) {
@@ -33,11 +32,13 @@ export const createItem = async (req: Request, res: Response, next: NextFunction
 export const getItems = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     logger.debug("item.controller -> getItems -> req.query:", req.query);
     try {
+        const { page, limit } = parsePagination(req.query.page, req.query.limit);
         const result = await ItemService.getItems({
-            page: req.query.page ? parseInt(req.query.page as string, 10) : undefined,
-            limit: req.query.limit ? parseInt(req.query.limit as string, 10) : undefined,
+            page,
+            limit,
             search: req.query.search as string,
-            sort: req.query.sort as string
+            sort: req.query.sort as string,
+            ids: parseIdList(req.query.ids, 'ids'),
         });
 
         logger.debug(`item.controller -> getItems -> page: ${req.query.page}, limit: ${req.query.limit}`);
@@ -62,9 +63,9 @@ export const deleteItem = async (
     next: NextFunction
 ): Promise<void> => {
     try {
-        const id = req.params.id as string;
+        const id = assertObjectId(req.params.id, 'item ID');
         await ItemService.deleteItem(id);
-        res.status(200).json({ message: 'Item deleted successfully' });
+        res.status(200).json({ success: true, message: 'Item deleted successfully' });
     } catch (error) {
         next(error);
     }
@@ -73,7 +74,7 @@ export const deleteItem = async (
 export const updateItemImage = async (req: AuthenticatedRequest<{ itemId: string }>, res: Response, next: NextFunction): Promise<void> => {
     logger.debug("item.controller -> updateItemImage -> ", req.file);
     try {
-        const itemId = req.params.itemId as string;
+        const itemId = assertObjectId(req.params.itemId, 'item ID');
 
         if (!req.file || !req.file.filename) {
             logger.warn("item.controller -> updateItemImage -> no file provided in the request");
@@ -94,11 +95,7 @@ export const updateItemImage = async (req: AuthenticatedRequest<{ itemId: string
 
 export const updateItem = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-        const itemId = req.params.itemId as string;
-        if (!itemId) {
-            logger.warn("item.controller -> updateItem -> no itemId provided in the request");
-            throw new AppError('Item ID is required!', 400);
-        }
+        const itemId = assertObjectId(req.params.itemId, 'item ID');
 
         const { name, category, price } = req.body;
 
@@ -108,7 +105,7 @@ export const updateItem = async (req: Request, res: Response, next: NextFunction
 
         const updatedItem = await ItemService.updateItem(itemId, { name, category, price });
 
-        res.status(200).json({ message: 'Item updated successfully', item: updatedItem });
+        res.status(200).json({ success: true, message: 'Item updated successfully', item: updatedItem });
     } catch (error) {
         next(error);
     }
@@ -116,8 +113,12 @@ export const updateItem = async (req: Request, res: Response, next: NextFunction
 
 export const getItemImage = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-        const filename = req.params.filename as string;
-        const imagePath = path.join(process.cwd(), 'uploads', 'items', filename);
+        // Only plain filenames are accepted, so "../" (even URL-encoded) can never escape the folder
+        const filename = path.basename(req.params.filename as string);
+        if (!SAFE_IMAGE_NAME.test(filename)) {
+            throw new AppError('Image not found!', 404);
+        }
+        const imagePath = path.join(IMAGE_DIR, filename);
         
         if (!fs.existsSync(imagePath)) {
             throw new AppError('Image not found!', 404);

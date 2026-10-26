@@ -1,27 +1,20 @@
-import { useState, useContext } from "react";
+import { useState } from "react";
 import { NavLink } from "react-router-dom";
 import { 
     Box, Drawer, Divider, List, ListItem, 
     ListItemButton, ListItemIcon, ListItemText, IconButton,
-    useTheme
 } from "@mui/material";
 import MenuIcon from '@mui/icons-material/Menu';
 import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
-import DarkModeIcon from '@mui/icons-material/DarkMode';
-import LightModeIcon from '@mui/icons-material/LightMode';
 import LogoutIcon from '@mui/icons-material/Logout';
 
-import { useAuth } from "../context/AuthContext.jsx";
-import { ColorModeContext } from "../context/ThemeContextProvider.jsx";
+import { useAuth } from "../context/AuthContext";
 
 function SidebarDrawer() {
     const { isAdmin, isLoggedIn, isManager } = useAuth();
     const [isOpen, setIsOpen] = useState(false);
     const isManagerOrAdmin = isAdmin || isManager;
     
-    // Hooks for Theme and Context
-    const theme = useTheme();
-    const { toggleColorMode } = useContext(ColorModeContext);
 
     const toggleSidebar = () => setIsOpen((prev) => !prev);
 
@@ -33,7 +26,7 @@ function SidebarDrawer() {
     ];
 
     // Dynamic style function that reads directly from your theme.js
-    const getNavItemStyles = (isActive) => ({
+    const getNavItemStyles = (isActive: boolean) => ({
         bgcolor: isActive ? 'primary.main' : 'transparent', 
         color: isActive ? 'primary.contrastText' : 'text.primary', 
         borderRadius: 1,
@@ -118,6 +111,7 @@ function SidebarDrawer() {
         <Box>
             <IconButton 
                 onClick={toggleSidebar} 
+                aria-label="Open navigation menu"
                 sx={{ 
                     position: 'fixed', 
                     top: 12, 

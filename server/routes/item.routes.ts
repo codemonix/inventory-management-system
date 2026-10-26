@@ -1,7 +1,7 @@
 
 import { Router, RequestHandler } from 'express';
 import { handleImageUpload } from '../middleware/upload.middleware.js';
-import auth, { isAdmin }  from '../middleware/auth.middleware.js';
+import auth, { isAdmin, isManagerOrAdmin }  from '../middleware/auth.middleware.js';
 import { createItem, 
     getItems, 
     getAllItems, 
@@ -12,13 +12,14 @@ import { createItem,
     
 const router = Router();
 
-router.post('/', auth, createItem);
+// Catalog changes: manager or admin. Deleting: admin only.
+router.post('/', auth, isManagerOrAdmin, createItem);
 router.get('/', auth, getItems);
 router.get('/all', auth, getAllItems);
 router.delete('/:id', auth, isAdmin, deleteItem as unknown as RequestHandler);
-router.put('/:itemId', auth, isAdmin, updateItem);
+router.put('/:itemId', auth, isManagerOrAdmin, updateItem);
 
-router.post('/:itemId/update-image', auth, handleImageUpload, updateItemImage as unknown as RequestHandler);
-router.get('/image/:filename', getItemImage)
+router.post('/:itemId/update-image', auth, isManagerOrAdmin, handleImageUpload, updateItemImage as unknown as RequestHandler);
+router.get('/image/:filename', auth, getItemImage)
 
 export default router;

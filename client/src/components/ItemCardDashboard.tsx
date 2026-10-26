@@ -3,14 +3,23 @@ import InputTwoToneIcon from '@mui/icons-material/InputTwoTone';
 import OutputTwoToneIcon from '@mui/icons-material/OutputTwoTone';
 import SwapHorizonIcon from '@mui/icons-material/SwapHoriz';
 import StockDetails from "./StockDetail";
-import ImageWithCameraOver from "./ImageWithCameraOver.jsx";
-import { useManagedImage } from "../hooks/useManagedObjectImage.js";
-import { fetchItemImage } from "../services/itemService.js";
+import ImageWithCameraOver from "./ImageWithCameraOver";
+import { useManagedImage } from "../hooks/useManagedObjectImage";
+import { fetchItemImage } from "../services/itemService";
+import { DEFAULT_ITEM_IMAGE } from '../constants';
+import { IInventoryRecord } from '../types/inventory.types';
+import { ILocation } from '../types/location.types';
 
-const defaultImage = "/uploads/items/default.jpg"; 
+interface ItemCardDashboardProps {
+    item: IInventoryRecord;
+    onIn: () => void;
+    onOut: () => void;
+    onAddToTransfer: () => void;
+    locations: ILocation[];
+}
 
-const ItemCardDashboard = ({ item, onIn, onOut, locationColors, onAddToTransfer, locations }) => {
-    const { displayUrl, isImageLoading } = useManagedImage(item.image, fetchItemImage, defaultImage);
+const ItemCardDashboard = ({ item, onIn, onOut, onAddToTransfer, locations }: ItemCardDashboardProps) => {
+    const { displayUrl, isImageLoading } = useManagedImage(item.image, fetchItemImage, DEFAULT_ITEM_IMAGE);
 
     return (
         <Card 
@@ -42,8 +51,6 @@ const ItemCardDashboard = ({ item, onIn, onOut, locationColors, onAddToTransfer,
                     <ImageWithCameraOver 
                         imageUrl={displayUrl} 
                         readOnly={true} 
-                        // Ensures the image covers the box perfectly without stretching
-                        style={{ objectFit: 'cover', width: '100%', height: '100%' }} 
                     />
                 )}
             </Box>
@@ -66,7 +73,7 @@ const ItemCardDashboard = ({ item, onIn, onOut, locationColors, onAddToTransfer,
 
                 {/* Body: Stock Indicators */}
                 <Box sx={{ flexGrow: 1, display: 'flex', alignItems: 'center' }}>
-                    <StockDetails item={item} locationColors={locationColors} direction="row" locations={locations} />
+                    <StockDetails item={item} direction="row" locations={locations} />
                 </Box>
 
                 {/* Footer: Action Buttons */}

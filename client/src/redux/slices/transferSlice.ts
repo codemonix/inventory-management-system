@@ -5,7 +5,8 @@ import {
     createTempTransfer, 
     addItem, 
     finalizeTransfer, 
-    removeItem
+    removeItem,
+    discardTransfer
 } from "../thunks/transferThunks";
 import { logDebug } from "../../utils/logger";
 
@@ -61,6 +62,11 @@ const tempTransferSlice = createSlice({
             .addCase(removeItem.fulfilled, (state, action: PayloadAction<TempTransferActionResponse>) => {
                 state.data = action.payload.temp || state.data;
                 state.successMessage = "Item successfully removed.";
+            })
+            .addCase(discardTransfer.fulfilled, (state) => {
+                state.data = null;
+                state.tempTransferStatus = 'succeeded';
+                state.successMessage = "Draft discarded.";
             })
             .addCase(finalizeTransfer.fulfilled, (state) => {
                 // When finalized, the cart is empty! We don't push to a history array

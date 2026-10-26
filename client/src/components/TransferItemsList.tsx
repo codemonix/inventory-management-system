@@ -1,9 +1,8 @@
 import { Box, Typography } from "@mui/material";
-import { logInfo } from "../utils/logger.js";
-import ItemCardTransfer from "./ItemCardTransfer.jsx";
+import ItemCardTransfer from "./ItemCardTransfer";
+import { ITransferLine } from "../types/transfer.types";
 
-export default function TransferItemsList({ items }) {
-    logInfo("TransferItemsList -> items:", items);
+export default function TransferItemsList({ items }: { items: ITransferLine[] }) {
 
     // Empty State
     if (!items || items.length === 0) {
@@ -45,10 +44,10 @@ export default function TransferItemsList({ items }) {
                 py: 1 
             }}
         >
-            {items.map((itm) => (
+            {items.map((line, index) => (
                 <ItemCardTransfer 
-                    key={itm.item?._id || Math.random()} 
-                    item={itm} 
+                    key={line.item?._id ?? `deleted-${index}`} 
+                    line={line} 
                 />
             ))}
         </Box>

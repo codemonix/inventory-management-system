@@ -55,7 +55,9 @@ const dashboardSlice = createSlice({
                 state.items = action.payload.items;
                 state.totalItems = action.payload.pagination.totalCount;
             })
-            .addCase(getDashboardData.rejected, (state, action: PayloadAction<string | undefined>) => {
+            .addCase(getDashboardData.rejected, (state, action) => {
+                // Cancelled because a newer query replaced it: that request is now pending
+                if (action.meta.aborted) return;
                 state.loading = false;
                 state.error = action.payload || "Failed to load dashboard data";
             });

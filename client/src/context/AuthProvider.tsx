@@ -1,8 +1,8 @@
 import { useState, useEffect, ReactNode } from "react";
-import { AuthContext } from "./AuthContext.jsx";
-import { loginApi, fetchUserData, registerApi } from "../services/authService.js";
-import { logDebug, logError, logInfo } from "../utils/logger.js";
-import { IUser } from "../types/auth.types.js";
+import { AuthContext } from "./AuthContext";
+import { loginApi, fetchUserData, registerApi } from "../services/authService";
+import { logDebug, logError, logInfo } from "../utils/logger";
+import { IUser } from "../types/auth.types";
 
 interface AuthProviderProps {
     children: ReactNode;
@@ -33,12 +33,13 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
                     setIsAdmin(isAdmin);
                     setIsManager(isManager);
                     setIsLoggedIn(true);
-                    logDebug("User data fetched successfully userData, user", userData, user);
+                    logDebug("User data fetched successfully", userData);
 
                 })
-                .catch((error: any) => {
+                .catch((error) => {
                     if (cancelled) return;
-                    logError('AuthProvider -> Invalid token or fetch user data failed:', error.message);
+                    const message = error instanceof Error ? error.message : "Unknown error";
+                    logError('AuthProvider -> Invalid token or fetch user data failed:', message);
                     setIsLoggedIn(false);
                     setUser(null);
                     setIsAdmin(false);
@@ -72,8 +73,9 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
                 setIsManager(isManager);
                 
             }
-    } catch (error: any) {
-        logError("AuthProvider -> Login failed:", error.message);
+    } catch (error) {
+        const message = error instanceof Error ? error.message : "Unknown error";
+        logError("AuthProvider -> Login failed:", message);
         throw error;
     }
     };
@@ -86,7 +88,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         logInfo("User logged out");
     };
 
-    const register = async ({name, email, password}: Record<string, string> ): Promise<void> => {
+    const register = async ({ name = '', email, password }: { name?: string, email: string, password: string }): Promise<boolean> => {
         try {
             const { token, user } = await registerApi(name, email, password);
 
@@ -94,7 +96,8 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
             logDebug("register -> token", !!token)
             logDebug("is user approved?", user.isApproved)
 
-            if (user.isApproved) {
+            // No token means the account must be approved by an admin or manager first
+            if (user.isApproved && token) {
                 localStorage.setItem('token', token);
                 setUser(user);
                 setIsAdmin(user.role === 'admin');
@@ -102,8 +105,10 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
                 setIsLoggedIn(true);
             }
             logInfo("User registered successfully");
-        } catch (error: any) {
-            logError("Register failed:", error.message);
+            return Boolean(user.isApproved && token);
+        } catch (error) {
+            const message = error instanceof Error ? error.message : "Unknown error";
+            logError("Register failed:", message);
             throw error;
         }
     }

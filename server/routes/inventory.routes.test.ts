@@ -1,12 +1,12 @@
 // server/routes/inventory.routes.test.ts
 import request from 'supertest';
-import mongoose from 'mongoose';
 import app from '../app.js';
 
 // Import Models
 import User from '../models/users.model.js';
 import Item from '../models/item.model.js';
 import Location from '../models/location.model.js';
+import Inventory from '../models/inventory.model.js';
 
 // Import the Token Utility!
 import generateToken from '../utils/generateToken.js'; 
@@ -114,6 +114,85 @@ describe('Integration: Inventory Endpoints', () => {
             expect(response.status).toBe(400); 
             expect(response.body.success).toBe(false);
             // expect(response.body.message).toContain('Insufficient stock'); // Update to match your actual error message
+        });
+    });
+
+    describe('Hardening', () => {
+        it('should reject a non-numeric quantity', async () => {
+            const response = await request(app)
+                .post(`/api/inventory/${itemId}/in`)
+                .set('Authorization', `Bearer ${token}`)
+                .send({ locationId, quantity: 'abc' });
+
+            expect(response.status).toBe(400);
+            expect(await Inventory.countDocuments()).toBe(0);
+        });
+
+        it('should reject stock IN for a location that does not exist', async () => {
+            const response = await request(app)
+                .post(`/api/inventory/${itemId}/in`)
+                .set('Authorization', `Bearer ${token}`)
+                .send({ locationId: '507f1f77bcf86cd799439011', quantity: 5 });
+
+            expect(response.status).toBe(404);
+            expect(await Inventory.countDocuments()).toBe(0);
+        });
+
+        it('should let an admin delete an empty inventory record (route now authenticates first)', async () => {
+            const record = await Inventory.create({ itemId, locationId, quantity: 0 });
+            const response = await request(app)
+                .delete(`/api/inventory/${record.id}`)
+                .set('Authorization', `Bearer ${token}`);
+
+            expect(response.status).toBe(200);
+        });
+
+        it('should only count search matches in pagination totals', async () => {
+            const other = await Item.create({ name: 'Unrelated', nameLower: 'unrelated', code: 'ITEM-002' });
+            await Inventory.create({ itemId, locationId, quantity: 1 });
+            await Inventory.create({ itemId: other.id, locationId, quantity: 1 });
+
+            const response = await request(app)
+                .get('/api/inventory?search=StockItem')
+                .set('Authorization', `Bearer ${token}`);
+
+            expect(response.status).toBe(200);
+            expect(response.body.pagination.totalCount).toBe(1);
+        });
+    });
+
+    describe('Stock totals and items by id', () => {
+        it('should return totals only for the requested items, with 0 for items without stock', async () => {
+            const other = await Item.create({ name: 'NoStock', nameLower: 'nostock', code: 'ITEM-003' });
+            const secondLocation = await Location.create({ name: 'Second' });
+            await Inventory.create({ itemId, locationId, quantity: 4 });
+            await Inventory.create({ itemId, locationId: secondLocation.id, quantity: 6 });
+
+            const response = await request(app)
+                .get(`/api/inventory/totals?itemIds=${itemId},${other.id}`)
+                .set('Authorization', `Bearer ${token}`);
+
+            expect(response.status).toBe(200);
+            expect(response.body.totals).toEqual({ [itemId]: 10, [other.id]: 0 });
+        });
+
+        it('should reject malformed item ids', async () => {
+            const response = await request(app)
+                .get('/api/inventory/totals?itemIds=not-an-id')
+                .set('Authorization', `Bearer ${token}`);
+            expect(response.status).toBe(400);
+        });
+
+        it('should fetch only the requested items from /items', async () => {
+            await Item.create({ name: 'Other', nameLower: 'other', code: 'ITEM-004' });
+
+            const response = await request(app)
+                .get(`/api/items?ids=${itemId}`)
+                .set('Authorization', `Bearer ${token}`);
+
+            expect(response.status).toBe(200);
+            expect(response.body.result.items).toHaveLength(1);
+            expect(response.body.result.items[0]._id).toBe(itemId);
         });
     });
 });

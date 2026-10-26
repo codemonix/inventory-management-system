@@ -3,7 +3,13 @@ import CameraAltIcon from '@mui/icons-material/CameraAlt';
 import BrokenImageIcon from '@mui/icons-material/BrokenImage';
 import { useEffect, useState } from 'react';
 
-function ImageWithCameraOver({ imageUrl, onChange, readOnly = false }) {
+interface ImageWithCameraOverProps {
+    imageUrl: string | null | undefined;
+    onChange?: () => void;   // not needed when readOnly
+    readOnly?: boolean;
+}
+
+function ImageWithCameraOver({ imageUrl, onChange, readOnly = false }: ImageWithCameraOverProps) {
     const [hasError, setHasError] = useState(false);
 
     useEffect(() => {
@@ -23,7 +29,7 @@ function ImageWithCameraOver({ imageUrl, onChange, readOnly = false }) {
                 borderRadius: 1,
                 bgcolor: 'background.default'
             }}
-            onClick={isPlaceholder ? onChange : undefined}
+            onClick={isPlaceholder && !readOnly ? onChange : undefined}
         >
             {isPlaceholder ? (
                 <Box 
@@ -59,6 +65,7 @@ function ImageWithCameraOver({ imageUrl, onChange, readOnly = false }) {
             {!readOnly && (
                 <IconButton 
                     size='small'
+                    aria-label="Upload image"
                     sx={{
                         position: 'absolute',
                         bottom: 8,
@@ -74,7 +81,7 @@ function ImageWithCameraOver({ imageUrl, onChange, readOnly = false }) {
                     }}
                     onClick={(e) => {
                         e.stopPropagation();
-                        onChange();
+                        onChange?.();
                     }}
                 >
                     <CameraAltIcon fontSize='small'/>

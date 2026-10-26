@@ -1,6 +1,6 @@
 import { createAsyncThunk } from "@reduxjs/toolkit";
 import { fetchInventory } from "../../services/inventoryService";
-import { FetchInventoryParams, InventoryPaginatedResult } from "../../types/inventory.types.js";
+import { FetchInventoryParams, InventoryPaginatedResult } from "../../types/inventory.types";
 
 
 export const getDashboardData = createAsyncThunk<

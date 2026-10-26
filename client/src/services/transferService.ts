@@ -1,81 +1,81 @@
 import api, { isApiError } from "../api/api";
+import { getBackendMessage } from "../utils/backendMessage";
 import { logInfo, logError, logDebug } from "../utils/logger";
 import {
     ITransfer,
     ITempTransfer,
+    TransferHistoryFilters,
+    TransferHistoryPage,
     TransferResponse,
     TempTransferResponse,
     TempTransferActionResponse,
-    DeleteResponse
 } from "../types/transfer.types";
 
 // Transfers
 
-export const getTransfers = async (): Promise<ITransfer[]> => {
+// One page of transfer history (newest first). Empty filter values are left out of the query.
+export const getTransferHistory = async (
+    filters: TransferHistoryFilters = {},
+    page = 1,
+    limit = 20,
+    signal?: AbortSignal,
+): Promise<TransferHistoryPage> => {
+    const params: Record<string, string | number> = { page, limit };
+    for (const [key, value] of Object.entries(filters)) {
+        if (value && value !== 'all') params[key] = value;
+    }
     try {
-        logDebug("Fetching transfers...")
-        const response = await api.get<{transfers: ITransfer[]}>("/transfers")
-        logInfo("Transfers Fetched successfully")
-        return response.data.transfers;
+        const response = await api.get<TransferHistoryPage>("/transfers", { params, signal });
+        logDebug("transferService -> getTransferHistory:", response.data);
+        return response.data;
     } catch (error) {
-        logError("transferService.js -> getTransfers error");
-        if (isApiError(error)) throw new Error(error.response?.data?.message || "Failed to fetch transfers.");
+        logError("transferService -> getTransferHistory error");
+        if (isApiError(error)) throw new Error(getBackendMessage(error) || "Failed to fetch transfers.");
         throw error instanceof Error ? error : new Error("Unknown error fetching transfers.");
     }
-} 
+};
 
-export const createTransfer = async (transfer: Omit<ITransfer, "id">): Promise<TransferResponse> => {
+export const createTransfer = async (transfer: {
+    fromLocation: string;
+    toLocation: string;
+    items: { item: string; quantity: number }[];
+}): Promise<TransferResponse> => {
     try {
         const response =  await api.post<TransferResponse>("/transfers", transfer)
         logInfo("Transfer created successfully")
         return response.data;
     } catch (error) {
-        logError("transferService.js -> createTransfer error");
-        if (isApiError(error)) throw new Error(error.response?.data?.message || "Failed to create transfer.");
+        logError("transferService -> createTransfer error");
+        if (isApiError(error)) throw new Error(getBackendMessage(error) || "Failed to create transfer.");
         throw error instanceof Error ? error : new Error("Unknown error creating transfer.");
     }
-} 
+};
 
-
-export const updateTransfer = async (id: string, transfer: Partial<ITransfer>): Promise<TransferResponse> => {
+// Manager or admin only (enforced by the server)
+export const confirmTransfer = async (transferId: string): Promise<TransferResponse> => {
     try {
-        const response = await api.put<TransferResponse>(`/transfers/${id}`, transfer)
-        logInfo("Transfer updated successfully")
-        return response.data;
-    } catch (error) {
-        logError("transferService.js -> updateTransfer error");
-        if (isApiError(error)) throw new Error(error.response?.data?.message || "Failed to update transfer.");
-        throw error instanceof Error ? error : new Error("Unknown error updating transfer.");
-    }
-} 
-
-
-
-export const deleteTransfer = async (id: string): Promise<DeleteResponse> => {
-    try {
-        const response = await api.delete<DeleteResponse>(`/transfers/${id}`);
-        logInfo(`Transfer deleted successfully id: ${id}`);
-        return response.data;
-    } catch (error) {
-        logError("transferService.js -> deleteTransfer error");
-        if (isApiError(error)) throw new Error(error.response?.data?.message || "Failed to delete transfer.");
-        throw error instanceof Error ? error : new Error("Unknown error deleting transfer.");
-    }
-} 
-
-
-export const confirmTransfer = async (transfer: string): Promise<TransferResponse> => {
-    try {
-        logDebug("transferService -> confirmTransfer -> transfer:", transfer);
-        const response = await api.put<TransferResponse>(`/transfers/${transfer}/confirm`);
+        logDebug("transferService -> confirmTransfer -> id:", transferId);
+        const response = await api.put<TransferResponse>(`/transfers/${transferId}/confirm`);
         logInfo("Transfer confirmed successfully, response:", response.data)
         return response.data;
     } catch (error) {
-        if (isApiError(error)) throw new Error(error.response?.data?.message || "Failed to confirm transfer.");
+        if (isApiError(error)) throw new Error(getBackendMessage(error) || "Failed to confirm transfer.");
         throw error instanceof Error ? error : new Error("Unknown error confirming transfer.");
     }
-};  
+};
 
+
+// Admin only (enforced by the server): stock goes back to the source location
+export const cancelTransfer = async (transferId: string): Promise<TransferResponse> => {
+    try {
+        const response = await api.put<TransferResponse>(`/transfers/${transferId}/cancel`);
+        logInfo("Transfer cancelled successfully");
+        return response.data;
+    } catch (error) {
+        if (isApiError(error)) throw new Error(getBackendMessage(error) || "Failed to cancel transfer.");
+        throw error instanceof Error ? error : new Error("Unknown error cancelling transfer.");
+    }
+};
 
 // Temp Transfer (Shopping Cart System)
 export const getTempTransfer = async (): Promise<ITempTransfer> => {
@@ -85,7 +85,7 @@ export const getTempTransfer = async (): Promise<ITempTransfer> => {
         logDebug("transferService -> getTempTransfer -> temp:", response.data.temp);
         return response.data.temp;
     } catch (error) {
-        if (isApiError(error)) throw new Error(error.response?.data?.message || "Failed to fetch temp transfer.");
+        if (isApiError(error)) throw new Error(getBackendMessage(error) || "Failed to fetch temp transfer.");
         throw error instanceof Error ? error : new Error("Unknown error fetching temp transfer.");
     }
 } 
@@ -97,20 +97,20 @@ export const createTempTransfer = async (tempTransfer: Pick<ITempTransfer, "from
         logInfo("Temp Transfer created successfully")
         return response.data.temp;
     } catch (error) {
-        if (isApiError(error)) throw new Error(error.response?.data?.message || "Failed to initialize temp transfer.");
+        if (isApiError(error)) throw new Error(getBackendMessage(error) || "Failed to initialize temp transfer.");
         throw error instanceof Error ? error : new Error("Unknown error initializing temp transfer.");
     }
 
 }
 
-export const addItemToTempTransfer = async (item: { item: string, quantity: number, sourceLocationId: string}): Promise<TempTransferActionResponse> => {
+export const addItemToTempTransfer = async (item: { itemId: string, quantity: number, sourceLocationId: string }): Promise<TempTransferActionResponse> => {
     try {
         const response = await api.post<TempTransferActionResponse>("/transfers/temp/add", item);
         logInfo("Item added to temp transfer successfully");
         logDebug("transferService -> addItemToTempTransfer -> response:", response.data.temp);
         return response.data;
     } catch (error) {
-        if (isApiError(error)) throw new Error(error.response?.data?.message || "Failed to add item to transfer.");
+        if (isApiError(error)) throw new Error(getBackendMessage(error) || "Failed to add item to transfer.");
         throw error instanceof Error ? error : new Error("Unknown error adding item.");
     }
 } 
@@ -121,10 +121,21 @@ export const removeItemFromTempTransfer = async (itemId: string) => {
         logInfo(`item ${itemId} removed from temp transfer successfully`);
         return response.data;
         } catch (error) { 
-            if (isApiError(error)) throw new Error(error.response?.data?.message || "Failed to remove item from transfer.");
+            if (isApiError(error)) throw new Error(getBackendMessage(error) || "Failed to remove item from transfer.");
         throw error instanceof Error ? error : new Error("Unknown error removing item.");
     }
 } 
+
+// Throws the current user's draft away; its reserved stock returns to the shelf
+export const discardTempTransfer = async (): Promise<void> => {
+    try {
+        await api.delete("/transfers/temp");
+        logInfo("Temp Transfer discarded");
+    } catch (error) {
+        if (isApiError(error)) throw new Error(getBackendMessage(error) || "Failed to discard transfer.");
+        throw error instanceof Error ? error : new Error("Unknown error discarding transfer.");
+    }
+};
 
 export const finalizeTempTransfer = async (): Promise<ITransfer> => {
     try {
@@ -132,7 +143,7 @@ export const finalizeTempTransfer = async (): Promise<ITransfer> => {
         logInfo("Temp Transfer finalized successfully")
         return response.data.transfer;
     } catch (error) {
-        if (isApiError(error)) throw new Error(error.response?.data?.message || "Failed to finalize transfer.");
+        if (isApiError(error)) throw new Error(getBackendMessage(error) || "Failed to finalize transfer.");
         throw error instanceof Error ? error : new Error("Unknown error finalizing transfer.");
     }
 } 

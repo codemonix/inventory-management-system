@@ -3,6 +3,7 @@ import logger from "../utils/logger.js";
 import * as locationService from '../services/location.service.js';
 import { AppError } from "../errors/AppError.js";
 import { AuthenticatedRequest } from "../types/auth.types.js";
+import { assertObjectId } from "../utils/validation.js";
 
 
 interface LocationParams {
@@ -16,7 +17,7 @@ export async function createLocation(
     next: NextFunction
 ): Promise<void> {
     try {
-        if (!req.body || !req.body.name) {
+        if (!req.body || typeof req.body.name !== 'string' || !req.body.name.trim()) {
             return next(new AppError("Location Name is required", 400));
         }
         logger.debug("location.controller -> createLocation -> req.body:", req.body);
@@ -56,17 +57,8 @@ export async function deleteLocation(
     next: NextFunction
 ): Promise<void> {
     try {
-        const id = req.params.id;
-        const user = req.user;
-        if (!id) {
-            return next(new AppError("Location ID parameter is missing", 400));
-        }
-        
-        const location = await locationService.removeLocation(id, user);
-        
-        if (!location) {
-            return next(new AppError("Location not found", 404));
-        }
+        const id = assertObjectId(req.params.id, 'location ID');
+        await locationService.removeLocation(id, req.user);
         res.status(200).json({ success: true, message: 'Location deleted successfully' });
     } catch (error) {
         logger.error("location.controller -> deleteLocation -> error:");
@@ -81,8 +73,8 @@ export async function updateLocation(
     ): Promise<void> {
         logger.debug("location.controller -> updateLocation -> req.body:", req.body);
         try {
-            const id = req.params.id as string;
-            const location = req.body;
+            const id = assertObjectId(req.params.id, 'location ID');
+            const location = req.body ?? {};
             const updatedLocation = await locationService.updateLocation(id, location);
             res.status(200).json({ success: true, message: 'Location updated successfully', location: updatedLocation });
         } catch (error) {

@@ -19,7 +19,6 @@ export interface CreateItemDTO {
     name: string;
     category: string;
     price: number;
-    filename?: string;
 }
 
 export interface UpdateItemDTO {
@@ -34,6 +33,7 @@ export interface QueryItemsDTO {
     limit?: number;
     search?: string;
     sort?: string;
+    ids?: string[];   // only these items (e.g. the lines of a draft transfer)
 }
 
 export interface ItemParams {

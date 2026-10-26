@@ -11,7 +11,7 @@ import {
 
 export const getTempTransfer = async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
     try {
-        const temp = await transferService.getTempTransfer();
+        const temp = await transferService.getTempTransfer(req.user._id.toString());
         logger.debug("Temp transfer:", temp);
         res.status(200).json({ success: true, temp });
     } catch (error) {
@@ -26,7 +26,7 @@ export const createTempTransfer = async (
     next: NextFunction
 ): Promise<void> => {
     try {
-        const temp = await transferService.createTempTransfer(req.body);
+        const temp = await transferService.createTempTransfer(req.body, req.user._id.toString());
         res.status(201).json({ success: true, temp });
     } catch (error) {
         logger.error("transfercontroller -> Error in createTempTransfer");
@@ -40,7 +40,7 @@ export const addItemToTempTransfer = async (
     next: NextFunction
 ): Promise<void> => {
     try {
-        const temp = await transferService.addItemToTempTransfer(req.body);
+        const temp = await transferService.addItemToTempTransfer(req.body, req.user._id.toString());
         res.status(201).json({ success: true, temp });
     } catch (error) {
         logger.error("transfercontroller -> Error in addItemToTempTransfer");
@@ -57,10 +57,24 @@ export const removeItemFromTempTransfer = async (
         const { itemId } = req.params;
         if (!itemId) throw new AppError("Item ID is required", 400);
 
-        const temp = await transferService.removeItemFromTempTransfer(itemId);
+        const temp = await transferService.removeItemFromTempTransfer(itemId, req.user._id.toString());
         res.status(200).json({ success: true, temp });
     } catch (error) {
         logger.error("transfercontroller -> Error in removeItemFromTempTransfer");
+        next(error);
+    }
+};
+
+export const discardTempTransfer = async (
+    req: AuthenticatedRequest, 
+    res: Response, 
+    next: NextFunction
+): Promise<void> => {
+    try {
+        await transferService.discardTempTransfer(req.user._id.toString());
+        res.status(200).json({ success: true, message: 'Draft discarded and stock returned.' });
+    } catch (error) {
+        logger.error("transfercontroller -> Error in discardTempTransfer");
         next(error);
     }
 };
@@ -105,12 +119,29 @@ export const confirmTransfer = async (
             throw new AppError("Transfer ID is required", 400);
         } 
 
-        const transfer = await transferService.confirmTransferReceived(id);
+        const transfer = await transferService.confirmTransferReceived(id, req.user._id.toString());
         logger.info(`Transfer confirmed by user: ${req.user.email}`);
         
         res.status(200).json({ success: true, message: 'Transfer received and stock updated', transfer });
     } catch (error) {
         logger.error("transferController -> Error in confirmTransfer");
+        next(error);
+    }
+};
+
+export const cancelTransfer = async (
+    req: AuthenticatedRequest<{ id: string }>, 
+    res: Response, 
+    next: NextFunction
+): Promise<void> => {
+    try {
+        const transfer = await transferService.cancelTransfer(req.params.id, req.user._id.toString());
+        logger.info(`Transfer ${req.params.id} cancelled by ${req.user.email}`, {
+            type: 'audit', action: 'CANCEL_TRANSFER', userId: req.user._id,
+        });
+        res.status(200).json({ success: true, message: 'Transfer cancelled and stock returned.', transfer });
+    } catch (error) {
+        logger.error("transferController -> Error in cancelTransfer");
         next(error);
     }
 };
@@ -121,8 +152,8 @@ export const getAllTransfers = async (
     next: NextFunction
 ): Promise<void> => {
     try {
-        const transfers = await transferService.getAllTransfers();
-        res.status(200).json({ success: true, transfers });
+        const result = await transferService.getTransferHistory(req.query);
+        res.status(200).json({ success: true, ...result });
     } catch (error) {
         logger.error("transferController -> Error in getAllTransfers");
         next(error);

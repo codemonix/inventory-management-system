@@ -1,8 +1,17 @@
 import { Box, Typography } from '@mui/material';
 import LocationOnIcon from '@mui/icons-material/LocationOn'; // Semantic map pin icon
 import { logDebug } from '../utils/logger';
+import { IInventoryRecord } from '../types/inventory.types';
+import { ILocation } from '../types/location.types';
 
-const StockDetails = ({ item, locationColors, direction = 'column ', width, locations }) => {
+interface StockDetailsProps {
+  item: Pick<IInventoryRecord, 'stock'>;
+  direction?: 'row' | 'column';
+  width?: number | string;
+  locations?: ILocation[];   // used for each location's color
+}
+
+const StockDetails = ({ item, direction = 'column', width, locations }: StockDetailsProps) => {
   // Defensive check in case stock data is missing
   if (!item?.stock || item.stock.length === 0) return null;
   logDebug("StockDetails -> item:", item);

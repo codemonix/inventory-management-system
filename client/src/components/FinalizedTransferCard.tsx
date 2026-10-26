@@ -1,22 +1,21 @@
 import { Card, Box, Typography, Chip, Button, Stack, Divider } from "@mui/material";
 import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
-import { logDebug, logInfo } from "../utils/logger";
+import { ITransfer } from "../types/transfer.types";
+import { transferStatusColor, transferStatusLabel } from "../utils/transferStatus";
 
-const getStatusColor = (status) => {
-    switch (status?.toLowerCase()) {
-        case 'pending':
-        case 'in_transit': return 'info';
-        case 'confirmed': return 'success';
-        default: return 'default';
-    }
-};
+interface FinalizedTransferCardProps {
+    transfer: ITransfer;
+    onViewItems: () => void;
+    // Omitted for users who may not confirm (only managers and admins can)
+    onConfirm?: () => void;
+    // Omitted for non-admins (only admins can cancel)
+    onCancel?: () => void;
+}
 
-const FinalizedTransferCard = ({ transfer, onViewItems, onConfirm }) => {
-    logDebug("FinalizedTransferCard.jsx -> transfer:", transfer);
-    logInfo("loading FinalizedTransferCard ...");
-
-    const { fromLocation, toLocation, status, _id, items = [] } = transfer;
+const FinalizedTransferCard = ({ transfer, onViewItems, onConfirm, onCancel }: FinalizedTransferCardProps) => {
+    const { fromLocation, toLocation, status, _id, items = [], createdAt } = transfer;
     const isConfirmed = status === 'confirmed';
+    const isOpen = status === 'in_transit';
 
     return (
         <Card elevation={0} sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 2, bgcolor: 'background.paper' }}>
@@ -29,9 +28,12 @@ const FinalizedTransferCard = ({ transfer, onViewItems, onConfirm }) => {
                             <Typography variant="subtitle2" fontWeight="bold" color="primary.main">{toLocation?.name || 'N/A'}</Typography>
                         </Stack>
                         <Stack direction="row" spacing={1} alignItems="center">
-                            <Chip label={status || 'Unknown'} color={getStatusColor(status)} size="small" sx={{ fontWeight: 'bold', textTransform: 'capitalize' }} />
-                            <Typography variant="caption" color="text.secondary" fontFamily="monospace">ID: {_id?.slice(-6)}</Typography>
+                            <Chip label={transferStatusLabel(status)} color={transferStatusColor(status)} size="small" sx={{ fontWeight: 'bold' }} />
+                            <Typography variant="caption" color="text.secondary" fontFamily="monospace">ID: {_id.slice(-6)}</Typography>
                         </Stack>
+                        <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.5 }}>
+                            {new Date(createdAt).toLocaleString()}
+                        </Typography>
                     </Box>
                 </Stack>
 
@@ -39,16 +41,29 @@ const FinalizedTransferCard = ({ transfer, onViewItems, onConfirm }) => {
                     <Button variant="outlined" size="small" onClick={onViewItems} sx={{ flex: 1, borderRadius: 2 }}>
                         View Items
                     </Button>
-                    <Button 
-                        variant="contained" 
-                        color={isConfirmed ? "success" : "primary"}
-                        size="small" 
-                        onClick={onConfirm}
-                        disabled={isConfirmed}
-                        sx={{ flex: 1, borderRadius: 2 }}
-                    >
-                        {isConfirmed ? 'Confirmed' : 'Confirm'}
-                    </Button>
+                    {onConfirm && (
+                        <Button 
+                            variant="contained" 
+                            color={isConfirmed ? "success" : "primary"}
+                            size="small" 
+                            onClick={onConfirm}
+                            disabled={!isOpen}
+                            sx={{ flex: 1, borderRadius: 2 }}
+                        >
+                            {isConfirmed ? 'Confirmed' : isOpen ? 'Confirm' : 'Cancelled'}
+                        </Button>
+                    )}
+                    {onCancel && isOpen && (
+                        <Button 
+                            variant="outlined" 
+                            color="error"
+                            size="small" 
+                            onClick={onCancel}
+                            sx={{ flex: 1, borderRadius: 2 }}
+                        >
+                            Cancel
+                        </Button>
+                    )}
                 </Stack>
             </Box>
 
@@ -58,10 +73,10 @@ const FinalizedTransferCard = ({ transfer, onViewItems, onConfirm }) => {
                     <Box sx={{ p: 2, bgcolor: 'background.default' }}>
                         <Typography variant="caption" fontWeight="bold" color="text.secondary" sx={{ textTransform: 'uppercase', mb: 1, display: 'block' }}>Manifest</Typography>
                         <Stack spacing={0.5}>
-                            {items.slice(0, 3).map((item) => (
-                                <Box key={item.item?._id} sx={{ display: 'flex', justifyContent: 'space-between', bgcolor: 'action.hover', p: 1, borderRadius: 1 }}>
-                                    <Typography variant="body2" color="text.secondary">{item.item?.name}</Typography>
-                                    <Typography variant="body2" fontWeight="bold">x{item.quantity}</Typography>
+                            {items.slice(0, 3).map((line, index) => (
+                                <Box key={line.item?._id ?? index} sx={{ display: 'flex', justifyContent: 'space-between', bgcolor: 'action.hover', p: 1, borderRadius: 1 }}>
+                                    <Typography variant="body2" color="text.secondary">{line.item?.name ?? 'Deleted item'}</Typography>
+                                    <Typography variant="body2" fontWeight="bold">x{line.quantity}</Typography>
                                 </Box>
                             ))}
                             {items.length > 3 && (

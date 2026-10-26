@@ -10,7 +10,7 @@
     // See also https://aka.ms/tsconfig/module
     "module": "NodeNext",
     "target": "ES2022",
-    "allowJs": true,
+    "allowJs": false,
     // "types": [],
     // For nodejs:
     // "lib": ["esnext"],

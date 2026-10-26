@@ -1,6 +1,9 @@
-// This template will be filled at container start by docker-entrypoint.sh to produce runtime-config.js
+// Template filled at container start by docker-entrypoint.sh to produce /config.js,
+// which index.html loads before the app. src/config.ts reads window.__IMS_CONFIG__.
+window.__IMS_CONFIG__ = {
+  API_URL: "{{API_BASE}}"
+};
 
-window.__IMS_RUNTIME__ = {
-  API_BASE: "{{API_BASE}}",     
-  BASE_PATH: "{{BASE_PATH}}"     
+window.env = {
+  IS_DEMO: {{IS_DEMO}}
 };

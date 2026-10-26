@@ -1,58 +1,45 @@
 import { useState } from "react";
 import { useTransferManager } from "../hooks/useTransferManager";
-import { Dialog, DialogContent, DialogTitle, Box, Typography, IconButton } from "@mui/material";
+import { Dialog, DialogContent, DialogTitle, Box, Typography, IconButton, Snackbar, Alert } from "@mui/material";
 import CloseIcon from '@mui/icons-material/Close';
 
 // Sub-components
-import ActiveTransferSection from "./ActiveTransferSection.jsx";
-import TransferHistorySection from "./TransferHistorySection.jsx";
-import StartTransferDialog from "./StartTransferDialog.jsx";
-import TransferItemsList from "./TransferItemsList.jsx";
-import ConfirmModal from "./ConfirmModal.jsx";
-
-import { logDebug, logInfo } from "../utils/logger";
+import ActiveTransferSection from "./ActiveTransferSection";
+import TransferHistorySection from "./TransferHistorySection";
+import StartTransferDialog from "./StartTransferDialog";
+import TransferItemsList from "./TransferItemsList";
+import { useAuth } from "../context/AuthContext";
+import { ITransfer } from "../types/transfer.types";
 
 const TransferList = () => {
-    logDebug(" Loading TransferList component...");
-
-    // Data & Logic from Custom Hook (100% UNTOUCHED)
+    // Draft transfer state; the history manages its own paging and filters
     const { 
-        transfers, tempTransfer, tempTransferStatus, populatedTempTransfer, 
-        startNewTransfer, finalizeCurrentTransfer, confirmPastTransfer 
+        tempTransfer, tempTransferStatus, populatedTempTransfer, 
+        startNewTransfer, finalizeCurrentTransfer, removeDraftItem, discardDraft, actionError, setActionError
     } = useTransferManager();
+    const { isAdmin, isManager } = useAuth();
 
     // UI State for Modals
     const [showStartDialog, setShowStartDialog] = useState(false);
     const [openItems, setOpenItems] = useState(false);
-    const [confirmOpen, setConfirmOpen] = useState(false);
-    const [selectedTransfer, setSelectedTransfer] = useState(null);
+    const [selectedTransfer, setSelectedTransfer] = useState<ITransfer | null>(null);
+    const [historyRefreshKey, setHistoryRefreshKey] = useState(0);
 
     // Handlers
-    const handleStartNew = async (fromLocation, toLocation) => {
+    const handleStartNew = async (fromLocation: string, toLocation: string) => {
         await startNewTransfer(fromLocation, toLocation);
         setShowStartDialog(false);
     };
 
-    const handleConfirm = () => {
-        confirmPastTransfer(selectedTransfer._id);
-        setConfirmOpen(false);
+    const handleFinalize = async () => {
+        // A finalized draft appears at the top of the history
+        if (await finalizeCurrentTransfer()) setHistoryRefreshKey((key) => key + 1);
     };
 
-    const handleOpenItems = (transfer) => {
+    const handleOpenItems = (transfer: ITransfer) => {
         setSelectedTransfer(transfer);
         setOpenItems(true);
     };
-
-    const handleOpenConfirmDialog = (transfer) => {
-        if (transfer.status !== 'confirmed') {
-            setSelectedTransfer(transfer);
-            setConfirmOpen(true);
-        }
-    };
-
-    logDebug("TransferList -> tempTransfer:", tempTransfer);
-    logDebug("TransferList -> tempTransferStatus:", tempTransferStatus);
-    logDebug("TransferList -> populatedTempTransfer:", populatedTempTransfer);
 
     return (
         <Box sx={{ maxWidth: 'lg', mx: 'auto', p: { xs: 1, md: 3 }, display: 'flex', flexDirection: 'column', gap: 5 }}>
@@ -62,13 +49,17 @@ const TransferList = () => {
                 tempTransferStatus={tempTransferStatus}
                 populatedTempTransfer={populatedTempTransfer}
                 onStartNew={() => setShowStartDialog(true)}
-                onFinalize={finalizeCurrentTransfer}
+                onFinalize={handleFinalize}
+                onRemoveItem={removeDraftItem}
+                onDiscard={discardDraft}
             />
 
             <TransferHistorySection 
-                transfers={transfers}
                 onViewItems={handleOpenItems}
-                onConfirmDialog={handleOpenConfirmDialog}
+                canConfirm={isAdmin || isManager}
+                canCancel={isAdmin}
+                refreshKey={historyRefreshKey}
+                onError={setActionError}
             />
 
             {/* --- Modals & Dialogs --- */}
@@ -155,24 +146,22 @@ const TransferList = () => {
                 {/* Transfer Items List */} 
                 <DialogContent sx={{ bgcolor: 'background.default', pt: 2, pb: 1 }}>
                     <Box sx={{ pt: 2, pb: 1 }}>
-                        <TransferItemsList 
-                            items={selectedTransfer?.items || []} 
-                            onDelete={() => {}} 
-                            onEdit={() => {}} 
-                            onConfirm={() => {}} 
-                        />
+                        <TransferItemsList items={selectedTransfer?.items || []} />
                     </Box>
                 </DialogContent>
             </Dialog>
 
-            <ConfirmModal 
-                open={confirmOpen}
-                title='Confirm Arrival'
-                message={`Are you sure the items have arrived at ${selectedTransfer?.toLocation?.name || 'their destination'}?`}
-                onClose={() => setConfirmOpen(false)}
-                onConfirm={handleConfirm}
-            />
             
+            <Snackbar
+                open={Boolean(actionError)}
+                autoHideDuration={6000}
+                onClose={() => setActionError(null)}
+                anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+            >
+                <Alert onClose={() => setActionError(null)} severity="error" sx={{ width: '100%' }}>
+                    {actionError}
+                </Alert>
+            </Snackbar>
         </Box>
     );
 };

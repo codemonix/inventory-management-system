@@ -5,5 +5,6 @@ export interface SystemActionResponse {
     message: string;
 }
 
-export type ClearTarget = 'items' | 'locations' | 'inventory' | 'all' | 'logs';
+// Matches the server's POST /system/clear targets
+export type ClearTarget = 'transfers' | 'items';
 

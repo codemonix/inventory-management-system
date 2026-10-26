@@ -1,24 +1,33 @@
-import { useSelector } from "react-redux";
 import { Box, Typography } from "@mui/material";
+import { useAppSelector } from "../redux/hooks";
+import { IItem } from "../types/item.types";
 
 // Components
-import ItemCard from "./ItemCard.jsx";
-import StockActionDialog from "./StockActionDialog.jsx";
+import ItemCard from "./ItemCard";
+import StockActionDialog from "./StockActionDialog";
 
 // Hooks
-import { useStockAction } from "../hooks/useStockAction.js";
+import { useStockAction } from "../hooks/useStockAction";
 
-import { logDebug, logInfo } from "../utils/logger.js";
+import { logDebug, logInfo } from "../utils/logger";
 
-const ItemList = ({ items, onDelete, onEdit, onImageUpload, refreshInventory, stockLookup }) => {
+interface ItemListProps {
+    items: IItem[];
+    onDelete?: (item: IItem) => void;
+    onEdit?: (item: IItem) => void;
+    onImageUpload?: (itemId: string, imageUrl: string) => void;
+    refreshInventory: () => void;
+    stockLookup?: Record<string, number>;
+}
+
+const ItemList = ({ items, onDelete, onEdit, onImageUpload, refreshInventory, stockLookup }: ItemListProps) => {
 
     logInfo("Loading ItemList ...")
     
-    const locations = useSelector((state) => state.locations.locations);
+    const locations = useAppSelector((state) => state.locations.locations);
 
     const {
         dialogOpen,
-        currentItemId,
         actionType,
         defaultLocation,
         localError: stockError,
@@ -73,7 +82,6 @@ const ItemList = ({ items, onDelete, onEdit, onImageUpload, refreshInventory, st
                 open={dialogOpen}
                 onClose={closeDialog}
                 onSubmit={submitAction}
-                itemId={currentItemId}
                 locations={locations}
                 type={actionType}
                 errorMessage={stockError}

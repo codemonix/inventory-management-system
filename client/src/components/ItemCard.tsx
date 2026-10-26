@@ -19,29 +19,41 @@ import ImageWithCameraOver from "./ImageWithCameraOver";
 import { fetchItemImage } from "../services/itemService";
 import { useManagedImage } from "../hooks/useManagedObjectImage";
 import { useImageUpload } from "../hooks/useImageUpload";
+import { DEFAULT_ITEM_IMAGE } from '../constants';
+import { IItem } from '../types/item.types';
 
-const defaultImage = "/uploads/items/default.jpg"; 
+interface ItemCardProps {
+    item: IItem;
+    onIn: () => void;
+    onOut: () => void;
+    // Each action is shown only when its handler is passed (role-gated by the page)
+    onDelete?: (item: IItem) => void;
+    onEdit?: (item: IItem, anchor?: HTMLElement) => void;
+    onImageUpload?: (itemId: string, imageUrl: string) => void;
+    totalStock: number;
+}
 
-const ItemCard = ({ item, onIn, onOut, onDelete, onEdit, onImageUpload, totalStock }) => {
+const ItemCard = ({ item, onIn, onOut, onDelete, onEdit, onImageUpload, totalStock }: ItemCardProps) => {
     
-    const { displayUrl, setLocalPreview, isImageLoading } = useManagedImage(
+    const { displayUrl, setLocalPreview, clearLocalPreview, isImageLoading } = useManagedImage(
         item.imageUrl,
         fetchItemImage,
-        defaultImage
+        DEFAULT_ITEM_IMAGE
     );
 
+    // A failed upload drops the local preview so the card never shows an image that was not saved
     const { isUploading, uploadError, clearError, triggerImageUpload } = useImageUpload({
         onSuccess: onImageUpload,
-        setLocalPreview: setLocalPreview
+        setLocalPreview,
+        clearLocalPreview
     });
 
     return (
         <Card 
             elevation={0} 
             sx={{ 
-                width: '100%', 
-                mb: 2, // Replaces rigid margins with standard MUI bottom margin
-                border: '1px solid', 
+                width: '100%',
+                border: '1px solid', // spacing between cards comes from the ItemList grid gap
                 borderColor: 'divider',
                 borderRadius: 2,
                 bgcolor: 'background.paper',
@@ -66,7 +78,8 @@ const ItemCard = ({ item, onIn, onOut, onDelete, onEdit, onImageUpload, totalSto
                 ) : (
                     <ImageWithCameraOver 
                         imageUrl={displayUrl}
-                        onChange={() => triggerImageUpload(item.code, item._id, displayUrl)}
+                        readOnly={!onImageUpload}
+                        onChange={() => triggerImageUpload(item.code, item._id)}
                     />
                 )}
                 
@@ -114,17 +127,21 @@ const ItemCard = ({ item, onIn, onOut, onDelete, onEdit, onImageUpload, totalSto
                     sx={{ p: 1, bgcolor: 'action.hover' }} // Slight background difference for the action bar
                 >
                     <Box>
-                        <IconButton 
-                            size="small"
-                            onClick={(e) => onEdit(item, e.currentTarget)} 
-                            color="primary" 
-                            title="Edit Item"
-                        >
-                            <EditIcon fontSize="small" />
-                        </IconButton>
-                        <IconButton size="small" onClick={() => onDelete(item)} color="error" title="Delete Item">
-                            <DeleteIcon fontSize="small" />
-                        </IconButton>
+                        {onEdit && (
+                            <IconButton 
+                                size="small"
+                                onClick={(e) => onEdit(item, e.currentTarget)} 
+                                color="primary" 
+                                title="Edit Item"
+                            >
+                                <EditIcon fontSize="small" />
+                            </IconButton>
+                        )}
+                        {onDelete && (
+                            <IconButton size="small" onClick={() => onDelete(item)} color="error" title="Delete Item">
+                                <DeleteIcon fontSize="small" />
+                            </IconButton>
+                        )}
                     </Box>
                     <Box>
                         <IconButton size="small" onClick={onIn} color="primary" title="Stock In" aria-label="stock-in">

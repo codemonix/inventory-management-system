@@ -11,13 +11,8 @@ export interface ISystemLog extends Document {
     timestamp: Date;
 }
 
-export interface ISystemSetting extends Document {
-    _id: string;
-    logLevel: 'error' | 'warn' | 'info' | 'http' | 'verbose' | 'debug' | 'silly';
-    enableDbLogging: boolean;
-    createdAt: Date;
-    updatedAt: Date;
-}
+// Single definition lives with the model's types
+export type { ISystemSetting } from './systemSetting.type.js';
 
 // --- TYPES ----
 export interface IGetLogsParams {
@@ -42,11 +37,12 @@ export interface ILogQueryParams {
     limit?: string;
     level?: string;
     type?: string;
+    search?: string;
 }
 
 export interface IUpdateSettingsBody {
-    logLevel: string;
-    enableDbLogging: boolean;
+    logLevel: unknown;
+    enableDbLogging: unknown;
 }
 
 export interface IFactoryResetBody {

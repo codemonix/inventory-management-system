@@ -7,3 +7,6 @@ dist
 .vscode
 *.log
 uploads/
+.env.backend
+mongo/keyfile
+coverage

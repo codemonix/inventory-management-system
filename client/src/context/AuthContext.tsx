@@ -1,5 +1,5 @@
 import { createContext, useContext } from "react";
-import { IUser } from "../types/auth.types.js";
+import { IUser } from "../types/auth.types";
 
 interface IAuthContext {
     isLoggedIn: boolean;
@@ -9,7 +9,8 @@ interface IAuthContext {
     isManager: boolean;
     login: (email: string, password: string) => Promise<void>;
     logout: () => void;
-    register: ( credentioals: { name?: string, email: string, password: string }) => Promise<void>;
+    // Resolves true when logged in right away, false when the account awaits approval
+    register: (credentials: { name?: string, email: string, password: string }) => Promise<boolean>;
 }
 
 export const AuthContext = createContext<IAuthContext | undefined>(undefined);

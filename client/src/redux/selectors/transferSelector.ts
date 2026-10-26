@@ -12,15 +12,13 @@ export interface PopulatedTempTransfer {
 
 export const selectTempTransfer = (state: RootState) => state.transfer.data;
 const selectAllLocations = (state: RootState) => state.locations.locations;
-const selectAllItems = (state: RootState) => state.items.fullList;
 
 
 
 
 export const selectTempTransferLocations = createSelector(
-    [selectTempTransfer, selectAllLocations, selectAllItems],
-    (tempTransfer, allLocations, allItems): PopulatedTempTransfer | null => {
-        logDebug("transferSelector -> allItems ->", {allItems});
+    [selectTempTransfer, selectAllLocations],
+    (tempTransfer, allLocations): PopulatedTempTransfer | null => {
         if (!tempTransfer) {
             logInfo("transferSelector.js -> No tempTransfer");
             return null;

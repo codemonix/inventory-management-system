@@ -1,91 +1,77 @@
-
 # Inventory Management System (IMS)
-**Enterprise-grade multi-warehouse stock control solution with automated disaster recovery.**
 
-### 🔗 [Live Demo: ims.saeidmon.com](https://ims.saeidmon.com)
-* **Credentials**: `demo@ims.com` / `demo123`
-*(Note: You can also use the "Auto-Fill Demo Account" button on the login page)*
+Multi-location stock control with two-phase transfers and built-in backup and restore.
 
----
-
-## 🚀 Project Overview
-
-This is a robust, full-stack Inventory Management System designed to handle complex stock operations across distributed geographies. Unlike standard CRUD applications, this system implements **transactional integrity**, **two-phase commitments** for stock transfers, and a **disaster recovery engine** capable of full system backups and restores.
-
-It is built to demonstrate production-ready architecture, strict security standards (RBAC), and automated DevOps pipelines.
+🔗 **Live demo:** [ims.saeidmon.com](https://ims.saeidmon.com)
+- **Demo login:** `demo@ims.com` / `demo123` (or use the "Auto-Fill Demo Account" button on the login page)
 
 ---
 
-## ✨ Key Engineering Highlights
+## Overview
 
-### 1. 🛡️ Enterprise Disaster Recovery
-Includes a dedicated **System Operations Console** for data safety[cite: 1205, 1213]:
-***Full System Backup**: Streams a compressed `.zip` containing both the MongoDB JSON dump and the raw image uploads folder directly to the client using `archiver`.
-***Transactional Restore**: Implements MongoDB Sessions (`session.startTransaction()`) to ensure an "All-or-Nothing" restore process. If the database restore fails, the file system is not touched, preventing data corruption.
-***Factory Reset**: A secured "Kill Switch" that wipes all transactional data while preserving admin accounts, useful for resetting demo environments.
+IMS manages stock across several warehouses from one item catalog. Stock transfers go through a holding state, so stock is never counted in two places or lost in transit. Every stock movement is logged for auditing, and an admin console can back up and restore the whole system, all or nothing.
 
-### 2. 📦 Multi-Warehouse Logic
-***Distributed Inventory**: Manages stock levels across specific locations (e.g., Istanbul, Dubai) with a unified item catalog.
-* **Two-Phase Transfer Engine**: prevents stock discrepancies by using a "Temporary Transfer" holding state. [cite_start]Items move from `Stock` $\to$ `In-Transit` $\to$ `Confirmed`, requiring acknowledgement at the destination warehouse.
+## Key features
 
-### 3. 📜 Audit & Security
-***Immutable Logs**: Every stock adjustment (IN/OUT) and transfer is recorded in a read-only `Transaction` collection for auditing purposes.
-* **RBAC Architecture**: Middleware-enforced roles (`Admin`, `Manager`, `User`) protect sensitive routes. [cite_start]For example, only Admins can trigger system restores or manage users.
+### 1. Backup and restore
+A **System Operations Console** for data safety:
+- **Full system backup:** streams a compressed `.zip` with the MongoDB JSON dump and the uploaded images folder directly to the client, using `archiver`.
+- **Transactional restore:** uses MongoDB sessions (`session.startTransaction()`) so a restore is all or nothing. If the database restore fails, the file system isn't touched, so nothing ends up half-restored.
+- **Factory reset:** a secured reset that wipes all data and uploaded images but keeps admin accounts, used to reset the demo environment.
 
----
+### 2. Multi-warehouse logic
+- **Distributed inventory:** stock levels per location (for example Istanbul and Dubai) with a single item catalog.
+- **Two-phase transfer engine:** items move from `Stock` → `In-Transit` → `Confirmed`, and the destination warehouse must acknowledge receipt. The holding state prevents stock discrepancies. Each user assembles their own draft transfer; stock reserved in a draft goes back to the shelf if the draft is replaced or cleared.
 
-## 🛠️ Technical Stack
+### 3. Audit and security
+- **Audit log:** every stock adjustment (IN/OUT) and transfer is recorded in a read-only `Transaction` collection.
+- **Role-based access control:** middleware-enforced roles protect every route:
+  - **User:** stock in/out, and building and sending transfers
+  - **Manager:** also confirms transfer arrivals, and manages items, locations and regular users
+  - **Admin:** also cancels in-transit transfers, deletes items and locations, and runs system operations (backup, restore, reset, settings)
+- **Authentication:** JWT for stateless sessions, bcrypt password hashing, rate-limited login, accounts that need approval, Helmet security headers, and input validation in the service layer.
 
-### Frontend
-* **Core**: React 19 (Vite)
-***State Management**: Redux Toolkit (Slices for Items, Transfers, Auth, Dashboard)
-***UI Framework**: Material UI (MUI) with DataGrid for advanced tables 
-* **Visualization**: Recharts / Custom Dashboard Components
+## Tech stack
 
-### Backend
-* **Runtime**: Node.js & Express
-***Database**: MongoDB (Mongoose) with Transaction Support 
-***System Ops**: `archiver` (Zip streaming) & `adm-zip` (Restore logic) 
-***Security**: JWT Authentication, BCrypt password hashing, Helmet security headers
+| Layer | Technologies |
+|---|---|
+| Frontend | React 19 (Vite), Redux Toolkit (items, transfers, auth and dashboard slices), Material UI with DataGrid, Recharts |
+| Backend | Node.js, Express, MongoDB (Mongoose) with transactions, `archiver` and `adm-zip` for backup and restore |
+| DevOps | Docker (backend, frontend, Nginx, MongoDB), GitHub Actions for testing, building and pushing images to GHCR, Nginx reverse proxy |
 
-### DevOps
-***Containerization**: Fully Dockerized (Backend, Frontend, Nginx, MongoDB)
-***CI/CD**: GitHub Actions pipelines for automated testing, building, and pushing to GHCR.
-***Infrastructure**: Nginx Reverse Proxy for production routing.
+## Installation
 
----
-
-## ⚡ Installation & Setup
-
-### Option 1: Docker (Recommended)
-The fastest way to run the full stack (Database + API + Client).
+### Option 1: Docker (recommended)
+Runs the full stack (database, API and client).
 
 ```bash
 # 1. Clone the repository
-git clone [https://github.com/saeidmon/inventory-management-system.git](https://github.com/saeidmon/inventory-management-system.git)
+git clone https://github.com/codemonix/inventory-management-system.git
 cd inventory-management-system
 
-# 2. Configure Environment
-# (Optional) Create a .env file if you want to override defaults
+# 2. Configure the environment (MongoDB credentials, JWT secret)
 cp .env.example .env
 
-# 3. Start the Application
-docker-compose up -d
+# 3. Create the MongoDB replica-set keyfile
+mkdir -p mongo && openssl rand -base64 756 > mongo/keyfile
+sudo chown 999:999 mongo/keyfile && sudo chmod 400 mongo/keyfile
 
+# 4. Start the application
+docker compose up -d
 ```
 
-*Access the dashboard at `http://localhost:3000` (or your configured port).*
+The dashboard runs at `http://localhost`. On first visit, open `/setup` to create the first admin.
+For production (and for migrating an existing database to authenticated MongoDB) see [docs/mongo-auth-runbook.md](docs/mongo-auth-runbook.md).
 
-### Option 2: Manual Setup
+### Option 2: Manual setup
 
-**Backend**
+**Backend** (needs a local MongoDB replica set, because stock changes use transactions)
 
 ```bash
 cd server
+cp .env.example .env
 npm install
-# Ensure you have a local MongoDB instance running
 npm run dev
-
 ```
 
 **Frontend**
@@ -94,70 +80,38 @@ npm run dev
 cd client
 npm install
 npm run dev
-
 ```
 
----
+## Testing
 
-## 🧪 Testing
+- **Backend:** Vitest and Supertest against an in-memory MongoDB replica set, covering API endpoints, auth and role checks, and transfer logic
 
-The project maintains reliability through a dual-testing strategy:
+  ```bash
+  cd server && npm test
+  ```
 
-* 
-**Backend Tests**: Uses `Jest` and `Supertest` to validate API endpoints, auth flows, and complex transfer logic.
+- **Frontend:** Vitest for component rendering and state management
 
+  ```bash
+  cd client && npm test
+  ```
 
-```bash
-cd server && npm test
-
-```
-
-
-* 
-**Frontend Tests**: Uses `Vitest` for component rendering and state management checks.
-
-
-```bash
-cd client && npm test
+## Project structure
 
 ```
-
-
-
----
-
-## 📂 Project Structure
-
-```
-├── client/                 # React 19 Frontend
-│   ├── src/redux/          # Global State (Slices & Thunks)
-│   ├── src/components/     # Reusable UI Components
-│   └── src/pages/          # Application Routes
-├── server/                 # Express Backend
-│   ├── controllers/        # Business Logic (Inventory, System, Auth)
-│   ├── models/             # Mongoose Schemas (Transactions, Items)
-│   ├── middleware/         # RBAC & Error Handling
-│   └── utils/              # Helper functions (Backup, Logger)
-├── .github/workflows/      # CI/CD Pipelines
+├── client/                 # React 19 frontend
+│   ├── src/redux/          # Global state (slices and thunks)
+│   ├── src/components/     # Reusable UI components
+│   └── src/pages/          # Application routes
+├── server/                 # Express backend
+│   ├── controllers/        # Business logic (inventory, system, auth)
+│   ├── models/             # Mongoose schemas (transactions, items)
+│   ├── middleware/         # RBAC and error handling
+│   └── utils/              # Helpers (backup, logger)
+├── .github/workflows/      # CI/CD pipelines
 └── docker-compose.yml      # Orchestration
-
 ```
 
----
+## Author
 
-## 🔒 Security Features
-
-* **Role-Based Access Control**: Strict separation of `Admin` vs `Viewer` capabilities.
-* **Sanitization**: Inputs validated via Mongoose schemas.
-* 
-**Session Management**: Secure JWT implementation for stateless authentication.
-
-
-
----
-
-*© 2026 Codemonix. Built for production environments.*
-
-```
-
-```
+Saeid Monfared · [saeidmon.com](https://www.saeidmon.com) · [LinkedIn](https://www.linkedin.com/in/saeid-monfared/)

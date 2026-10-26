@@ -3,23 +3,32 @@ import logger from '../utils/logger.js'
 import { Request, Response, NextFunction } from 'express';
 import * as authService from '../services/auth.service.js';
 import { AuthenticatedRequest, RegisterDTO, LoginDTO } from '../types/auth.types.js';
+import { AppError } from '../errors/AppError.js';
+
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 
 
 export async function  registerUser(
-    req: Request<{}, {}, RegisterDTO>,
+    req: Request<Record<string, never>, unknown, RegisterDTO>,
     res: Response,
     next: NextFunction
 ): Promise<void> {
     
     try {
-        const { name, email , password , role = 'user' } = req.body;
-        if ( !name || !email || !password) {
-            res.status(400).json({ message: "All fileds are required" });
-            return 
+        const { name, email , password } = req.body;
+        if (typeof name !== 'string' || typeof email !== 'string' || typeof password !== 'string'
+            || !name.trim() || !email || !password) {
+            return next(new AppError("All fields are required", 400));
+        }
+        if (!EMAIL_PATTERN.test(email)) {
+            return next(new AppError("Invalid email address", 400));
+        }
+        if (password.length < 8) {
+            return next(new AppError("Password must be at least 8 characters", 400));
         }
 
-        const result = await authService.registerUser({ name, email, password, role });
+        const result = await authService.registerUser({ name: name.trim(), email, password });
         res.status(201).json(result);
 
     } catch (error) {
@@ -30,16 +39,15 @@ export async function  registerUser(
 }
 
 export async function loginUser(
-    req: Request<{}, {}, LoginDTO>, 
+    req: Request<Record<string, never>, unknown, LoginDTO>, 
     res: Response,
     next: NextFunction
 ): Promise<void> {
     const { email, password } = req.body;
     try {
         logger.info("auth.controller.js -> Attempt login for:", {email});
-        if ( !email || !password) {
-            res.status(400).json({ message: "Email and Password are required" });
-            return 
+        if (typeof email !== 'string' || typeof password !== 'string' || !email || !password) {
+            return next(new AppError("Email and Password are required", 400));
         }
 
         const result = await authService.loginUser({ email, password });
@@ -60,8 +68,7 @@ export async function getCurrentUser(
 
     try {
         if (!req.user || !req.user._id) {
-            res.status(404).json({ error: 'Not authorized, token failed' });
-            return 
+            return next(new AppError('Not authorized, token failed', 401));
         }
 
         const result = await authService.getUserById(req.user._id.toString());

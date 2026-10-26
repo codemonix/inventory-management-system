@@ -1,19 +1,24 @@
+export type TransactionType = 'IN' | 'OUT' | 'TRANSFER';
 
-
-// The core database model representation for a Transaction Log
+// A stock movement as returned by GET /transactions/logs (references populated)
 export interface ITransactionLog {
-    id: string;
-    action: string;
-    user?: string;
-    details?: string | Record<string, any>;
+    _id: string;
+    itemId: { _id: string; name: string } | null;
+    userId: { _id: string; email: string } | null;
+    locationId: { _id: string; name: string } | null;
+    type: TransactionType;
+    quantity: number;
+    note?: string;
     createdAt: string;
     updatedAt: string;
 }
 
+export type TransactionSortField = 'createdAt' | 'type' | 'quantity';
+
 // DTO for the network request parameters
 export interface FetchLogsParams {
     search?: string;
-    sortBy?: string;
+    sortBy?: TransactionSortField;
     sortOrder?: 'asc' | 'desc';
     skip?: number;
     limit?: number;
@@ -22,5 +27,5 @@ export interface FetchLogsParams {
 // DTO for the paginated network response
 export interface PaginatedLogsResult {
     logs: ITransactionLog[];
-    totalCount: number;
+    total: number;
 }

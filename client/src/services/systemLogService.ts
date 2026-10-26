@@ -1,5 +1,6 @@
 
 import api, { isApiError } from "../api/api";
+import { getBackendMessage } from "../utils/backendMessage";
 import { logDebug, logError, logInfo } from "../utils/logger";
 import { 
     FetchSystemLogsParams, 
@@ -25,7 +26,7 @@ export const fetchSystemLogs = async (params: FetchSystemLogsParams = {}): Promi
         return response.data;
     } catch (error: unknown) {
         if (isApiError(error)) {
-            const backendMessage = error.response?.data?.message;
+            const backendMessage = getBackendMessage(error);
             logError("Failed to fetch system logs API:", error.message);
             throw new Error(backendMessage || "Failed to fetch system logs.");
         }
@@ -41,7 +42,7 @@ export const clearSystemLogs = async (): Promise<ClearLogsResponse> => {
         return response.data;
     } catch (error: unknown) {
         if (isApiError(error)) {
-            const backendMessage = error.response?.data?.message;
+            const backendMessage = getBackendMessage(error);
             logError("Failed to clear system logs API:", error.message);
             throw new Error(backendMessage || "Failed to clear system logs.");
         }

@@ -1,4 +1,9 @@
+import { ClientSession } from "mongoose";
 import Transaction from "../models/transaction.model.js";
+import Item from "../models/item.model.js";
+import User from "../models/users.model.js";
+import Location from "../models/location.model.js";
+import { escapeRegex } from "../utils/validation.js";
 import { ILogTransactionParams, 
     ITransaction, 
     ITransactionLogResult, 
@@ -6,53 +11,58 @@ import { ILogTransactionParams,
     IPopulatedTransaction
 } from "../types/transactions.types.js";
 
-export async function logTransaction(params: ILogTransactionParams): Promise<ITransaction> {
+const TRANSACTION_SORT_FIELDS = ['createdAt', 'type', 'quantity'];
+
+export async function logTransaction(params: ILogTransactionParams, session?: ClientSession): Promise<ITransaction> {
     const { itemId, userId, locationId, type, quantity, note } = params;
-    return await Transaction.create({
+    const [transaction] = await Transaction.create([{
         itemId,
         userId,
         locationId,
         type,
         quantity,
         note
-    })
+    }], { session });
+    return transaction;
 }
 
 export async function getTransactionLogs(
     params: IGetTransactionLogsParams): Promise<ITransactionLogResult> {
 
-    const search = params.search || '';
-    const sortBy = params.sortBy || 'createdAt';
-    const sortOrder = params.sortOrder || 'desc';
-    const skip = params.skip || 0;
-    const limit = params.limit || 20;
+    const search = (params.search || '').trim().slice(0, 100);
+    const sortBy = TRANSACTION_SORT_FIELDS.includes(params.sortBy || '') ? params.sortBy as string : 'createdAt';
+    const sortOrder = params.sortOrder === 'asc' ? 1 : -1;
+    const skip = Math.max(0, params.skip || 0);
+    const limit = Math.min(200, Math.max(1, params.limit || 20));
 
-    const regex  = new RegExp(search, 'i');
-    // Base query: populate related documents
-    const query = Transaction.find()
-        .populate('itemId', 'name')
-        .populate('userId', 'email')
-        .populate('locationId', 'name')
-        .sort({ [sortBy ]: sortOrder === 'asc' ? 1 : -1 })
-        .skip(Number(skip))
-        .limit(Number(limit))
-        .lean();
-
-    const results = await query as unknown as IPopulatedTransaction[];
-    if (!search) {
-        const total = await Transaction.countDocuments();
-        return { logs: results , total };
+    // Search runs in the database across the referenced names, so paging and totals stay correct.
+    const filter: Record<string, unknown> = {};
+    if (search) {
+        const regex = { $regex: escapeRegex(search), $options: 'i' };
+        const [items, users, locations] = await Promise.all([
+            Item.find({ name: regex }).distinct('_id'),
+            User.find({ email: regex }).distinct('_id'),
+            Location.find({ name: regex }).distinct('_id'),
+        ]);
+        filter.$or = [
+            { itemId: { $in: items } },
+            { userId: { $in: users } },
+            { locationId: { $in: locations } },
+            { note: regex },
+        ];
     }
-    
-    // Apply filter if there is.
-    const filtered = results.filter(tx => {
-        return [
-            tx.itemId?.name,
-            tx.userId?.email,
-            tx.locationId?.name,
-            tx.note,
-        ].some(field => field && regex.test(field));
-    });
-    return { logs: filtered , total: filtered.length };
-}
 
+    const [logs, total] = await Promise.all([
+        Transaction.find(filter)
+            .populate('itemId', 'name')
+            .populate('userId', 'email')
+            .populate('locationId', 'name')
+            .sort({ [sortBy]: sortOrder })
+            .skip(skip)
+            .limit(limit)
+            .lean() as unknown as Promise<IPopulatedTransaction[]>,
+        Transaction.countDocuments(filter),
+    ]);
+
+    return { logs, total };
+}

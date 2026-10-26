@@ -1,6 +1,13 @@
 import { Pagination, Box } from "@mui/material";
 
-const PaginationControls = ({ page = 1, totalCount = 0, limit = 10, onChange }) => {
+interface PaginationControlsProps {
+    page?: number;
+    totalCount?: number;
+    limit?: number;
+    onChange: (page: number) => void;
+}
+
+const PaginationControls = ({ page = 1, totalCount = 0, limit = 10, onChange }: PaginationControlsProps) => {
     const safeLimit = limit > 0 ? limit : 10;
     const pageCount = Math.max(0, Math.ceil(totalCount / safeLimit));
     

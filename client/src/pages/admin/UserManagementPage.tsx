@@ -1,44 +1,46 @@
 import { useEffect, useState, useCallback } from "react";
 import { useSearchParams } from "react-router-dom";
-import { DataGrid } from "@mui/x-data-grid";
+import { DataGrid, GridColDef, GridPaginationModel } from "@mui/x-data-grid";
 import {
     Box,
+    Alert,
     Avatar,
-    Typography,
     IconButton,
     Tooltip,
     Switch,
 } from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
-import { useSelector, useDispatch } from "react-redux";
 
-import { getUsers, toggleUserActiveStatus } from "../../services/userService.js";
-import { useAuth } from "../../context/AuthContext.jsx";
-import EditUserDialog from "../../components/admin/EditUserDialog.jsx";
-import StatusHandler from "../../components/StatusHandler.jsx";
-import SearchFilterBar from "../../components/SearchFilterBar.jsx";
-import { logInfo, logError, logDebug } from "../../utils/logger.js";
+import { getUsers, toggleUserActiveStatus } from "../../services/userService";
+import { useAuth } from "../../context/AuthContext";
+import EditUserDialog from "../../components/admin/EditUserDialog";
+import StatusHandler, { LoadStatus } from "../../components/StatusHandler";
+import SearchFilterBar from "../../components/SearchFilterBar";
+import { logError } from "../../utils/logger";
+import { getErrorMessage } from "../../utils/errorMessage";
+import { IUserRecord } from "../../types/user.types";
 
 
 const UserManagementPage = () => {
-    const { user: currentUser, isAdmin, isManager } = useAuth();
+    const { isAdmin, isManager } = useAuth();
     const [ searchParams, setSearchParams ] = useSearchParams();
 
     // DATA state
-    const [ users, setUsers ] = useState([]);
+    const [ users, setUsers ] = useState<IUserRecord[]>([]);
     const [ totalCount, setTotalCount ] = useState(0);
-    const [ status, setStatus ] = useState('idel');
-    const [ error, setError ] = useState(null);
+    const [ status, setStatus ] = useState<LoadStatus>('idle');
+    const [ error, setError ] = useState<string | null>(null);
+    // Errors from row actions are shown above the grid instead of replacing it
+    const [ actionError, setActionError ] = useState<string | null>(null);
 
     // View state, init from URL params if any
-    const page = parseInt(searchParams.get('page')) || 1;
-    const limit = parseInt(searchParams.get('limit')) || 10;
-    const sort =searchParams.get('sort') || 'name_asc';
+    const page = parseInt(searchParams.get('page') ?? '', 10) || 1;
+    const limit = parseInt(searchParams.get('limit') ?? '', 10) || 10;
+    const sort = searchParams.get('sort') || 'name_asc';
     const search = searchParams.get('search') || '';
 
     // Dialog state
-    const [ selectedUser, setSelectedUser ] = useState(null);
-    const [ editDialogOpen, setEditDialogOpen ] = useState(false);
+    const [ selectedUser, setSelectedUser ] = useState<IUserRecord | null>(null);
 
     // Fetch data
     const loadUsersData = useCallback( async () => {
@@ -46,81 +48,60 @@ const UserManagementPage = () => {
         setError(null);
         try {
             const response = await getUsers({ page, limit, sort, search });
-            logDebug("UserManagementPage.jsx -> loadUsersData response:", response);
-            setUsers(response);
-            setTotalCount(response.totalCount || 0);
+            setUsers(response.users);
+            setTotalCount(response.totalCount);
             setStatus('succeeded');
-        } catch (error) {
-            logError("UserManagementPage.jsx -> loadUsersData failed:", error.message || "Unknown Error");
-            setError(error.message || "Failed to load users data.");
+        } catch (err: unknown) {
+            const message = getErrorMessage(err, "Failed to load users data.");
+            logError("UserManagementPage -> loadUsersData failed:", message);
+            setError(message);
             setStatus('failed');
         }
     }, [page, limit, sort, search]);
 
     useEffect(() => {
-        loadUsersData();
+        void loadUsersData();
     }, [loadUsersData]);
 
-
-
-    const updateSearchParams = ( newParams ) => {
+    const updateSearchParams = ( newParams: Record<string, string | number> ) => {
         setSearchParams((prev) => {
-            const current = Object.fromEntries(prev);
-            return { ...current, ...newParams}
+            const next = new URLSearchParams(prev);
+            for (const [key, value] of Object.entries(newParams)) next.set(key, String(value));
+            return next;
         });
     };
 
-    const handleSearchChange = (e) => {
-        updateSearchParams({ search: e.target.value, page: 1 });
-    };
-
-    const handleSortChange = (e) => {
-        updateSearchParams({ sort: e.target.value, page: 1 });
-    };
-
-    const handlePageChange = ( newPage ) => {
-        updateSearchParams({ page: newPage + 1 });
-    };
-
-    const handlePageSizeChange = ( newPageSize ) => {
-        updateSearchParams({ limit: newPageSize, page: 1 });
-    };
-
-    const handleEditUserClick = (user) => {
-        setSelectedUser(user);
-        setEditDialogOpen(true);
+    const handlePaginationChange = (model: GridPaginationModel) => {
+        updateSearchParams({ page: model.page + 1, limit: model.pageSize });
     };
 
     const handleEditClose = () => {
         setSelectedUser(null);
-        setEditDialogOpen(false);
-    }
-
-    const handleToggleActive = async (userToToggle) => {
-        if ( currentUser.role !== "admin" && currentUser.role !== "manager") return;
-        try {
-            // Backend
-            const response = await toggleUserActiveStatus(userToToggle._id, !userToToggle.isActive);
-            const updatedUser = response.user;
-            logDebug("UserManagementPage.jsx -> handleToggleActive updatedUser:", updatedUser);
-            // Local
-            setUsers((prevUsers) => 
-                prevUsers.map((u) => u._id === userToToggle._id ? { ...u, isActive: updatedUser.isActive } : u));
-            } catch (error) {
-                logError("UserManagementPage.jsx -> handleToggleActive failed:", error.message || "Unknown Error");
-                setError(error.message || "Failed to toggle user active status.");
-                setStatus('failed');
-            }
-        
+        // Pick up whatever the dialog changed
+        void loadUsersData();
     };
 
-    const columns = [
+    const handleToggleActive = async (userToToggle: IUserRecord) => {
+        if (!isAdmin && !isManager) return;
+        setActionError(null);
+        try {
+            const { user: updatedUser } = await toggleUserActiveStatus(userToToggle._id, !userToToggle.isActive);
+            setUsers((prevUsers) =>
+                prevUsers.map((u) => u._id === userToToggle._id ? { ...u, isActive: updatedUser.isActive } : u));
+        } catch (err: unknown) {
+            const message = getErrorMessage(err, "Failed to toggle user active status.");
+            logError("UserManagementPage -> handleToggleActive failed:", message);
+            setActionError(message);
+        }
+    };
+
+    const columns: GridColDef<IUserRecord>[] = [
         {
             field: "avatar",
             headerName: "",
             renderCell: (params) => (
                 <Avatar
-                    src={`https://api.dicebear.com/5.x/initials/svg?seed=${params.row.name}`}
+                    src={`https://api.dicebear.com/5.x/initials/svg?seed=${encodeURIComponent(params.row.name)}`}
                     alt={params.row.name}
                 />
             ),
@@ -135,7 +116,7 @@ const UserManagementPage = () => {
             headerName: "Active",
             flex: 1,
             renderCell: (params) => (
-                <Switch 
+                <Switch
                     checked={ params.row.isActive }
                     onChange={() => handleToggleActive(params.row)}
                     disabled= { !isAdmin && !isManager }
@@ -152,7 +133,7 @@ const UserManagementPage = () => {
             field: "lastLogin",
             headerName: "Last Login",
             flex: 1,
-            renderCell: (params) => 
+            renderCell: (params) =>
                 params.row.lastLogin ? new Date(params.row.lastLogin).toLocaleString() : 'Never',
         },
         {
@@ -162,7 +143,7 @@ const UserManagementPage = () => {
             sortable: false,
             renderCell: (params) => (
                 <Tooltip title="Edit">
-                    <IconButton onClick={() => handleEditUserClick(params.row)}>
+                    <IconButton onClick={() => setSelectedUser(params.row)}>
                         <EditIcon />
                     </IconButton>
                 </Tooltip>
@@ -170,20 +151,21 @@ const UserManagementPage = () => {
         },
     ];
 
-    logInfo("users currently in state:", users)
-
     return (
         <Box p={1} maxWidth="lg" mx="auto">
             <Box mb={2} >
-                <SearchFilterBar 
+                <SearchFilterBar
                     search={search}
                     limit={limit}
-                    page={page}
                     sort={sort}
-                    onSearchChange={handleSearchChange}
-                    onSortChange={handleSortChange}
+                    onSearchChange={(value) => updateSearchParams({ search: value, page: 1 })}
+                    onSortChange={(value) => updateSearchParams({ sort: value, page: 1 })}
+                    onLimitChange={(value) => updateSearchParams({ limit: value, page: 1 })}
                 />
             </Box>
+            {actionError && (
+                <Alert severity="error" sx={{ mb: 2 }} onClose={() => setActionError(null)}>{actionError}</Alert>
+            )}
             <StatusHandler status={status} error={error} >
                 <Box sx={{ width: '100%', overflowX: 'auto' }}>
                     <DataGrid
@@ -193,18 +175,17 @@ const UserManagementPage = () => {
                         pagination
                         paginationMode='server'
                         rowCount={totalCount}
-                        page={ page - 1 }
-                        pageSize={limit}
-                        onPageChange={handlePageChange}
-                        onPageSizeChange={handlePageSizeChange}
+                        paginationModel={{ page: page - 1, pageSize: limit }}
+                        onPaginationModelChange={handlePaginationChange}
+                        pageSizeOptions={[10, 25, 50]}
                         getRowId={ (row) => row._id }
                         disableRowSelectionOnClick
                     />
                 </Box>
             </StatusHandler>
-            { selectedUser && 
-                <EditUserDialog 
-                    open={editDialogOpen}
+            { selectedUser &&
+                <EditUserDialog
+                    open
                     onClose={handleEditClose}
                     user={selectedUser}
                 />
