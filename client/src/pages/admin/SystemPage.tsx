@@ -2,7 +2,7 @@ import { ChangeEvent, useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { 
     Box, Typography, Paper, Button, Divider, 
-    FormControl, Alert, CircularProgress, Card, CardContent,
+    FormControl, Alert, CircularProgress, Chip,
     Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions, 
     TextField, Stack, MenuItem, Select, InputLabel, FormGroup, FormControlLabel, Switch, 
     alpha,
@@ -174,115 +174,117 @@ const SettingsPage = () => {
         }
     };
 
+    // Shared look for the three section cards
+    const sectionSx = { p: { xs: 2, md: 3 }, borderRadius: 2, height: '100%', display: 'flex', flexDirection: 'column' } as const;
+    const settingHelpSx = { ml: 6, mt: -0.5, display: 'block' } as const;
+
     return (
         <Box maxWidth="lg" mx="auto" p={1}>
-            <Box px={1} py={0.5} sx={{ bgcolor: 'action.hover', borderRadius: 2 }}>
-                <Typography variant="body2" color="text.secondary" fontWeight="medium">
-                    v{__APP_VERSION__} 
-                </Typography>
+            {/* Page header */}
+            <Box display="flex" alignItems="center" justifyContent="space-between" mb={2}>
+                <Typography variant="h5" fontWeight="bold">System</Typography>
+                <Chip label={`v${__APP_VERSION__}`} size="small" variant="outlined" />
             </Box>
 
             {message && <Alert severity="success" sx={{ mb: 2 }}>{message}</Alert>}
             {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
 
-            <Stack spacing={3} sx={{ width: '100%' }} direction={{ xs: 'column', md: 'row' }}>
-                
-                {/* 1. BACKUP SECTION */}
-                <Paper 
-                    sx={{ 
-                        p: 2, 
-                        width: '100%' // Force full width
-                    }}
-                >
-                    <Typography variant="h6">Backup & Restore</Typography>
+            <Stack spacing={3}>
+
+                {/* 1. SYSTEM SETTINGS (full width: the most used section) */}
+                <Paper variant="outlined" sx={sectionSx}>
+                    <Typography variant="h6">System Settings</Typography>
                     <Divider sx={{ my: 2 }} />
-                    
-                    <Box mb={3}>
-                        <Typography variant="body2" gutterBottom>Download full ZIP backup (DB + Images).</Typography>
-                        <Button 
-                            variant="contained" 
-                            startIcon={<CloudDownloadIcon />} 
-                            onClick={handleBackup} 
-                            disabled={loading}
-                            fullWidth
-                        >
-                            Download Backup
-                        </Button>
+
+                    <Box
+                        sx={{
+                            display: 'grid',
+                            gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' },
+                            columnGap: 4,
+                            rowGap: 3,
+                        }}
+                    >
+                        {/* General */}
+                        <Box>
+                            <Typography variant="overline" color="text.secondary">General</Typography>
+                            <FormGroup>
+                                <FormControlLabel
+                                    control={
+                                        <Switch
+                                            checked={localDemoMode}
+                                            onChange={(e) => setLocalDemoMode(e.target.checked)}
+                                            color="primary"
+                                        />
+                                    }
+                                    label="Demo mode"
+                                />
+                                <Typography variant="caption" color="text.secondary" sx={settingHelpSx}>
+                                    Shows a button on the login page that fills in the demo account (demo@ims.com).
+                                </Typography>
+                            </FormGroup>
+                        </Box>
+
+                        {/* Logging */}
+                        <Box>
+                            <Typography variant="overline" color="text.secondary">Logging</Typography>
+                            <FormGroup sx={{ mb: 2.5 }}>
+                                <FormControlLabel
+                                    control={
+                                        <Switch
+                                            checked={localEnableDbLogging}
+                                            onChange={(e) => setLocalEnableDbLogging(e.target.checked)}
+                                            color="primary"
+                                        />
+                                    }
+                                    label="Enable Database Logging"
+                                />
+                                <Typography variant="caption" color="text.secondary" sx={settingHelpSx}>
+                                    Toggle off to stop writing logs to MongoDB. Terminal logs will remain active.
+                                </Typography>
+                            </FormGroup>
+
+                            <FormControl fullWidth size="small">
+                                <InputLabel id="log-level-label">Log Level</InputLabel>
+                                <Select
+                                    labelId="log-level-label"
+                                    value={localLogLevel}
+                                    label="Log Level"
+                                    onChange={(e) => setLocalLogLevel(e.target.value)}
+                                >
+                                    <MenuItem value="error">Error Only</MenuItem>
+                                    <MenuItem value="warn">Warnings & Errors</MenuItem>
+                                    <MenuItem value="info">Info (Standard)</MenuItem>
+                                    <MenuItem value="debug">Debug (Verbose)</MenuItem>
+                                </Select>
+                            </FormControl>
+
+                            <Box display="flex" alignItems="center" justifyContent="space-between" gap={2} mt={2.5}>
+                                <Typography variant="caption" color="text.secondary">
+                                    Clearing system logs does not affect inventory transactions.
+                                </Typography>
+                                <Button
+                                    variant="text"
+                                    color="error"
+                                    size="small"
+                                    startIcon={<DeleteIcon />}
+                                    onClick={handleClearLogs}
+                                    sx={{ whiteSpace: 'nowrap', flexShrink: 0 }}
+                                >
+                                    Clear Logs
+                                </Button>
+                            </Box>
+                        </Box>
                     </Box>
 
-                    <Box>
-                        <Typography variant="body2" gutterBottom>Restore from .zip backup.</Typography>
-                        <Button 
-                            component="label" 
-                            variant="outlined" 
-                            startIcon={<CloudUploadIcon />} 
-                            color="warning" 
-                            disabled={loading}
-                            fullWidth
-                        >
-                            Upload & Restore
-                            <input type="file" hidden accept=".zip" onChange={handleFileChange} />
-                        </Button>
-                    </Box>
-                </Paper>
-
-                {/* System Settings */}
-                <Paper elevation={3} sx={{ p: 2, mb: 3 }}>
-                    <Typography variant="h6" gutterBottom>System Settings</Typography>
-                    <Divider sx={{ mb: 3 }} />
-
-                    <FormGroup sx={{ mb: 3 }}>
-                        <FormControlLabel 
-                            control={
-                                <Switch 
-                                    checked={localDemoMode} 
-                                    onChange={(e) => setLocalDemoMode(e.target.checked)} 
-                                    color="primary" 
-                                />
-                            } 
-                            label="Demo mode" 
-                        />
-                        <Typography variant="caption" color="textSecondary" sx={{ ml: 4, mt: -1, display: 'block' }}>
-                            Shows a button on the login page that fills in the demo account (demo@ims.com).
-                        </Typography>
-                    </FormGroup>
-
-                    <FormGroup sx={{ mb: 3 }}>
-                        <FormControlLabel 
-                            control={
-                                <Switch 
-                                    checked={localEnableDbLogging} 
-                                    onChange={(e) => setLocalEnableDbLogging(e.target.checked)} 
-                                    color="primary" 
-                                />
-                            } 
-                            label="Enable Database Logging" 
-                        />
-                        <Typography variant="caption" color="textSecondary" sx={{ ml: 4, mt: -1, display: 'block' }}>
-                            Toggle off to stop writing logs to MongoDB. Terminal logs will remain active.
-                        </Typography>
-                    </FormGroup>
-                    
-                    {/* Stacked so the card's narrow column never truncates the level or wraps the button */}
-                    <Box display="flex" flexDirection="column" alignItems="flex-start" gap={2} mb={3}>
-                        <FormControl fullWidth>
-                            <InputLabel id="log-level-label">Log Level</InputLabel>
-                            <Select
-                                labelId="log-level-label"
-                                value={localLogLevel}
-                                label="Log Level"
-                                onChange={(e) => setLocalLogLevel(e.target.value)}
-                            >
-                                <MenuItem value="error">Error Only</MenuItem>
-                                <MenuItem value="warn">Warnings & Errors</MenuItem>
-                                <MenuItem value="info">Info (Standard)</MenuItem>
-                                <MenuItem value="debug">Debug (Verbose)</MenuItem>
-                            </Select>
-                        </FormControl>
-
-                        <Button 
-                            variant="contained" 
-                            color="primary" 
+                    {/* One save action for every setting above */}
+                    <Divider sx={{ my: 2 }} />
+                    <Box display="flex" alignItems="center" justifyContent="flex-end" gap={2}>
+                        {hasUnsavedChanges && (
+                            <Typography variant="body2" color="warning.main">Unsaved changes</Typography>
+                        )}
+                        <Button
+                            variant="contained"
+                            color="primary"
                             startIcon={<SaveIcon />}
                             onClick={handleSaveSettings}
                             disabled={isLoading || !hasUnsavedChanges}
@@ -291,46 +293,76 @@ const SettingsPage = () => {
                             Save Settings
                         </Button>
                     </Box>
-
-                    <Box mt={4}>
-                        <Typography variant="body2" color="textSecondary" gutterBottom>
-                            Clearing system logs will not affect your business inventory transactions.
-                        </Typography>
-                        <Button 
-                            variant="outlined" 
-                            color="error" 
-                            startIcon={<DeleteIcon />}
-                            onClick={handleClearLogs}
-                        >
-                            Clear System Logs
-                        </Button>
-                    </Box>
                 </Paper>
 
-                {/* 2. DANGER ZONE */}
-                <Card 
-                    sx={{ 
-                        // `border` first: it would otherwise reset the color set by borderColor
-                        border: 1,
-                        borderColor: 'error.main', 
-                        // Faint red tint that works in light and dark mode
-                        bgcolor: (theme) => alpha(theme.palette.error.main, 0.06),
-                        width: '100%' // Force full width
+                {/* 2 + 3: data operations side by side, equal height */}
+                <Box
+                    sx={{
+                        display: 'grid',
+                        gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' },
+                        gap: 3,
                     }}
                 >
-                    <CardContent>
+                    {/* 2. BACKUP & RESTORE */}
+                    <Paper variant="outlined" sx={sectionSx}>
+                        <Typography variant="h6">Backup & Restore</Typography>
+                        <Divider sx={{ my: 2 }} />
+
+                        <Box mb={3}>
+                            <Typography variant="body2" color="text.secondary" gutterBottom>
+                                Download a full ZIP backup (database + images).
+                            </Typography>
+                            <Button
+                                variant="contained"
+                                startIcon={<CloudDownloadIcon />}
+                                onClick={handleBackup}
+                                disabled={loading}
+                                fullWidth
+                            >
+                                Download Backup
+                            </Button>
+                        </Box>
+
+                        <Box mt="auto">
+                            <Typography variant="body2" color="text.secondary" gutterBottom>
+                                Restore from a .zip backup. This overwrites all current data.
+                            </Typography>
+                            <Button
+                                component="label"
+                                variant="outlined"
+                                startIcon={<CloudUploadIcon />}
+                                color="warning"
+                                disabled={loading}
+                                fullWidth
+                            >
+                                Upload & Restore
+                                <input type="file" hidden accept=".zip" onChange={handleFileChange} />
+                            </Button>
+                        </Box>
+                    </Paper>
+
+                    {/* 3. DANGER ZONE */}
+                    <Paper
+                        variant="outlined"
+                        sx={{
+                            ...sectionSx,
+                            // Faint red tint that works in light and dark mode
+                            borderColor: 'error.main',
+                            bgcolor: (theme) => alpha(theme.palette.error.main, 0.06),
+                        }}
+                    >
                         <Box display="flex" alignItems="center" gap={1}>
                             <WarningAmberIcon color="error" />
                             <Typography variant="h6" color="error">Danger Zone</Typography>
                         </Box>
                         <Divider sx={{ my: 2, borderColor: (theme) => alpha(theme.palette.error.main, 0.3) }} />
-                        
+
                         <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-                            <Typography variant="body2">Delete Transfers</Typography>
-                            <Button 
-                                variant="outlined" 
-                                color="error" 
-                                size="small" 
+                            <Typography variant="body2">Delete all transfers</Typography>
+                            <Button
+                                variant="outlined"
+                                color="error"
+                                size="small"
                                 onClick={() => { setActionType('CLEAR_TRANSFERS'); setConfirmOpen(true); }}
                             >
                                 Clear
@@ -338,29 +370,29 @@ const SettingsPage = () => {
                         </Box>
 
                         <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
-                            <Typography variant="body2">Delete Items</Typography>
-                            <Button 
-                                variant="outlined" 
-                                color="error" 
-                                size="small" 
+                            <Typography variant="body2">Delete all items</Typography>
+                            <Button
+                                variant="outlined"
+                                color="error"
+                                size="small"
                                 onClick={() => { setActionType('CLEAR_ITEMS'); setConfirmOpen(true); }}
                             >
                                 Clear
                             </Button>
                         </Box>
 
-                        <Button 
-                            variant="contained" 
-                            color="error" 
-                            fullWidth 
-                            startIcon={<DeleteForeverIcon />} 
+                        <Button
+                            variant="contained"
+                            color="error"
+                            fullWidth
+                            startIcon={<DeleteForeverIcon />}
                             onClick={() => { setConfirmPhrase(''); setResetDialogOpen(true); }}
+                            sx={{ mt: 'auto' }}
                         >
-                            FACTORY RESET
+                            Factory Reset
                         </Button>
-                    </CardContent>
-                </Card>
-
+                    </Paper>
+                </Box>
             </Stack>
             {loading && <Box display="flex" justifyContent="center" mt={4}><CircularProgress /></Box>}
 
